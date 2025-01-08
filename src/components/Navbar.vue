@@ -1,0 +1,95 @@
+<script setup>
+import { ref, defineEmits } from 'vue'
+import { RouterLink } from 'vue-router'
+
+const isMenuOpen = ref(false)
+const emit = defineEmits(['toggle-menu'])
+
+const toggleMenu = () => {
+    isMenuOpen.value = !isMenuOpen.value
+    emit('toggle-menu', isMenuOpen.value) // Notify the parent component
+}
+</script>
+
+<template>
+    <!-- Navbar - Desktop -->
+    <div class="bg-sky-800 min-w-full max-w-full shadow-2xl">
+        <div class="text-white mx-auto px-8 py-6 flex items-center justify-between">
+
+            <!-- Logo section -->
+            <div class="flex justify-center items-center gap-x-4">
+                <div class="min-w-16 max-w-16">
+                    <img src="@/assets/images/logo_3.png" alt="Smiley Vision Logo">
+                </div>
+                <div class="flex lg:text-2xl text-xl font-semibold shrink-0">
+                    Smiley Vision
+                </div>
+            </div>
+
+            <!-- Nabar Links - Desktop -->
+            <ul class="lg:flex items-center justify-between my-4 xl:gap-x-4 hidden">
+                <li>
+                    <RouterLink class="hover:bg-sky-900 hover:rounded-xl p-4 font-semibold" to="/">Principal
+                    </RouterLink>
+                </li>
+                <li>
+                    <RouterLink class="hover:bg-sky-900 hover:rounded-xl p-4 font-semibold" to="/about">Acerca
+                    </RouterLink>
+                </li>
+                <li>
+                    <RouterLink class="hover:bg-sky-900 hover:rounded-xl p-4 font-semibold" to="/shop">Comprar
+                    </RouterLink>
+                </li>
+                <li>
+                    <RouterLink class="hover:bg-sky-900 hover:rounded-xl p-4 font-semibold" to="/contact">Contacto
+                    </RouterLink>
+                </li>
+            </ul>
+
+            <!-- Navbar Icons - Desktop -->
+            <div class="lg:flex items-center justify-center gap-8 hidden">
+                <div class="min-w-8 max-w-16">
+                    <RouterLink class="pi pi-info-circle text-xl" to="/about"></RouterLink>
+                </div>
+                <div class="min-w-8 max-w-16">
+                    <RouterLink class="pi pi-shopping-bag text-xl" to="/shop"></RouterLink>
+                </div>
+                <RouterLink to="/login" class="bg-sky-200 hover:bg-sky-300 text-black px-4 py-2 rounded-xl shadow-xl">
+                    Iniciar sesión
+                </RouterLink>
+            </div>
+
+            <!-- Mobile Menu Icon -->
+            <div class="flex lg:hidden">
+                <button :class="`pi ${isMenuOpen ? 'pi-times' : 'pi-bars'} text-4xl`" @click="toggleMenu"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div class="absolute right-0 shadow-xl z-50">
+        <ul :class="`flex flex-col max-w-40 bg-sky-600 text-white px-6 py-4 gap-y-4 lg:hidden
+            ${isMenuOpen ? '' : 'hidden'}`">
+            <li>
+                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/">Principal
+                </RouterLink>
+            </li>
+            <li>
+                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/about">Acerca
+                </RouterLink>
+            </li>
+            <li>
+                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/shop">Comprar
+                </RouterLink>
+            </li>
+            <li>
+                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/contact">Contacto
+                </RouterLink>
+            </li>
+            <li class="mb-1">
+                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/login">Ingresar
+                </RouterLink>
+            </li>
+        </ul>
+    </div>
+</template>
