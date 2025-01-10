@@ -9,7 +9,7 @@ const props = defineProps({
     },
     width: {
         type: Number,
-        default: 60
+        default: 12
     },
     to: {
         type: String,
@@ -24,7 +24,8 @@ const props = defineProps({
         type="button"
         :to="to"
         :class="[isHollow ? 'border-solid border-4 border-sky-700 text-sky-700 font-semibold hover:bg-sky-200 hover:text-sky-900' :
-                 'bg-sky-700 text-white hover:bg-sky-800 focus:outline-none text-s',
-                 'focus:ring-4 focus:ring-sky-300 rounded-full mpx-5 py-2.5 text-center me-2 mb-2', `w-${width}`]"
+                 'bg-gradient-to-r from-sky-400 to-sky-700 text-white hover:from-sky-500 hover:to-sky-800 text-s',
+                 'focus:ring-4 focus:outline-none focus:ring-sky-300 rounded-full mpx-5 py-2.5 text-center me-2 mb-2']"
+        :style="{ width: `${width}rem` }"
     >{{ text }}</RouterLink>
 </template>

@@ -44,7 +44,7 @@ onUnmounted(() => {
             <!-- Logo section -->
             <div class="flex justify-center items-center gap-x-4">
                 <div class="min-w-16 max-w-16">
-                    <img src="@/assets/images/logo_3.png" alt="Smiley Vision Logo">
+                    <img src="@/assets/images/smiley_logo.png" alt="Smiley Vision Logo">
                 </div>
                 <div class="flex lg:text-2xl text-xl font-semibold shrink-0">
                     Smiley Vision

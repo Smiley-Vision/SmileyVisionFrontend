@@ -4,10 +4,10 @@ import Button from '@/components/Button.vue';
 
 <template>
     <!-- Home view container -->
-    <div class="flex lg:flex-row flex-col max-w-full px-20 mt-14 gap-10">
+    <div class="flex lg:flex-row flex-col max-w-full px-20 mt-14 gap-24">
 
         <!-- Left sub-container -->
-        <div>
+        <div class="flex-1">
 
             <!-- Title and subtitle -->
             <div class="flex flex-col gap-y-4 mb-8">
@@ -21,7 +21,7 @@ import Button from '@/components/Button.vue';
 
             <!-- Bar, description and buttons -->
             <div class="flex flex-col gap-y-8">
-                <div class="bg-sky-800 max-w-48 h-2"></div>
+                <div class="bg-gradient-to-r from-sky-400 to-sky-800 max-w-48 h-2"></div>
                 <div class="text-justify font-medium text-sky-800 max-w-xl">
                     En Smiley Vision nos preocupamos por la calidad
                     de tu óptica, así como la satisfacción de tus
@@ -30,15 +30,15 @@ import Button from '@/components/Button.vue';
                     de un gran atractivo para el público.
                 </div>
                 <div class="flex flex-row gap-6 p-4 lg:mx-auto">
-                    <Button to="/shop" :is-hollow="false" text="Ver productos" :width="60"></Button>
-                    <Button to="/about" :is-hollow="true" text="Sobre nosotros" :width="60"></Button>
+                    <Button to="/shop" :is-hollow="false" text="Ver productos"></Button>
+                    <Button to="/about" :is-hollow="true" text="Sobre nosotros"></Button>
                 </div>
             </div>
         </div>
 
         <!-- Right sub-container -->
-        <div>
-            <img src="@/assets/images/home_image2.jpeg" alt="">
+        <div class="flex-1">
+            <img src="@/assets/images/home_image.jpeg" alt="home_image" class="w-full h-full object-cover object-left">
         </div>
     </div>
 </template>
