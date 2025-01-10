@@ -1,10 +1,15 @@
 <script setup>
 import { ref, defineEmits, onMounted, onUnmounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 
 const isMenuOpen = ref(false)
 const dropDownMenu = ref(null)
 const emit = defineEmits(['toggle-menu'])
+
+const isActiveLink = (routePath) => {
+    const route = useRoute() // Current route path we're in
+    return route.path === routePath
+}
 
 // User clicks outside the drop-down menu
 function handleClickOutside(event) {
@@ -34,7 +39,7 @@ onUnmounted(() => {
 <template>
     <!-- Navbar - Desktop -->
     <div class="bg-sky-800 min-w-full max-w-full shadow-2xl">
-        <div class="text-white mx-auto px-8 py-6 flex items-center justify-between">
+        <div class="text-white mx-auto px-20 py-6 flex items-center justify-between">
 
             <!-- Logo section -->
             <div class="flex justify-center items-center gap-x-4">
@@ -49,19 +54,31 @@ onUnmounted(() => {
             <!-- Nabar Links - Desktop -->
             <ul class="lg:flex items-center justify-between my-4 xl:gap-x-4 hidden">
                 <li>
-                    <RouterLink class="hover:bg-sky-900 hover:rounded-xl p-4 font-semibold" to="/">Principal
+                    <RouterLink
+                        :class="[isActiveLink('/') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
+                                 'p-4 font-semibold rounded-xl']"
+                        to="/">Principal
                     </RouterLink>
                 </li>
                 <li>
-                    <RouterLink class="hover:bg-sky-900 hover:rounded-xl p-4 font-semibold" to="/about">Acerca
+                    <RouterLink
+                        :class="[isActiveLink('/about') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
+                                 'p-4 font-semibold rounded-xl']"
+                        to="/about">Acerca
                     </RouterLink>
                 </li>
                 <li>
-                    <RouterLink class="hover:bg-sky-900 hover:rounded-xl p-4 font-semibold" to="/shop">Comprar
+                    <RouterLink
+                        :class="[isActiveLink('/shop') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
+                                 'p-4 font-semibold rounded-xl']"
+                        to="/shop">Comprar
                     </RouterLink>
                 </li>
                 <li>
-                    <RouterLink class="hover:bg-sky-900 hover:rounded-xl p-4 font-semibold" to="/contact">Contacto
+                    <RouterLink
+                        :class="[isActiveLink('/contact') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
+                                 'p-4 font-semibold rounded-xl']"
+                        to="/contact">Contacto
                     </RouterLink>
                 </li>
             </ul>

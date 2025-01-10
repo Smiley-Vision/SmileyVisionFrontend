@@ -40,7 +40,7 @@ build/
 .vscode/
 
 # Temporary or generated files
-_theme_files/
+inspiration/
 
 # Environment variables
 .env
