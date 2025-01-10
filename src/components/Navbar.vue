@@ -1,14 +1,34 @@
 <script setup>
-import { ref, defineEmits } from 'vue'
+import { ref, defineEmits, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
 const isMenuOpen = ref(false)
+const dropDownMenu = ref(null)
 const emit = defineEmits(['toggle-menu'])
+
+// User clicks outside the drop-down menu
+function handleClickOutside(event) {
+    if (dropDownMenu.value &&
+        isMenuOpen.value &&
+        !dropDownMenu.value.contains(event.target) &&
+        event.target !== document.getElementById('menu-button')) {
+            isMenuOpen.value = false;
+            emit('toggle-menu', false);
+    }
+}
 
 const toggleMenu = () => {
     isMenuOpen.value = !isMenuOpen.value
-    emit('toggle-menu', isMenuOpen.value) // Notify the parent component
+    emit('toggle-menu', isMenuOpen.value)
 }
+
+onMounted(() => {
+    document.body.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+    document.body.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <template>
@@ -61,13 +81,14 @@ const toggleMenu = () => {
 
             <!-- Mobile Menu Icon -->
             <div class="flex lg:hidden">
-                <button :class="`pi ${isMenuOpen ? 'pi-times' : 'pi-bars'} text-4xl`" @click="toggleMenu"></button>
+                <button id="menu-button" :class="`pi ${isMenuOpen ? 'pi-times' : 'pi-bars'} text-4xl`"
+                    @click="toggleMenu"></button>
             </div>
         </div>
     </div>
 
     <!-- Mobile Menu -->
-    <div class="absolute right-0 shadow-xl z-50">
+    <div ref="dropDownMenu" class="absolute right-0 shadow-xl z-50">
         <ul :class="`flex flex-col max-w-40 bg-sky-600 text-white px-6 py-4 gap-y-4 lg:hidden
             ${isMenuOpen ? '' : 'hidden'}`">
             <li>
