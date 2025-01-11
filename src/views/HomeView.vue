@@ -11,7 +11,7 @@ import Button from '@/components/Button.vue';
 
             <!-- Title and subtitle -->
             <div class="flex flex-col gap-y-4 mb-8">
-                <div class="md:text-8xl text-3xl font-semibold text-sky-800">
+                <div class="md:text-8xl text-4xl font-semibold text-sky-800">
                     Somos Distribuidores
                 </div>
                 <div class="md:text-4xl text-xl font-normal text-sky-800">
@@ -29,9 +29,9 @@ import Button from '@/components/Button.vue';
                     variedad de productos para tu óptica que serán
                     de un gran atractivo para el público.
                 </div>
-                <div class="flex flex-row gap-6 p-4 lg:mx-auto">
-                    <Button to="/shop" :is-hollow="false" text="Ver productos"></Button>
-                    <Button to="/contact" :is-hollow="true" text="Contáctanos"></Button>
+                <div class="flex md:flex-row flex-col gap-6 p-4 mx-auto">
+                    <Button to="/shop" :is-hollow="false" :width="12" text="Ver productos"></Button>
+                    <Button to="/contact" :is-hollow="true" :width="12" text="Contáctanos"></Button>
                 </div>
             </div>
         </div>
