@@ -4,17 +4,17 @@ import Button from '@/components/Button.vue';
 
 <template>
     <!-- Home view container -->
-    <div class="flex lg:flex-row flex-col max-w-full px-20 mt-14 gap-24">
+    <div class="flex lg:flex-row flex-col max-w-full px-20 mt-14 lg:gap-28 gap-10">
 
         <!-- Left sub-container -->
         <div class="flex-1">
 
             <!-- Title and subtitle -->
             <div class="flex flex-col gap-y-4 mb-8">
-                <div class="md:text-8xl text-6xl font-semibold text-sky-800">
+                <div class="md:text-8xl text-3xl font-semibold text-sky-800">
                     Somos Distribuidores
                 </div>
-                <div class="md:text-4xl text-3xl font-normal text-sky-800">
+                <div class="md:text-4xl text-xl font-normal text-sky-800">
                     Tenemos lo mejor para tu óptica
                 </div>
             </div>
@@ -31,14 +31,14 @@ import Button from '@/components/Button.vue';
                 </div>
                 <div class="flex flex-row gap-6 p-4 lg:mx-auto">
                     <Button to="/shop" :is-hollow="false" text="Ver productos"></Button>
-                    <Button to="/about" :is-hollow="true" text="Sobre nosotros"></Button>
+                    <Button to="/contact" :is-hollow="true" text="Contáctanos"></Button>
                 </div>
             </div>
         </div>
 
         <!-- Right sub-container -->
         <div class="flex-1">
-            <img src="@/assets/images/home_image.jpeg" alt="home_image" class="w-full h-full object-cover object-left">
+            <img src="@/assets/images/home_image.jpeg" alt="home_image" class="w-full h-full object-cover object-left lg:mb-0 mb-8">
         </div>
     </div>
 </template>

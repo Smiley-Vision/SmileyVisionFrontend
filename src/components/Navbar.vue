@@ -46,7 +46,7 @@ onUnmounted(() => {
                 <div class="min-w-16 max-w-16">
                     <img src="@/assets/images/smiley_logo.png" alt="Smiley Vision Logo">
                 </div>
-                <div class="flex lg:text-2xl text-xl font-semibold shrink-0">
+                <div class="flex lg:text-2xl text-xl font-semibold shrink-0 md:visible invisible">
                     Smiley Vision
                 </div>
             </div>

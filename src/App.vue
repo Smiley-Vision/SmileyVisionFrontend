@@ -17,7 +17,7 @@ function handleToggleMenu(state) {
 
     <!-- Content Overlay -->
     <div v-if="isMenuOpen" class="absolute top-[7rem] left-0
-    w-full h-[calc(100vh-7rem)] bg-black/30 z-40"></div>
+    w-full h-full lg:bg-black/0 bg-black/30 z-40"></div>
 
     <!-- Main Content -->
     <div class="relative z-10">
