@@ -15,7 +15,7 @@ export const useAuthStore = defineStore('auth', () => {
             const data = await fetchData('login', 'POST', body)
 
             token.value = data.token
-            user.value = user.token
+            user.value = data.user
 
             localStorage.setItem('token', data.token)
         } catch (error) {
