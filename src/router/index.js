@@ -4,6 +4,7 @@ import AboutView from "@/views/AboutView.vue"
 import ShopView from "@/views/ShopView.vue"
 import ContactView from "@/views/ContactView.vue"
 import LoginView from "@/views/LoginView.vue"
+import RegisterView from "@/views/RegisterView.vue"
 import NotFoundView from "@/views/NotFoundView.vue"
 
 const router = createRouter({
@@ -33,6 +34,11 @@ const router = createRouter({
             path: '/login',
             name: 'login',
             component: LoginView
+        },
+        {
+            path: '/register',
+            name: 'register',
+            component: RegisterView
         },
         {
             path: '/:catchAll(.*)',

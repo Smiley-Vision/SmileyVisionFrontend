@@ -4,7 +4,7 @@ import Button from '@/components/Button.vue';
 
 <template>
     <!-- Home view container -->
-    <div class="flex lg:flex-row flex-col max-w-full px-20 mt-14 lg:gap-28 gap-10">
+    <div class="flex lg:flex-row flex-col px-20 mt-14 lg:gap-28 gap-10">
 
         <!-- Left sub-container -->
         <div class="flex-1">

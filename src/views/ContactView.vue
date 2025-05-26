@@ -4,7 +4,7 @@ import Button from '@/components/Button.vue';
 
 <template>
     <!-- Contact view container -->
-    <div class="flex flex-col max-w-full px-20 mt-14 gap-16 2xl:mb-0 mb-12">
+    <div class="flex flex-col px-20 mt-14 gap-16 2xl:mb-0 mb-12">
 
         <!-- Title and subtitle -->
         <div class="flex flex-col gap-8">
