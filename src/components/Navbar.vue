@@ -1,9 +1,16 @@
 <script setup>
+import router from '@/router'
+import { useAuthStore } from '@/stores/auth'
+import { useToast } from 'primevue'
 import { ref, defineEmits, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
+const auth = useAuthStore()
+const toast = useToast()
+
 const isMenuOpen = ref(false)
 const dropDownMenu = ref(null)
+const isAuthenticated = auth.isAuthenticated
 const emit = defineEmits(['toggle-menu'])
 
 const isActiveLink = (routePath) => {
@@ -19,6 +26,23 @@ function handleClickOutside(event) {
         event.target !== document.getElementById('menu-button')) {
             isMenuOpen.value = false;
             emit('toggle-menu', false);
+    }
+}
+
+const handleLogout = async () => {
+    try {
+        const data = await auth.logout()
+
+        router.push('/')
+
+        toast.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Sesión cerrada',
+            life: 4000 // 4 seconds
+        })
+    } catch (error) {
+        throw error
     }
 }
 
@@ -91,8 +115,11 @@ onUnmounted(() => {
                 <div class="min-w-8 max-w-16">
                     <RouterLink class="pi pi-shopping-bag text-xl" to="/shop"></RouterLink>
                 </div>
-                <RouterLink to="/login" class="bg-sky-200 hover:bg-sky-300 text-black px-4 py-2 rounded-xl shadow-xl">
+                <RouterLink v-if="!isAuthenticated" to="/login" class="bg-sky-200 hover:bg-sky-300 text-black px-4 py-2 rounded-xl shadow-xl">
                     Iniciar sesión
+                </RouterLink>
+                <RouterLink v-else to="/" @click.prevent="handleLogout" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-xl shadow-xl">
+                    Cerrar sesión
                 </RouterLink>
             </div>
 

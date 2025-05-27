@@ -17,7 +17,22 @@ export const useAuthStore = defineStore('auth', () => {
             token.value = data.token
             user.value = data.user
 
+            console.log('User after log in: ' + user.value);
+
             localStorage.setItem('token', data.token)
+        } catch (error) {
+            throw error
+        }
+    }
+
+    const logout = async () => {
+        try {
+            await fetchData('logout', 'POST')
+
+            token.value = null
+            user.value = null
+    
+            localStorage.removeItem('token')
         } catch (error) {
             throw error
         }
@@ -28,6 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
         user,
         isAuthenticated,
         isAdmin,
-        login
+        login,
+        logout
     }
 })

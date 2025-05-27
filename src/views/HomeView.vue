@@ -1,5 +1,29 @@
 <script setup>
 import Button from '@/components/Button.vue';
+import { useAuthStore } from '@/stores/auth';
+import { useToast } from 'primevue';
+import { onMounted } from 'vue';
+
+const auth = useAuthStore()
+const toast = useToast()
+
+const isAuthenticated = auth.isAuthenticated
+const user = auth.user
+
+onMounted(() => {
+    console.log(isAuthenticated);
+
+    if (isAuthenticated && user.name) {
+        toast.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: `Bienvenido, ${user.name}`,
+            life: 4000 // 4 seconds
+        })
+    }
+})
+
+
 </script>
 
 <template>
@@ -40,5 +64,8 @@ import Button from '@/components/Button.vue';
         <div class="flex-1">
             <img src="@/assets/images/home_image.jpeg" alt="home_image" class="w-full h-full object-cover object-left lg:mb-0 mb-8">
         </div>
+
+        <!-- Toast -->
+        <Toast position="top-left"/>
     </div>
 </template>

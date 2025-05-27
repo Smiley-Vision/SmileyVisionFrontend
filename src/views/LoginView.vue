@@ -68,5 +68,8 @@ const submitLogin = async () => {
                 </button>
             </form>
         </div>
+
+        <!-- Toast -->
+        <Toast position="bottom-right"/>
     </div>
 </template>
