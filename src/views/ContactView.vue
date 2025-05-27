@@ -29,7 +29,7 @@ import Button from '@/components/Button.vue';
             <div class="flex-1 flex flex-col gap-4 bg-gray-300 rounded-xl shadow-lg px-8 py-4 relative">
                 <!-- Icon -->
                 <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-sky-600 rounded-full flex items-center justify-center shadow-md">
-                    <i class="pi pi-phone text-white text-4xl"></i> <!-- Example icon -->
+                    <i class="pi pi-phone text-white" style="font-size: 2rem"></i> <!-- Example icon -->
                 </div>
                 <!-- Content -->
                 <div class="text-2xl font-semibold mt-8 mb-4">
@@ -46,7 +46,7 @@ import Button from '@/components/Button.vue';
             <div class="flex-1 flex flex-col gap-4 bg-gray-300 rounded-xl shadow-lg px-8 py-4 relative">
                 <!-- Icon -->
                 <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-sky-600 rounded-full flex items-center justify-center shadow-md">
-                    <i class="pi pi-whatsapp text-white text-4xl"></i> <!-- Example icon -->
+                    <i class="pi pi-whatsapp text-white" style="font-size: 2rem"></i> <!-- Example icon -->
                 </div>
                 <!-- Content -->
                 <div class="text-2xl font-semibold mt-8 mb-4">
@@ -63,7 +63,7 @@ import Button from '@/components/Button.vue';
             <div class="flex-1 flex flex-col gap-4 bg-gray-300 rounded-xl shadow-lg px-8 py-4 relative">
                 <!-- Icon -->
                 <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-sky-600 rounded-full flex items-center justify-center shadow-md">
-                    <i class="pi pi-envelope text-white text-4xl"></i> <!-- Example icon -->
+                    <i class="pi pi-envelope text-white" style="font-size: 2rem"></i> <!-- Example icon -->
                 </div>
                 <!-- Content -->
                 <div class="text-2xl font-semibold mt-8 mb-4">

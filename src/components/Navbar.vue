@@ -110,10 +110,10 @@ onUnmounted(() => {
             <!-- Navbar Icons - Desktop -->
             <div class="lg:flex items-center justify-center gap-8 hidden">
                 <div class="min-w-8 max-w-16">
-                    <RouterLink class="pi pi-info-circle text-xl" to="/about"></RouterLink>
+                    <RouterLink class="pi pi-info-circle" style="font-size: 1.5rem" to="/about"></RouterLink>
                 </div>
                 <div class="min-w-8 max-w-16">
-                    <RouterLink class="pi pi-shopping-bag text-xl" to="/shop"></RouterLink>
+                    <RouterLink class="pi pi-shopping-bag" style="font-size: 1.5rem" to="/shop"></RouterLink>
                 </div>
                 <RouterLink v-if="!isAuthenticated" to="/login" class="bg-sky-200 hover:bg-sky-300 text-black px-4 py-2 rounded-xl shadow-xl">
                     Iniciar sesión
@@ -125,7 +125,7 @@ onUnmounted(() => {
 
             <!-- Mobile Menu Icon -->
             <div class="flex lg:hidden">
-                <button id="menu-button" :class="`pi ${isMenuOpen ? 'pi-times' : 'pi-bars'} text-4xl`"
+                <button id="menu-button" :class="`pi ${isMenuOpen ? 'pi-times' : 'pi-bars'}`" style="font-size: 2rem"
                     @click="toggleMenu"></button>
             </div>
         </div>

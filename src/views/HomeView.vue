@@ -11,8 +11,6 @@ const isAuthenticated = auth.isAuthenticated
 const user = auth.user
 
 onMounted(() => {
-    console.log(isAuthenticated);
-
     if (isAuthenticated && user.name) {
         toast.add({
             severity: 'success',
@@ -22,8 +20,6 @@ onMounted(() => {
         })
     }
 })
-
-
 </script>
 
 <template>
