@@ -84,28 +84,42 @@ onUnmounted(() => {
                     <RouterLink
                         :class="[isActiveLink('/') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
                                  'p-4 font-semibold rounded-xl']"
-                        to="/">Principal
+                        :to="{ name: 'home' }">Principal
                     </RouterLink>
                 </li>
                 <li>
                     <RouterLink
                         :class="[isActiveLink('/about') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
                                  'p-4 font-semibold rounded-xl']"
-                        to="/about">Acerca
+                        :to="{ name: 'about' }">Acerca
                     </RouterLink>
                 </li>
                 <li>
                     <RouterLink
+                        v-if="!isAuthenticated || isAuthenticated && !isAdmin"
                         :class="[isActiveLink('/shop') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
                                  'p-4 font-semibold rounded-xl']"
-                        to="/shop">Comprar
+                        :to="{ name: 'shop' }">Comprar
+                    </RouterLink>
+                    <RouterLink
+                        v-else
+                        :class="[isActiveLink('/shop') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
+                                 'p-4 font-semibold rounded-xl']"
+                        :to="{ name: 'admin-products' }">Productos
                     </RouterLink>
                 </li>
                 <li>
                     <RouterLink
+                        v-if="!isAuthenticated || isAuthenticated && !isAdmin"
                         :class="[isActiveLink('/contact') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
                                  'p-4 font-semibold rounded-xl']"
-                        to="/contact">Contacto
+                        :to="{ name: 'contact' }">Contacto
+                    </RouterLink>
+                    <RouterLink
+                        v-else
+                        :class="[isActiveLink('/contact') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
+                                 'p-4 font-semibold rounded-xl']"
+                        :to="{ name: 'admin-register' }">Registrar
                     </RouterLink>
                 </li>
             </ul>
@@ -114,10 +128,10 @@ onUnmounted(() => {
             <div class="lg:flex items-center justify-center gap-8 hidden">
                 <div v-if="!isAuthenticated" class="flex gap-x-8">
                     <div class="min-w-8 max-w-16">
-                        <RouterLink class="pi pi-info-circle" style="font-size: 1.5rem" to="/about"></RouterLink>
+                        <RouterLink class="pi pi-info-circle" style="font-size: 1.5rem" :to="{ name: 'about' }"></RouterLink>
                     </div>
                     <div class="min-w-8 max-w-16">
-                        <RouterLink class="pi pi-shopping-bag" style="font-size: 1.5rem" to="/shop"></RouterLink>
+                        <RouterLink class="pi pi-shopping-bag" style="font-size: 1.5rem" :to="{ name: 'shop' }"></RouterLink>
                     </div>
                 </div>
                 <div v-else-if="isAuthenticated && isAdmin" class="text-2xl xl:-ml-24">
@@ -126,10 +140,10 @@ onUnmounted(() => {
                 <div v-else-if="isAuthenticated && !isAdmin" class="text-2xl xl:-ml-20">
                     {{ '[USER] ' + user.name }}
                 </div>
-                <RouterLink v-if="!isAuthenticated" to="/login" class="bg-sky-200 hover:bg-sky-300 text-black px-4 py-2 rounded-xl shadow-xl">
+                <RouterLink v-if="!isAuthenticated" :to="{ name: 'login' }" class="bg-sky-200 hover:bg-sky-300 text-black px-4 py-2 rounded-xl shadow-xl">
                     Iniciar sesión
                 </RouterLink>
-                <RouterLink v-else to="/" @click.prevent="handleLogout" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-xl shadow-xl">
+                <RouterLink v-else :to="{ name: 'home' }" @click.prevent="handleLogout" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-xl shadow-xl">
                     Cerrar sesión
                 </RouterLink>
             </div>
@@ -147,27 +161,33 @@ onUnmounted(() => {
         <ul :class="`flex flex-col max-w-40 bg-sky-600 text-white px-6 py-4 gap-y-4 lg:hidden
             ${isMenuOpen ? '' : 'hidden'}`">
             <li>
-                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/">Principal
+                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'home' }">Principal
                 </RouterLink>
             </li>
             <li>
-                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/about">Acerca
+                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'about' }">Acerca
                 </RouterLink>
             </li>
             <li>
-                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/shop">Comprar
+                <RouterLink v-if="!isAuthenticated || isAuthenticated && !isAdmin"
+                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'shop' }">Comprar
+                </RouterLink>
+                <RouterLink v-else class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'admin-products' }">Productos
                 </RouterLink>
             </li>
             <li>
-                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/contact">Contacto
+                <RouterLink v-if="!isAuthenticated || isAuthenticated && !isAdmin"
+                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'contact' }">Contacto
+                </RouterLink>
+                <RouterLink v-else class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'admin-register' }">Registrar
                 </RouterLink>
             </li>
             <li class="mb-1">
                 <RouterLink v-if="!isAuthenticated"
-                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/login">Ingresar
+                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'login' }">Ingresar
                 </RouterLink>
                 <RouterLink v-else
-                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/" @click.prevent="handleLogout">Salir
+                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'home' }" @click.prevent="handleLogout">Salir
                 </RouterLink>
             </li>
         </ul>
