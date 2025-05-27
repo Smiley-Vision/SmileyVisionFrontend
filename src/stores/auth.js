@@ -4,10 +4,10 @@ import { computed, ref } from "vue";
 
 export const useAuthStore = defineStore('auth', () => {
     const token = ref(localStorage.getItem('token'))
-    const user = ref({})
+    const user = ref(JSON.parse(localStorage.getItem('user')) || '{}')
 
     const isAuthenticated = computed(() => !!token.value)
-    const isAdmin = computed(() => user.value?.role_id == '1' || false)
+    const isAdmin = computed(() => user.value?.role_id === 1 || false)
 
     const login = async (email, password) => {
         try {
@@ -18,6 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = data.user
 
             localStorage.setItem('token', data.token)
+            localStorage.setItem('user', JSON.stringify(data.user))
         } catch (error) {
             throw error
         }
@@ -31,6 +32,7 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = null
     
             localStorage.removeItem('token')
+            localStorage.removeItem('user')
         } catch (error) {
             throw error
         }

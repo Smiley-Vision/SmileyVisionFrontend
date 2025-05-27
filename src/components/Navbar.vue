@@ -12,6 +12,8 @@ const toast = useToast()
 const isMenuOpen = ref(false)
 const dropDownMenu = ref(null)
 const isAuthenticated = computed(() => auth.isAuthenticated)
+const isAdmin = computed(() => auth.isAdmin)
+const user = computed(() => auth.user)
 const emit = defineEmits(['toggle-menu'])
 
 const isActiveLink = (routePath) => {
@@ -110,11 +112,19 @@ onUnmounted(() => {
 
             <!-- Navbar Icons - Desktop -->
             <div class="lg:flex items-center justify-center gap-8 hidden">
-                <div class="min-w-8 max-w-16">
-                    <RouterLink class="pi pi-info-circle" style="font-size: 1.5rem" to="/about"></RouterLink>
+                <div v-if="!isAuthenticated" class="flex gap-x-8">
+                    <div class="min-w-8 max-w-16">
+                        <RouterLink class="pi pi-info-circle" style="font-size: 1.5rem" to="/about"></RouterLink>
+                    </div>
+                    <div class="min-w-8 max-w-16">
+                        <RouterLink class="pi pi-shopping-bag" style="font-size: 1.5rem" to="/shop"></RouterLink>
+                    </div>
                 </div>
-                <div class="min-w-8 max-w-16">
-                    <RouterLink class="pi pi-shopping-bag" style="font-size: 1.5rem" to="/shop"></RouterLink>
+                <div v-else-if="isAuthenticated && isAdmin" class="text-2xl xl:-ml-24">
+                    {{ '[ADMIN] ' + user.name }}
+                </div>
+                <div v-else-if="isAuthenticated && !isAdmin" class="text-2xl xl:-ml-20">
+                    {{ '[USER] ' + user.name }}
                 </div>
                 <RouterLink v-if="!isAuthenticated" to="/login" class="bg-sky-200 hover:bg-sky-300 text-black px-4 py-2 rounded-xl shadow-xl">
                     Iniciar sesión
