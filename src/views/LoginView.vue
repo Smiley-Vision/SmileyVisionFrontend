@@ -37,9 +37,9 @@ const submitLogin = async () => {
             <div class="font-lg text-xl text-sky-800">
                 ¿No tienes una cuenta?
                 <RouterLink
-                    to="/register"
+                    to="/contact"
                     class="text-sky-500 hover:underline"
-                >Regístrate</RouterLink>
+                >Solicita una</RouterLink>
             </div>
         </div>
         <div class="flex flex-col gap-y-8">
