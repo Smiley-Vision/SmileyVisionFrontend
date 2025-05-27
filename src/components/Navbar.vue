@@ -153,7 +153,11 @@ onUnmounted(() => {
                 </RouterLink>
             </li>
             <li class="mb-1">
-                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/login">Ingresar
+                <RouterLink v-if="!isAuthenticated"
+                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/login">Ingresar
+                </RouterLink>
+                <RouterLink v-else
+                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" to="/" @click.prevent="handleLogout">Salir
                 </RouterLink>
             </li>
         </ul>
