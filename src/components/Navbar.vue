@@ -2,6 +2,7 @@
 import router from '@/router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from 'primevue'
+import { computed } from 'vue'
 import { ref, defineEmits, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
@@ -10,7 +11,7 @@ const toast = useToast()
 
 const isMenuOpen = ref(false)
 const dropDownMenu = ref(null)
-const isAuthenticated = auth.isAuthenticated
+const isAuthenticated = computed(() => auth.isAuthenticated)
 const emit = defineEmits(['toggle-menu'])
 
 const isActiveLink = (routePath) => {
