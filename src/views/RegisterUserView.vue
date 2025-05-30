@@ -9,14 +9,18 @@ const route = useRoute()
 const toast = useToast()
 const auth = useAuthStore()
 
-const token = route.params.token
+const token = route.query.token
 const isTokenValid = ref(false)
 
 // Check if the token exists in the
 // database and if it's available, via
 // fetch.
 const checkURLToken = async (token) => {
+    if (!token) return
+
     try {
+        console.log(token);
+        
         const response = await auth.checkToken(token)
 
         if (response.message === "Token exists and it's available")
@@ -29,22 +33,6 @@ const checkURLToken = async (token) => {
             life: 4000 // 4 seconds
         })
     }
-    // console.log(token);
-    
-
-    // try {
-    //     const response = await auth.checkToken(token)
-
-    //     console.log('checkToken response:', response)
-
-    //     if (response.message === "Token exists and it's available") {
-    //         console.log('Response is OK');
-            
-    //         isTokenValid.value = true
-    //     }
-    // } catch (error) {
-    //     throw error
-    // }
 }
 
 onMounted(async () => {
@@ -56,8 +44,11 @@ onMounted(async () => {
     <div v-if="isTokenValid" class="text-xl font-semibold">
         This is the user Register view.
     </div>
+    <div v-else-if="!token" class="text-xl font-semibold">
+        Register view without token
+    </div>
     <div v-else class="text-xl font-semibold">
-        The token is invalid or something else happened.
+        The token is invalid
     </div>
 
     <!-- Toast -->

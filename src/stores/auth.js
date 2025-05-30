@@ -40,8 +40,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     const checkToken = async (token) => {
         try {
-            const body = { token }
-            const response = await fetchData('check-register-token', 'POST', body)
+            const response = await fetchData(`check-register-token?token=${token}`, 'GET')
             return response
         } catch (error) {
             throw error
