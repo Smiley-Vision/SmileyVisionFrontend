@@ -13,18 +13,20 @@ const auth = useAuthStore()
 
 const token = route.query.token
 const isTokenValid = ref(false)
+const email = ref('')
 
 // Check the availability of the URL token
 const checkURLToken = async (token) => {
     if (!token) return
 
     try {
-        console.log(token);
-        
-        const response = await auth.checkToken(token)
+        const response = JSON.stringify(await auth.checkToken(token))
+        const data = JSON.parse(response)
 
-        if (response.message === "Token exists and it's available")
+        if (data.message === "Token exists and it's available") {
             isTokenValid.value = true
+            email.value = data['email']
+        }
     } catch (error) {
         toast.add({
             severity: 'error',
@@ -43,12 +45,17 @@ onMounted(async () => {
 <template>
     <!-- Valid URL token (use props here to pre-fill the email field) -->
     <div v-if="isTokenValid">
-        <RegisterUserView></RegisterUserView>
+        <RegisterUserView
+            :token="token"
+            :email="email"
+        ></RegisterUserView>
     </div>
+
     <!-- Not using a URL token -->
     <div v-else-if="!token">
         <RequestRegisterView></RequestRegisterView>
     </div>
+
     <!-- Invalid URL token--display an error -->
     <div v-else>
         The token is invalid

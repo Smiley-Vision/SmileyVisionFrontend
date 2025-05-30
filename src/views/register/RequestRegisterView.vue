@@ -18,9 +18,9 @@ const submitRegistrationRequest = async (email, message) => {
             <div class="font-semibold text-6xl text-sky-800">
                 Solicitud de registro
             </div>
-            <div class="font-lg text-xl text-sky-800">
-                Si eres un óptico, puedes solicitar registrarte al sistema<br>
-                para comprar productos. ¡Realiza tu solicitud ahora!<br>
+            <div class="font-lg text-xl text-sky-800 text-justify max-w-2xl">
+                Si eres un óptico, puedes solicitar registrarte al sistema
+                para comprar productos. ¡Realiza tu solicitud ahora!
             </div>
         </div>
         <form @submit.prevent="submitRegistrationRequest">
