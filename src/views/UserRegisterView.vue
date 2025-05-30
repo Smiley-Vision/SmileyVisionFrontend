@@ -5,6 +5,7 @@ import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import RequestRegisterView from './register/RequestRegisterView.vue';
+import RegisterUserView from './register/RegisterUserView.vue';
 
 const route = useRoute()
 const toast = useToast()
@@ -41,15 +42,15 @@ onMounted(async () => {
 
 <template>
     <!-- Valid URL token (use props here to pre-fill the email field) -->
-    <div v-if="isTokenValid" class="text-xl font-semibold">
-        This is the user Register view.
+    <div v-if="isTokenValid">
+        <RegisterUserView></RegisterUserView>
     </div>
     <!-- Not using a URL token -->
-    <div v-else-if="!token" class="flex flex-col gap-y-8">
+    <div v-else-if="!token">
         <RequestRegisterView></RequestRegisterView>
     </div>
     <!-- Invalid URL token--display an error -->
-    <div v-else class="text-xl font-semibold">
+    <div v-else>
         The token is invalid
     </div>
     <!-- Toast -->

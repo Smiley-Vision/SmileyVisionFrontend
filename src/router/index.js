@@ -4,7 +4,7 @@ import AboutView from "@/views/AboutView.vue"
 import ShopView from "@/views/ShopView.vue"
 import ContactView from "@/views/ContactView.vue"
 import LoginView from "@/views/LoginView.vue"
-import RegisterUserView from "@/views/RegisterUserView.vue"
+import UserRegisterView from "@/views/UserRegisterView.vue"
 import RegisterView from "@/views/admin/RegisterView.vue"
 import ProductsView from "@/views/admin/ProductsView.vue"
 import NotFoundView from "@/views/NotFoundView.vue"
@@ -41,7 +41,7 @@ const router = createRouter({
         {
             path: '/register',
             name: 'register',
-            component: RegisterUserView
+            component: UserRegisterView
         },
         {
             path: '/admin/products',
