@@ -41,16 +41,18 @@ onMounted(async () => {
 </script>
 
 <template>
+    <!-- Valid URL token -->
     <div v-if="isTokenValid" class="text-xl font-semibold">
         This is the user Register view.
     </div>
+    <!-- Not using a URL token -->
     <div v-else-if="!token" class="text-xl font-semibold">
         Register view without token
     </div>
+    <!-- Invalid URL token--display an error -->
     <div v-else class="text-xl font-semibold">
         The token is invalid
     </div>
-
     <!-- Toast -->
     <Toast position="bottom-right"/>
 </template>
