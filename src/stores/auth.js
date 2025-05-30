@@ -38,12 +38,22 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    const checkToken = async (token) => {
+        try {
+            const response = await fetchData(`check-register-token?token=${token}`, 'GET')
+            return response
+        } catch (error) {
+            throw error
+        }
+    }
+
     return {
         token,
         user,
         isAuthenticated,
         isAdmin,
         login,
-        logout
+        logout,
+        checkToken
     }
 })
