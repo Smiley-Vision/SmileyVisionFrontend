@@ -1,12 +1,16 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
 import { fetchData } from '@/utils/api';
 import { useToast } from 'primevue';
 import { watch } from 'vue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { reactive } from 'vue';
+import { useRouter } from 'vue-router';
 
+const auth = useAuthStore()
 const toast = useToast()
+const router = useRouter()
 
 const props = defineProps({
     token: String,
@@ -72,12 +76,8 @@ const submitRegistration = async () => {
             // Mark the registration token as used
             await fetchData('mark-register-token', 'POST', { token: props.token })
 
-            toast.add({
-                severity: 'success',
-                summary: 'Exito',
-                detail: 'Usuario registrado correctamente',
-                life: 4000 // 4 seconds
-            })
+            auth.justRegistered = true
+            router.push({ name: 'login' })
         }
         
     } catch (error) {
@@ -179,5 +179,4 @@ onMounted(async () => {
             </button>
         </form>
     </div>
-    <Toast position="bottom-right" />
 </template>
