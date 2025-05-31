@@ -7,11 +7,11 @@ import { onMounted } from 'vue';
 const auth = useAuthStore()
 const toast = useToast()
 
-const isAuthenticated = auth.isAuthenticated
+const justLoggedIn = auth.justLoggedIn
 const user = auth.user
 
 onMounted(() => {
-    if (isAuthenticated && user.name) {
+    if (justLoggedIn && user.name) {
         toast.add({
             severity: 'success',
             summary: 'Éxito',
