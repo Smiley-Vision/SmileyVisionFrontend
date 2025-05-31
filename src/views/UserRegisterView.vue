@@ -46,6 +46,7 @@ onMounted(async () => {
     <!-- Valid URL token (use props here to pre-fill the email field) -->
     <div v-if="isTokenValid">
         <RegisterUserView
+            :token="token"
             :email="email"
         ></RegisterUserView>
     </div>

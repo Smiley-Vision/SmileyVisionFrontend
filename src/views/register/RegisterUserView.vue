@@ -9,16 +9,17 @@ import { reactive } from 'vue';
 const toast = useToast()
 
 const props = defineProps({
+    token: String,
     email: String
 })
 
 const form = reactive({
     'name': '',
-    'email': '',
+    'email': props.email,
     'password': '',
     'phone': '',
     'role_id': 2,
-    'store_id': 0,
+    'store_id': null,
 })
 
 const roles = ['Óptico', 'Conductor']
@@ -55,21 +56,38 @@ const retrieveStores = async () => {
 
 // Submit the registration form
 const submitRegistration = async () => {
-    // name, email, phone, password, role_id, store_id
+    try {
+        const body = {
+            name: form.name,
+            email: form.email,
+            password: form.password,
+            phone: form.phone,
+            role_id: form.role_id,
+            store_id: form.store_id
+        }
 
-    // try {
+        const data = await fetchData('register', 'POST', body)
 
-    // } catch (error) {
-    //     toast.add({
-    //         severity: 'error',
-    //         summary: 'Error',
-    //         detail: 'Llene los campos correctamente',
-    //         life: 4000 // 4 seconds
-    //     })
-    // }
+        if (data.message === 'User created successfully') {
+            // Mark the registration token as used
+            await fetchData('mark-register-token', 'POST', { token: props.token })
 
-    console.log(form);
-    
+            toast.add({
+                severity: 'success',
+                summary: 'Exito',
+                detail: 'Usuario registrado correctamente',
+                life: 4000 // 4 seconds
+            })
+        }
+        
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Llene los campos correctamente',
+            life: 4000 // 4 seconds
+        })
+    }
 }
 
 onMounted(async () => {
@@ -106,7 +124,7 @@ onMounted(async () => {
                         <label for="email" class="font-medium text-lg text-gray-700">Correo electrónico:</label>
                         <input v-model="form.email" type="email" id="email" name="email"
                             class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            placeholder="Ingrese su correo electrónico" required>
+                            placeholder="Ingrese su correo electrónico" disabled required>
                     </div>
                     <!-- Password -->
                     <div class="flex flex-col gap-y-1">
