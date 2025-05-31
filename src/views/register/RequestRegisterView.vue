@@ -35,7 +35,7 @@ const submitRegistrationRequest = async (email, message) => {
             <div class="flex flex-col gap-y-1">
                 <label for="message" class="font-medium text-lg text-gray-700">Descripción:</label>
                 <input 
-                    v-model="form.password" type="text" id="message" name="message" 
+                    v-model="form.message" type="text" id="message" name="message" 
                     class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 max-w-xs"
                     placeholder="Describe tu solicitud" required
                 >
