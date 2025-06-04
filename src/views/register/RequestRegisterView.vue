@@ -1,5 +1,13 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
+import { fetchData } from '@/utils/api';
+import { useToast } from 'primevue';
 import { reactive } from 'vue';
+import { useRouter } from 'vue-router';
+
+const auth = useAuthStore()
+const toast = useToast()
+const router = useRouter()
 
 const form = reactive({
     'email': '',
@@ -7,8 +15,27 @@ const form = reactive({
 })
 
 // Submit the registration request
-const submitRegistrationRequest = async (email, message) => {
+const submitRegistrationRequest = async () => {
+    try {
+        const body = {
+            email: form.email,
+            message: form.message
+        }
 
+        const data = await fetchData('register-requests', 'POST', body)
+
+        if (data.message === "Success") {
+            auth.justSubmittedRequest = true
+            router.push({ name: 'home' })
+        }
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Por favor, llene correctamente los campos',
+            life: 4000 // 4 seconds
+        })
+    }
 }
 </script>
 
@@ -19,8 +46,16 @@ const submitRegistrationRequest = async (email, message) => {
                 Solicitud de registro
             </div>
             <div class="font-lg text-xl text-sky-800 text-justify max-w-2xl">
-                Si eres un óptico, puedes solicitar registrarte al sistema
-                para comprar productos. ¡Realiza tu solicitud ahora!
+                Si eres un óptico, puedes solicitar registrarte al sistema.
+                En caso de aceptar tu solicitud, se te enviará un enlace
+                para el registro a tu correo, a la brevedad.
+                <span class="font-medium">
+                    ¿Ya tienes cuenta?
+                    <RouterLink
+                        to="/login"
+                        class="text-sky-500 hover:underline"
+                    >Inicia sesión</RouterLink>
+                </span>
             </div>
         </div>
         <form @submit.prevent="submitRegistrationRequest">
@@ -37,7 +72,7 @@ const submitRegistrationRequest = async (email, message) => {
                 <input 
                     v-model="form.message" type="text" id="message" name="message" 
                     class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 max-w-xs"
-                    placeholder="Describe tu solicitud" required
+                    placeholder="Al menos 10 caracteres" required
                 >
             </div>
             <button 
@@ -47,5 +82,6 @@ const submitRegistrationRequest = async (email, message) => {
                 Solicitar registro
             </button>
         </form>
+        <Toast position="bottom-right"/>
     </div>
 </template>
