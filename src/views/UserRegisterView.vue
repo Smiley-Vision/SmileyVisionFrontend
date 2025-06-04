@@ -6,6 +6,7 @@ import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import RequestRegisterView from './register/RequestRegisterView.vue';
 import RegisterUserView from './register/RegisterUserView.vue';
+import InvalidTokenView from './register/InvalidTokenView.vue';
 
 const route = useRoute()
 const toast = useToast()
@@ -58,7 +59,7 @@ onMounted(async () => {
 
     <!-- Invalid URL token--display an error -->
     <div v-else>
-        The token is invalid
+        <InvalidTokenView></InvalidTokenView>
     </div>
     <!-- Toast -->
     <Toast position="bottom-right"/>
