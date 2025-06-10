@@ -7,17 +7,29 @@ import { onMounted } from 'vue';
 const auth = useAuthStore()
 const toast = useToast()
 
-const isAuthenticated = auth.isAuthenticated
 const user = auth.user
 
 onMounted(() => {
-    if (isAuthenticated && user.name) {
+    if (auth.justLoggedIn && user.name) {
         toast.add({
             severity: 'success',
             summary: 'Éxito',
             detail: `Bienvenido, ${user.name}`,
             life: 4000 // 4 seconds
         })
+
+        auth.justLoggedIn = false
+    }
+
+    if (auth.justSubmittedRequest) {
+        toast.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Solicitud enviada correctamente',
+            life: 4000 // 4 seconds
+        })
+
+        auth.justSubmittedRequest = false
     }
 })
 </script>

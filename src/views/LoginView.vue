@@ -1,6 +1,7 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'primevue';
+import { onMounted } from 'vue';
 import { reactive } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 
@@ -16,7 +17,7 @@ const form = reactive({
 const submitLogin = async () => {
     try {
         const data = await auth.login(form.email, form.password)
-        router.push({name: 'home'})
+        router.push({ name: 'home' })
     } catch (error) {
         toast.add({
             severity: 'error',
@@ -26,6 +27,17 @@ const submitLogin = async () => {
         })
     }
 }
+
+onMounted(() => {
+    if (auth.justRegistered) {
+        toast.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Registro exitoso. Puede iniciar sesión',
+            life: 4000 // 4 seconds
+        })
+    }
+})
 </script>
 
 <template>
@@ -37,7 +49,7 @@ const submitLogin = async () => {
             <div class="font-lg text-xl text-sky-800">
                 ¿No tienes una cuenta?
                 <RouterLink
-                    to="/contact"
+                    to="/register"
                     class="text-sky-500 hover:underline"
                 >Solicita una</RouterLink>
             </div>
@@ -70,6 +82,6 @@ const submitLogin = async () => {
         </div>
 
         <!-- Toast -->
-        <Toast position="bottom-right"/>
+        <Toast position="top-right"/>
     </div>
 </template>
