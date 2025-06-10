@@ -81,6 +81,7 @@ onUnmounted(() => {
             <!-- Nabar Links - Desktop -->
             <ul class="lg:flex items-center justify-between my-4 xl:gap-x-4 hidden">
                 <li>
+                    <!-- Home -->
                     <RouterLink
                         :class="[isActiveLink('/') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
                                  'p-4 font-semibold rounded-xl']"
@@ -88,6 +89,7 @@ onUnmounted(() => {
                     </RouterLink>
                 </li>
                 <li>
+                    <!-- About -->
                     <RouterLink
                         :class="[isActiveLink('/about') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
                                  'p-4 font-semibold rounded-xl']"
@@ -95,6 +97,7 @@ onUnmounted(() => {
                     </RouterLink>
                 </li>
                 <li>
+                    <!-- Shop / Products (admin) -->
                     <RouterLink
                         v-if="!isAuthenticated || isAuthenticated && !isAdmin"
                         :class="[isActiveLink('/shop') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
@@ -103,12 +106,13 @@ onUnmounted(() => {
                     </RouterLink>
                     <RouterLink
                         v-else
-                        :class="[isActiveLink('/shop') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
+                        :class="[isActiveLink('/admin/products') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
                                  'p-4 font-semibold rounded-xl']"
                         :to="{ name: 'admin-products' }">Productos
                     </RouterLink>
                 </li>
                 <li>
+                    <!-- Contact / Register (admin) -->
                     <RouterLink
                         v-if="!isAuthenticated || isAuthenticated && !isAdmin"
                         :class="[isActiveLink('/contact') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
@@ -117,7 +121,7 @@ onUnmounted(() => {
                     </RouterLink>
                     <RouterLink
                         v-else
-                        :class="[isActiveLink('/contact') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
+                        :class="[isActiveLink('/admin/register') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
                                  'p-4 font-semibold rounded-xl']"
                         :to="{ name: 'admin-register' }">Registrar
                     </RouterLink>
