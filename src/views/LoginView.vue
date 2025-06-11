@@ -16,14 +16,18 @@ const form = reactive({
 
 const submitLogin = async () => {
     try {
-        const data = await auth.login(form.email, form.password)
+        await auth.login(form.email, form.password)
         router.push({ name: 'home' })
     } catch (error) {
+        // Show the first validation error
+        const firstField = Object.keys(error.errors)[0]
+        const message = error.errors[firstField][0]
+
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Credenciales incorrectas',
-            life: 4000 // 4 seconds
+            detail: message,
+            life: 4000
         })
     }
 }
@@ -37,6 +41,8 @@ onMounted(() => {
             life: 4000 // 4 seconds
         })
     }
+
+    auth.justRegistered = false
 })
 </script>
 

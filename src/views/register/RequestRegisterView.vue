@@ -24,16 +24,18 @@ const submitRegistrationRequest = async () => {
 
         const data = await fetchData('register-requests', 'POST', body)
 
-        if (data.message === "Success") {
-            auth.justSubmittedRequest = true
-            router.push({ name: 'home' })
-        }
+        auth.justSubmittedRequest = true
+        router.push({ name: 'home' })
     } catch (error) {
+        // Show the first validation error
+        const firstField = Object.keys(error.errors)[0]
+        const message = error.errors[firstField][0]
+
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Por favor, llene correctamente los campos',
-            life: 4000 // 4 seconds
+            detail: message,
+            life: 4000
         })
     }
 }

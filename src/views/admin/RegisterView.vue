@@ -13,6 +13,13 @@ const formatDate = (dateString) => {
 
 const acceptRequest = async (id) => {
     try {
+        toast.add({
+            severity: 'info',
+            summary: 'Atención',
+            detail: 'Espere un segundo...',
+            life: 2000
+        })
+
         // Get the request associated with the ID
         const registrationRequest = await fetchData(`register-requests/${id}`, 'GET')
         const email = registrationRequest.email
@@ -21,20 +28,28 @@ const acceptRequest = async (id) => {
         const body = { email }
 
         // Accept the request 
-        const response = await fetchData('send-register-mail', 'POST', body)
+        await fetchData('send-register-mail', 'POST', body)
 
-        if (response.message === 'E-mail sent successfully.') {
-            await rejectRequest(id)
+        // Delete the request when accepted
+        await rejectRequest(id)
 
-            toast.add({
-                severity: 'success',
-                summary: 'Éxito',
-                detail: 'Correo enviado',
-                life: 4000 // 4 seconds
-            })
-        }
+        toast.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Correo enviado',
+            life: 4000 // 4 seconds
+        })
     } catch (error) {
-        throw error
+        // Show the first validation error
+        const firstField = Object.keys(error.errors)[0]
+        const message = error.errors[firstField][0]
+
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: message,
+            life: 4000
+        })
     }
 }
 

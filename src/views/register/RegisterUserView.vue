@@ -70,22 +70,24 @@ const submitRegistration = async () => {
             store_id: form.store_id
         }
 
-        const data = await fetchData('register', 'POST', body)
+        await fetchData('register', 'POST', body)
 
-        if (data.message === 'User created successfully') {
-            // Mark the registration token as used
-            await fetchData('mark-register-token', 'POST', { token: props.token })
+        // Registration successful. Mark the registration token as used
+        await fetchData('mark-register-token', 'POST', { token: props.token })
 
-            auth.justRegistered = true
-            router.push({ name: 'login' })
-        }
-        
+        auth.justRegistered = true
+        router.push({ name: 'login' })
+
     } catch (error) {
+        // Show the first validation error
+        const firstField = Object.keys(error.errors)[0]
+        const message = error.errors[firstField][0]
+
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Llene los campos correctamente',
-            life: 4000 // 4 seconds
+            detail: message,
+            life: 4000
         })
     }
 }

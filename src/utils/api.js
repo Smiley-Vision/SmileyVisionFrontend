@@ -27,17 +27,11 @@ async function fetchData(url, method = 'GET', body = {}) {
         }
 
         const response = await fetch(`${API_BASE_URL}/${url}`, fetchOptions)
+        const json = await response.json()
 
-        if(!response.ok) {
-            const error = new Error('HTTP error');
-            error.code = response.status;
-            const json = await response.json();
-            error.message = json.message
-            throw error;
-        }
+        if(!response.ok) throw json
 
-        const data = await response.json()
-        return data
+        return json
         
     } catch (error) {
         throw error
