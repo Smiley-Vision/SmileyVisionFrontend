@@ -8,10 +8,14 @@
         <div class="text-6xl font-bold">
             Error
         </div>
-        <div class="text-xl">
-            El token no existe o ha expirado.
+        <div class="font-medium text-xl text-center text-sky-800 max-w-lg">
+            El token no existe, ha expirado, o
+            usted no tiene permiso para acceder
+            a este formulario.
         </div>
-        <RouterLink :to="{ name: 'login' }" class="text-white text-xl px-6 py-4 rounded-xl bg-sky-600 hover:bg-sky-700 shadow-xl">
+        <RouterLink
+            :to="{ name: 'login' }" 
+            class="text-white text-xl px-6 py-4 rounded-xl bg-sky-600 hover:bg-sky-700 shadow-xl">
             Inicio de sesión
         </RouterLink>
     </div>

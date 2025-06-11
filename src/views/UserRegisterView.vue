@@ -13,8 +13,9 @@ const toast = useToast()
 const auth = useAuthStore()
 
 const token = route.query.token
+const isAdmin = auth.isAdmin
 const isTokenValid = ref(false)
-let email
+const email = ref('')
 
 // Check the availability of the URL token
 const checkURLToken = async (token) => {
@@ -26,7 +27,7 @@ const checkURLToken = async (token) => {
 
         if (data.message === "Token exists and it's available") {
             isTokenValid.value = true
-            email = data['email']
+            email.value = data['email']
         }
     } catch (error) {
         toast.add({
@@ -45,7 +46,7 @@ onMounted(async () => {
 
 <template>
     <!-- Valid URL token (use props here to pre-fill the email field) -->
-    <div v-if="isTokenValid">
+    <div v-if="isTokenValid && !isAdmin">
         <RegisterUserView
             :token="token"
             :email="email"
