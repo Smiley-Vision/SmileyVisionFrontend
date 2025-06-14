@@ -24,7 +24,7 @@ onMounted(async() => {
             v-if="isLoading"
             class="flex flex-col mx-auto my-auto items-center gap-y-8 mt-24">
             <div
-                class="text-sky-600 pi pi-spinner-dotted"
+                class="text-sky-600 pi pi-spinner-dotted animate-spin slow-spin"
                 style="font-size: 8rem">
             </div>
             <div class="lg:text-5xl text-4xl text-sky-700 font-bold">
@@ -45,13 +45,16 @@ onMounted(async() => {
         </div>
         <div class="flex lg:flex-row lg:gap-x-20 flex-col gap-y-16 max-w-4xl mx-auto my-auto p-4">
             <div v-for="(product, index) in products" :key="index" class="min-w-2xl rounded-xl">
-                <div class="flex flex-col items-center gap-y-4 max-w-sm max-h-sm">
-                    <img
-                        :src="`src/assets/images/shop/${index}.jpg`"
-                        class="size-60 border-solid border-4 border-sky-600 rounded-xl"
-                    >
-                    <div class="font-semibold text-gray-800">{{ product.name }}</div>
-                </div>
+                <RouterLink :to="{ name: 'home' }">
+                    <div class="flex flex-col items-center gap-y-4 max-w-sm max-h-sm">
+                        <img
+                            :src="`src/assets/images/shop/${index}.jpg`"
+                            class="size-60 border-solid border-4 border-sky-600 rounded-xl shadow-lg
+                                   hover:shadow-2xl transform transition duration-200 hover:scale-105"
+                        >
+                        <div class="font-semibold text-2xl text-sky-800">{{ product.name }}</div>
+                    </div>
+                </RouterLink>
             </div>
         </div>
     </div>
