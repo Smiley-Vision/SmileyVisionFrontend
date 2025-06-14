@@ -45,7 +45,7 @@ onMounted(async() => {
         </div>
         <div class="flex lg:flex-row lg:gap-x-20 flex-col gap-y-16 max-w-4xl mx-auto my-auto p-4">
             <div v-for="(product, index) in products" :key="index" class="min-w-2xl rounded-xl">
-                <RouterLink :to="{ name: 'home' }">
+                <RouterLink :to="{ name: 'shop-' + `${product.name}` }">
                     <div class="flex flex-col items-center gap-y-4 max-w-sm max-h-sm">
                         <img
                             :src="`src/assets/images/shop/${index}.jpg`"

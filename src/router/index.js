@@ -2,6 +2,9 @@ import { createRouter, createWebHistory } from "vue-router"
 import HomeView from "@/views/HomeView.vue"
 import AboutView from "@/views/AboutView.vue"
 import ShopView from "@/views/ShopView.vue"
+import MicasView from "@/views/shop/MicasView.vue"
+import ArmazonesView from "@/views/shop/ArmazonesView.vue"
+import EquiposView from "@/views/shop/EquiposView.vue"
 import ContactView from "@/views/ContactView.vue"
 import LoginView from "@/views/LoginView.vue"
 import UserRegisterView from "@/views/UserRegisterView.vue"
@@ -27,6 +30,21 @@ const router = createRouter({
             path: '/shop',
             name: 'shop',
             component: ShopView
+        },
+        {
+            path: '/shop/micas',
+            name: 'shop-Micas',
+            component: MicasView
+        },
+        {
+            path: '/shop/armazones',
+            name: 'shop-Armazones',
+            component: ArmazonesView
+        },
+        {
+            path: '/shop/equipos',
+            name: 'shop-Equipos',
+            component: EquiposView
         },
         {
             path: '/contact',
