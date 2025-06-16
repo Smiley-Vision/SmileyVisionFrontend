@@ -48,17 +48,20 @@ onMounted(async () => {
         
         <!-- Product grid (list, on phone) -->
         <div class="flex justify-center">
-            <div class="lg:grid lg:grid-cols-3 lg:gap-x-12 lg:gap-y-10 flex flex-col gap-y-8 text-center">
-                <div
-                    v-for="(equipo, index) in equipos" :key="index"
-                    class="flex flex-col gap-y-4">
-                    <img
-                        :src="`/src/assets/images/shop/products/equipos/${equipo.code}.jpeg`"
-                        class="size-80 border-solid border-4 border-sky-600 rounded-xl shadow-lg"
-                    >
-                    <div class="font-semibold text-lg text-sky-800">
-                        {{ equipo.name }}
-                    </div>
+            <div class="lg:grid lg:grid-cols-4 lg:gap-x-12 lg:gap-y-10 flex flex-col gap-y-8 text-center">
+                <div v-for="(equipo, index) in equipos" :key="index">
+                    <RouterLink :to="{ name: 'product', params: { id: equipo.id} }" :productID="equipo.code">
+                        <div class="flex flex-col items-center gap-y-4">
+                            <img
+                                :src="`/src/assets/images/shop/products/equipos/${equipo.code}.jpeg`"
+                                class="size-60 border-solid border-4 border-sky-600 rounded-xl shadow-lg
+                                        hover:shadow-2xl transform transition duration-200 hover:scale-105"
+                            >
+                            <div class="font-semibold text-lg text-sky-800">
+                                {{ equipo.name }}
+                            </div>
+                        </div>
+                    </RouterLink>
                 </div>
             </div>
         </div>
