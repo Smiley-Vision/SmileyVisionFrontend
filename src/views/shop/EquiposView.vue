@@ -35,7 +35,7 @@ onMounted(async () => {
     </div>
 
     <!-- Content -->
-    <div v-else class="flex flex-col lg:px-20 px-14 mt-14 lg:gap-y-16 gap-y-10 2xl:mb-0 mb-12">
+    <div v-else class="flex flex-col lg:px-20 px-14 mt-14 lg:gap-y-16 gap-y-10 2xl:mb-8 mb-12">
         <!-- Title and description -->
         <div class="flex flex-col gap-y-8">
             <div class="md:text-6xl text-4xl font-semibold text-sky-800 -mb-4">
@@ -48,11 +48,17 @@ onMounted(async () => {
         
         <!-- Product grid (list, on phone) -->
         <div class="flex justify-center">
-            <div class="lg:grid lg:grid-cols-3 lg:gap-x-12 flex-col">
+            <div class="lg:grid lg:grid-cols-3 lg:gap-x-12 lg:gap-y-10 flex flex-col gap-y-8 text-center">
                 <div
                     v-for="(equipo, index) in equipos" :key="index"
-                    class="bg-sky-300 rounded-xl shadow-xl">
-                    {{ equipo.name }}
+                    class="flex flex-col gap-y-4">
+                    <img
+                        :src="`/src/assets/images/shop/products/equipos/${equipo.code}.jpeg`"
+                        class="size-80 border-solid border-4 border-sky-600 rounded-xl shadow-lg"
+                    >
+                    <div class="font-semibold text-lg text-sky-800">
+                        {{ equipo.name }}
+                    </div>
                 </div>
             </div>
         </div>
