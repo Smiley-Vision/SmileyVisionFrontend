@@ -50,18 +50,18 @@ onMounted(async () => {
         <div class="flex justify-center">
             <div class="grid lg:grid-cols-4 grid-cols-2 lg:gap-x-12 gap-x-8 lg:gap-y-10 gap-y-8 text-center">
                 <div v-for="(equipo, index) in equipos" :key="index">
-                    <RouterLink :to="{ name: 'product', params: { id: equipo.id} }" :productID="equipo.code">
-                        <div class="flex flex-col items-center gap-y-4">
+                    <div class="flex flex-col items-center gap-y-4">
+                        <RouterLink :to="{ name: 'product', params: { id: equipo.id} }" :productID="equipo.code">
                             <img
                                 :src="`/src/assets/images/shop/products/equipos/${equipo.code}.jpeg`"
                                 class="lg:size-60 size-40 border-solid border-4 border-sky-600 rounded-xl shadow-lg
                                         hover:shadow-2xl transform transition duration-200 hover:scale-105"
                             >
-                            <div class="font-semibold lg:text-lg text-md text-sky-800">
-                                {{ equipo.name }}
-                            </div>
+                        </RouterLink>
+                        <div class="font-semibold lg:text-lg text-md text-sky-800">
+                            {{ equipo.name }}
                         </div>
-                    </RouterLink>
+                    </div>
                 </div>
             </div>
         </div>
