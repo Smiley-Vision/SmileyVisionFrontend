@@ -97,7 +97,7 @@ onMounted(async () => {
                         Descripción
                     </div>
                     <div class="text-justify font-medium text-sky-800 max-w-md">
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Laborum nemo dolor vel doloribus accusantium tenetur perferendis. Eum tenetur doloremque, esse animi maxime expedita optio dolore minima quisquam ducimus! Quasi, amet!
+                        {{ product.description }}
                     </div>
                 </div>
 
