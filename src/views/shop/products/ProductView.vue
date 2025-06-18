@@ -13,6 +13,19 @@ const productID = route.params.id
 
 const isLoading = ref(true)
 const product = ref({})
+const productAvailability = ref(0)
+const quantity = ref(1)
+
+// Increse the product quantity
+const increase = (availability) => {
+    if (quantity.value < availability)
+        quantity.value++
+}
+
+// Decrease the product quantity
+const decrease = () => {
+  if (quantity.value > 1) quantity.value--;
+}
 
 // Format the price of the product (commas)
 const formatPrice = (price) => {
@@ -41,9 +54,12 @@ const formatPrice = (price) => {
 onMounted(async () => {
     try {
         const response = await fetchData(`products/${productID}`, 'GET')
-        
-        isLoading.value = false
         product.value = response
+
+        // Get the availability of the product
+        productAvailability.value = await fetchData(`product-existence/${productID}`)
+
+        isLoading.value = false
     } catch (error) {
         toast.add({
             severity: 'error',
@@ -113,13 +129,49 @@ onMounted(async () => {
                     <div class="font-semibold text-sky-800">
                         En existencia:
                     </div>
-                    <div class="font-bold text-sky-600">
-                        10
+                    <div v-if="productAvailability != 0" class="font-bold text-sky-600">
+                        {{ productAvailability }}
+                    </div>
+                    <div v-else class="font-bold text-gray-400">
+                        NO DISPONIBLE
+                    </div>
+                </div>
+                
+                <div v-if="productAvailability != 0" class="flex flex-row gap-x-4">
+                    <div class="font-semibold text-sky-800">
+                        Cantidad:
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button @click="decrease"
+                                class="w-8 h-8 rounded bg-sky-600 text-white font-bold hover:bg-sky-700">
+                        −
+                        </button>
+    
+                        <input
+                            v-model="quantity"
+                            min="1"
+                            disabled
+                            class="w-14 text-center border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        />
+    
+                        <button @click="increase(productAvailability)"
+                                class="w-8 h-8 rounded bg-sky-600 text-white font-bold hover:bg-sky-700">
+                        +
+                        </button>
                     </div>
                 </div>
 
                 <!-- 'Add to cart' button -->
-                <button class="bg-sky-600 text-white px-3 py-1 rounded-md hover:bg-sky-700">Añadir al carrito</button>
+                <button
+                    v-if="productAvailability != 0"
+                    class="bg-sky-600 text-white px-3 py-1 rounded-md hover:bg-sky-700"
+                >Añadir al carrito</button>
+
+                <button
+                    v-else
+                    class="bg-gray-400 text-white px-3 py-1 rounded-md disabled"
+                    disabled
+                >Añadir al carrito</button>
             </div>
         </div>
     </div>
