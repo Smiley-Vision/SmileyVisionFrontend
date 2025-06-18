@@ -1,7 +1,10 @@
 <script setup>
 import { fetchData } from '@/utils/api';
+import { useToast } from 'primevue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
+
+const toast = useToast()
 
 const isLoading = ref(true)
 const equipos = ref([])
@@ -11,13 +14,16 @@ onMounted(async () => {
     try {
         const response = await fetchData('equipos', 'GET')
 
-        if (response) {
-            isLoading.value = false
-            equipos.value = response
-        }
+        equipos.value = response
+        isLoading.value = false
         
     } catch (error) {
-        throw error
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron obtener los equipos',
+            life: 4000
+        })
     }
 })
 </script>
@@ -66,4 +72,6 @@ onMounted(async () => {
             </div>
         </div>
     </div>
+
+    <Toast position="bottom-right"/>
 </template>

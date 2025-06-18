@@ -1,10 +1,12 @@
 <script setup>
 import { fetchData } from '@/utils/api';
+import { useToast } from 'primevue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute()
+const toast = useToast()
 
 // ID of the current product
 const productID = route.params.id
@@ -43,7 +45,12 @@ onMounted(async () => {
         isLoading.value = false
         product.value = response
     } catch (error) {
-        throw error
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo obtener el producto',
+            life: 4000
+        })
     }
 })
 </script>
@@ -116,4 +123,6 @@ onMounted(async () => {
             </div>
         </div>
     </div>
+
+    <Toast position="bottom-right"/>
 </template>

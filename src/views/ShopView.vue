@@ -1,18 +1,28 @@
 <script setup>
 import { fetchData } from '@/utils/api';
+import { useToast } from 'primevue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
+
+const toast = useToast()
 
 const isLoading = ref(true)
 const products = ref([])
 
 // Retrieve the product type objects
 onMounted(async() => {
-    const response = await fetchData('product-types', 'GET')
+    try {
+        const response = await fetchData('product-types', 'GET')
 
-    if (response) {
         products.value = response
         isLoading.value = false
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron obtener los productos',
+            life: 4000
+        })
     }
 })
 </script>
@@ -56,4 +66,6 @@ onMounted(async() => {
             </div>
         </div>
     </div>
+
+    <Toast position="bottom-right"/>
 </template>
