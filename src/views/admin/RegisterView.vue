@@ -5,6 +5,7 @@ import { onMounted, ref } from 'vue';
 
 const toast = useToast()
 
+const isLoading = ref(true)
 const registrationRequests = ref([])
 
 const formatDate = (dateString) => {
@@ -23,7 +24,7 @@ const acceptRequest = async (id) => {
         // Get the request associated with the ID
         const registrationRequest = await fetchData(`register-requests/${id}`, 'GET')
         const email = registrationRequest.email
-        
+
         // POST request body
         const body = { email }
 
@@ -69,7 +70,7 @@ const rejectRequest = async (id) => {
 onMounted(async () => {
     try {
         registrationRequests.value = await fetchData('register-requests', 'GET')
-        console.log(registrationRequests)
+        isLoading.value = false
     } catch (error) {
         throw error
     }
@@ -77,21 +78,51 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="grid gap-4 max-w-4xl mx-auto p-4">
-        <div v-for="request in registrationRequests" :key="request.id"
-            class="border rounded-lg p-4 shadow-md bg-white flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-                <div class="font-semibold text-gray-800">{{ request.email }}</div>
-                <div class="text-gray-600 text-sm">{{ request.message }}</div>
-                <div class="text-gray-400 text-xs mt-1">Solicitado: {{ formatDate(request.created_at) }}</div>
-            </div>
-            <div class="mt-3 md:mt-0 flex gap-2">
-                <button @click="acceptRequest(request.id)"
-                    class="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700">Aceptar</button>
-                <button @click="rejectRequest(request.id)"
-                    class="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700">Rechazar</button>
+    <!-- Loading screen -->
+    <div v-if="isLoading" class="flex flex-col mx-auto my-auto items-center gap-y-8 mt-24">
+        <div class="text-sky-600 pi pi-spinner-dotted animate-spin slow-spin" style="font-size: 8rem">
+        </div>
+        <div class="lg:text-5xl text-4xl text-sky-700 font-bold">
+            Cargando...
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div v-else class="flex flex-col lg:px-20 px-6 mt-10 gap-y-10 2xl:mb-8 mb-12">
+        <!-- Title and description -->
+        <div class="flex flex-col gap-y-2">
+            <h1 class="md:text-5xl text-3xl font-bold text-sky-800">
+                Solicitudes de registro
+            </h1>
+            <p class="text-base md:text-lg text-sky-700">
+                Elija qué usuarios pueden registrarse en el sistema.
+            </p>
+        </div>
+
+        <!-- Registration requests list -->
+        <div class="grid gap-4 max-w-3xl mx-auto w-full">
+            <div v-for="request in registrationRequests" :key="request.id"
+                class="border border-gray-200 rounded-xl p-6 shadow-sm bg-white flex flex-col md:flex-row md:items-center md:justify-between transition duration-200 hover:shadow-md">
+
+                <div class="space-y-1">
+                    <div class="font-medium text-gray-900 text-lg">{{ request.email }}</div>
+                    <div class="text-gray-600 text-sm">{{ request.message }}</div>
+                    <div class="text-gray-400 text-xs mt-1">Solicitado: {{ formatDate(request.created_at) }}</div>
+                </div>
+
+                <div class="mt-4 md:mt-0 flex gap-3">
+                    <button @click="acceptRequest(request.id)"
+                        class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm">
+                        Aceptar
+                    </button>
+                    <button @click="rejectRequest(request.id)"
+                        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm">
+                        Rechazar
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-    <Toast position="bottom-right"/>
+
+    <Toast position="bottom-right" />
 </template>
