@@ -5,6 +5,8 @@ import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL
+
 const route = useRoute()
 const toast = useToast()
 
@@ -96,7 +98,7 @@ onMounted(async () => {
             
             <!-- Product image -->
             <img
-                :src="`/src/assets/images/shop/products/equipos/${product.code}.jpeg`"
+                :src="`${backendUrl}/storage/${product.image_url}`"
                 alt="Imagen del producto"
                 class="lg:size-[28rem]"
             >
