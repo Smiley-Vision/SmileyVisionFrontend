@@ -46,7 +46,7 @@ watch(selectedStoreIndex, (newIndex) => {
 // Retrieve the available stores as an array
 const retrieveStores = async () => {
     try {
-        const response = await fetchData('get-stores', 'GET')
+        const response = await fetchData('stores', 'GET')
         stores.value = response.map(store => store['name'])
     } catch (error) {
         toast.add({
