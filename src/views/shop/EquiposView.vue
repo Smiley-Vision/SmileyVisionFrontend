@@ -18,9 +18,6 @@ onMounted(async () => {
 
         equipos.value = response
         isLoading.value = false
-
-        console.log(response);
-        
         
     } catch (error) {
         toast.add({
@@ -69,7 +66,7 @@ onMounted(async () => {
                                         hover:shadow-2xl transform transition duration-200 hover:scale-105"
                             >
                         </RouterLink>
-                        <div class="font-semibold lg:text-lg text-md text-sky-800">
+                        <div class="font-semibold lg:text-lg text-sm text-sky-800">
                             {{ equipo.name }}
                         </div>
                     </div>
