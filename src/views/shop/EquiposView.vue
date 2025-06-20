@@ -4,6 +4,8 @@ import { useToast } from 'primevue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL
+
 const toast = useToast()
 
 const isLoading = ref(true)
@@ -16,6 +18,9 @@ onMounted(async () => {
 
         equipos.value = response
         isLoading.value = false
+
+        console.log(response);
+        
         
     } catch (error) {
         toast.add({
@@ -59,7 +64,7 @@ onMounted(async () => {
                     <div class="flex flex-col items-center gap-y-4">
                         <RouterLink :to="{ name: 'product', params: { id: equipo.id} }" :productID="equipo.code">
                             <img
-                                :src="`/src/assets/images/shop/products/equipos/${equipo.code}.jpeg`"
+                                :src="`${backendUrl}/storage/${equipo.image_url}`"
                                 class="lg:size-60 size-40 border-solid border-4 border-sky-600 rounded-xl shadow-lg
                                         hover:shadow-2xl transform transition duration-200 hover:scale-105"
                             >
