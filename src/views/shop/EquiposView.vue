@@ -59,7 +59,7 @@ onMounted(async () => {
             <div class="grid lg:grid-cols-4 grid-cols-2 lg:gap-x-12 gap-x-8 lg:gap-y-10 gap-y-8 text-center">
                 <div v-for="(equipo, index) in equipos" :key="index">
                     <div class="flex flex-col items-center gap-y-4">
-                        <RouterLink :to="{ name: 'product', params: { id: equipo.id} }" :productID="equipo.code">
+                        <RouterLink :to="{ name: 'product', params: { code: equipo.code } }" :productID="equipo.code">
                             <img
                                 :src="`${backendUrl}/storage/${equipo.image_url}`"
                                 class="lg:size-60 size-40 border-solid border-4 border-sky-600 rounded-xl shadow-lg

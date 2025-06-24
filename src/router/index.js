@@ -49,7 +49,7 @@ const router = createRouter({
             component: EquiposView
         },
         {
-            path: '/shop/products/:id',
+            path: '/shop/products/:code',
             name: 'product',
             component: ProductView
         },

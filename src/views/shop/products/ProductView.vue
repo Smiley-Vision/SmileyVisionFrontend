@@ -10,8 +10,8 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL
 const route = useRoute()
 const toast = useToast()
 
-// ID of the current product
-const productID = route.params.id
+const productCode = route.params.code
+const productID = ref(0)
 
 const isLoading = ref(true)
 const product = ref({})
@@ -55,11 +55,12 @@ const formatPrice = (price) => {
 // Get the product associated with the ID
 onMounted(async () => {
     try {
-        const response = await fetchData(`products/${productID}`, 'GET')
+        const response = await fetchData(`products/${productCode}`, 'GET')
         product.value = response
+        productID.value = response.id
 
         // Get the availability of the product
-        productAvailability.value = await fetchData(`product-existence/${productID}`)
+        productAvailability.value = await fetchData(`product-existence/${productID.value}`)
 
         isLoading.value = false
     } catch (error) {
