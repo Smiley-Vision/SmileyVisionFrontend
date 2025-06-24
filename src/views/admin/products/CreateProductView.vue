@@ -1,5 +1,4 @@
 <script setup>
-import { useAuthStore } from '@/stores/auth';
 import { fetchData } from '@/utils/api';
 import { useToast } from 'primevue';
 import { reactive } from 'vue';
@@ -9,8 +8,7 @@ import { onMounted } from 'vue';
 const toast = useToast()
 const productTypes = ref([])
 
-// Form object; request body
-const form = reactive({
+const initialState = {
     'image': null,
     'file_name': '',
     'type_id': 1,
@@ -18,7 +16,26 @@ const form = reactive({
     'name': '',
     'description': '',
     'price': 0,
-})
+}
+
+// Form object; request body
+const form = reactive({ ...initialState })
+
+const imagePreview = ref(null)
+
+function retrieveImage(event) {
+    const file = event.target.files[0]
+
+    if (file) {
+        form.image = file
+        form.file_name = file.name
+
+        console.log(form.image);
+        console.log(form.file_name);
+
+        imagePreview.value = URL.createObjectURL(file)
+    }
+}
 
 // Submit the form
 const submitForm = async () => {
@@ -37,9 +54,12 @@ const submitForm = async () => {
         }
 
         const response = await fetchData('products', 'POST', formData)
-        const data = await response.json()
 
-        if (response.ok) {
+        if (response.message === 'Product created successfully') {
+            // Reset the form
+            Object.assign(form, initialState)
+            imagePreview.value = null
+
             toast.add({
                 severity: 'success',
                 summary: 'Éxito',
@@ -62,12 +82,6 @@ const submitForm = async () => {
     }
 }
 
-// Retrieve the image file
-const retrieveImage = (event) => {
-    form.image = event.target.files[0]
-    form.file_name = event.target.files[0].name
-}
-
 // Retrieve the product types
 onMounted(async () => {
     try {
@@ -84,24 +98,29 @@ onMounted(async () => {
 </script>
 
 <template>
-    <!-- Form content -->
-    <form @submit.prevent="submitForm" class="flex flex-col lg:mx-auto items-center mx-10 lg:mt-12 mt-10 p-6 gap-y-8 bg-slate-400 rounded-xl max-w-xl">
+    <form @submit.prevent="submitForm"
+        class="flex flex-col items-center max-w-2xl mx-auto my-12 p-10 gap-10 bg-white rounded-3xl shadow-2xl">
 
         <!-- Title -->
-        <div class="font-medium text-xl">
-            Subir producto al sistema
-        </div>
+        <h2 class="text-3xl font-bold text-sky-800 text-center">Subir producto al sistema</h2>
 
-        <!-- Image -->
-        <div class="flex flex-row items-center gap-x-4">
-            <label for="image_url">Imagen del producto:</label>
-            <input @change="retrieveImage" type="file" name="image_url" id="image_url" required>
+        <!-- Image Upload with Preview -->
+        <div class="w-48 h-48 relative cursor-pointer group" @click="$refs.imageInput.click()">
+            <input ref="imageInput" @change="retrieveImage" type="file" class="hidden" required />
+            <div
+                class="w-full h-full flex items-center justify-center bg-slate-100 border-2 border-dashed border-sky-400 rounded-2xl transition hover:bg-sky-50">
+                <img v-if="imagePreview" :src="imagePreview" alt="Vista previa"
+                    class="object-cover w-full h-full rounded-2xl" />
+                <span v-else class="text-sky-400 text-5xl font-bold select-none">+</span>
+            </div>
+            <p class="text-sm text-center mt-2 text-gray-600">Haz clic para seleccionar imagen</p>
         </div>
 
         <!-- Type -->
-        <div class="flex flex-row items-center gap-x-4">
-            <label for="type_id">Tipo de producto:</label>
-            <select v-model="form.type_id" name="type_id" id="type_id" required>
+        <div class="w-full">
+            <label for="type_id" class="block text-sky-700 font-medium mb-1">Tipo de producto</label>
+            <select v-model="form.type_id" id="type_id"
+                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required>
                 <option v-for="(type, index) in productTypes" :key="index" :value="index + 1">
                     {{ type.name }}
                 </option>
@@ -109,33 +128,40 @@ onMounted(async () => {
         </div>
 
         <!-- Code -->
-        <div class="flex flex-row items-center gap-x-4">
-            <label for="code">Código del producto:</label>
-            <input v-model="form.code" type="text" name="code" id="code" required>
+        <div class="w-full">
+            <label for="code" class="block text-sky-700 font-medium mb-1">Código del producto</label>
+            <input v-model="form.code" id="code" type="text"
+                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required />
         </div>
 
         <!-- Name -->
-        <div class="flex flex-row items-center gap-x-4">
-            <label for="name">Nombre del producto:</label>
-            <input v-model="form.name" type="text" name="name" id="name" required>
+        <div class="w-full">
+            <label for="name" class="block text-sky-700 font-medium mb-1">Nombre del producto</label>
+            <input v-model="form.name" id="name" type="text"
+                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required />
         </div>
 
         <!-- Description -->
-        <div class="flex flex-row items-center gap-x-4">
-            <label for="description">Descripción del producto:</label>
-            <input v-model="form.description" type="text" name="description" id="description" required>
+        <div class="w-full">
+            <label for="description" class="block text-sky-700 font-medium mb-1">Descripción</label>
+            <input v-model="form.description" id="description" type="text"
+                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required />
         </div>
 
         <!-- Price -->
-        <div class="flex flex-row items-center gap-x-4">
-            <label for="price">Precio del producto: $</label>
-            <input v-model="form.price" type="number" name="price" id="price" required>
+        <div class="w-full">
+            <label for="price" class="block text-sky-700 font-medium mb-1">Precio ($)</label>
+            <input v-model="form.price" id="price" type="number" step="0.01"
+                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required />
         </div>
 
-        <!-- Submit button -->
-        <button class="rounded-xl bg-sky-300 p-4 " type="submit">SUBIR</button>
+        <!-- Submit Button -->
+        <button type="submit"
+            class="bg-sky-500 text-white font-semibold px-8 py-3 rounded-xl hover:bg-sky-600 transition">
+            SUBIR
+        </button>
     </form>
 
-    <!-- Toast -->
-    <Toast position="bottom-right"/>
+    <!-- Toast (Optional, depending on your library) -->
+    <Toast position="bottom-right" />
 </template>
