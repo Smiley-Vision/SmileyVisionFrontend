@@ -12,6 +12,8 @@ import UserRegisterView from "@/views/UserRegisterView.vue"
 import RegisterView from "@/views/admin/RegisterView.vue"
 import ProductsView from "@/views/admin/ProductsView.vue"
 import CreateProductView from "@/views/admin/products/CreateProductView.vue"
+import ModifyProductView from "@/views/admin/products/ModifyProductView.vue"
+import ManageProductAvailabilityView from "@/views/admin/products/ManageProductAvailabilityView.vue"
 import NotFoundView from "@/views/NotFoundView.vue"
 import { useAuthStore } from "@/stores/auth"
 
@@ -75,8 +77,18 @@ const router = createRouter({
         },
         {
             path: '/admin/products/create',
-            name: 'admin-create-product',
+            name: 'admin-products-create',
             component: CreateProductView
+        },
+        {
+            path: '/admin/products/modify',
+            name: 'admin-products-modify',
+            component: ModifyProductView
+        },
+        {
+            path: '/admin/products/availability',
+            name: 'admin-products-availability',
+            component: ManageProductAvailabilityView
         },
         {
             path: '/admin/register',
