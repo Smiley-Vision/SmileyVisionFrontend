@@ -1,7 +1,12 @@
 <script setup>
 import { fetchData } from '@/utils/api';
+import { useToast } from 'primevue';
 import { onMounted } from 'vue';
 import { ref } from 'vue';
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL
+
+const toast = useToast()
 
 const searchQuery = ref('')
 const productTypes = ref([])
@@ -9,18 +14,31 @@ const selectedType = ref(0)
 const products = ref([])
 
 const isLoading = ref(false)
+const isSearchQueryEmpty = ref(true)
 
 // Fetch products with the search query
 const fetchFilteredProducts = async () => {
     try {
+        if (searchQuery.value === '') {
+            isSearchQueryEmpty.value = true
+            return   
+        }
+
         isLoading.value = true
-        const response = await fetchData(`products/query/${searchQuery.value}`, 'GET')
+        isSearchQueryEmpty.value = false
+        const response = await fetchData(`products/query/${searchQuery.value}/${selectedType.value}`, 'GET')
 
         isLoading.value = false
         products.value = response.products
         
     } catch (error) {
-        throw error
+        isLoading.value = false
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Prueba con otra búsqueda',
+            life: 4000
+        })
     }
 }
 
@@ -30,13 +48,18 @@ onMounted(async () => {
         const response = await fetchData('product-types', 'GET')
         productTypes.value = response   
     } catch (error) {
-        throw error
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron obtener los tipos de producto',
+            life: 4000
+        })
     }
 })
 </script>
 
 <template>
-    <div class="flex flex-col lg:px-20 px-14 mt-14 lg:gap-y-10 gap-y-10 2xl:mb-0 mb-12">
+    <div class="flex flex-col lg:px-20 px-14 py-14 lg:gap-y-10 gap-y-10 2xl:mb-0 mb-12">
         <!-- Descriptive title -->
         <div class="text-3xl font-semibold text-sky-800">
             Busque un producto para editar
@@ -52,6 +75,7 @@ onMounted(async () => {
             >
             <select
                 v-model="selectedType"
+                @change="fetchFilteredProducts"
                 name="type"
                 id="type"
                 :class="[
@@ -59,7 +83,7 @@ onMounted(async () => {
                     selectedType === 0 ? 'text-slate-400' : 'text-black'
                 ]"
                 >
-                <option disabled hidden value="0">Elegir categoría (opcional)</option>
+                <option disabled hidden value="0">Todas las categorías</option>
                 <option
                     v-for="(type, index) in productTypes"
                     :key="index"
@@ -81,11 +105,34 @@ onMounted(async () => {
             </div>
         </div>
 
-        <!-- Content -->
-        <div v-else class="lg:grid lg:grid-cols-4 flex flex-col gap-4 pt-4">
-            <div v-for="product in products" class="font-semibold text-xl text-sky-700">
-                {{ product.name }}
+        <!-- Products grid -->
+        <div v-else class="flex mx-auto items-center xl:grid xl:grid-cols-4 lg:grid lg:grid-cols-3 sm:grid sm:grid-cols-2 text-center flex-col gap-x-20 gap-y-12 pt-4">
+            <div v-for="product in products" class="flex flex-col items-center gap-y-4 font-semibold text-xl text-sky-700">
+                
+                <!-- Product name -->
+                <div class="text-lg text-sky-700 font-semibold">
+                    {{ product.name }}
+                </div>
+
+                <!-- Product image -->
+                <img
+                    :src="`${backendUrl}/storage/${product.image_url}`"
+                    class="lg:size-60 size-40 border-solid border-2 border-sky-600 rounded-xl shadow-lg
+                            hover:shadow-2xl transform transition duration-200 hover:scale-105"
+                >
+
+                <!-- Product Code -->
+                <div class="flex flex-row gap-x-4">
+                    <div class="font-semibold text-sky-500 text-lg">
+                        Código:
+                    </div>
+                    <div class="font-semibold text-sky-700 text-lg">
+                        {{ product.code }}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <Toast position="bottom-right"/>
 </template>
