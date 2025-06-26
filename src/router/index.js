@@ -1,20 +1,36 @@
 import { createRouter, createWebHistory } from "vue-router"
+
+// General, guest views
 import HomeView from "@/views/HomeView.vue"
 import AboutView from "@/views/AboutView.vue"
 import ShopView from "@/views/ShopView.vue"
+import ContactView from "@/views/ContactView.vue"
+
+// Type-specific product views
 import MicasView from "@/views/shop/MicasView.vue"
 import ArmazonesView from "@/views/shop/ArmazonesView.vue"
 import EquiposView from "@/views/shop/EquiposView.vue"
+
+// Product views
 import ProductView from "@/views/shop/products/ProductView.vue"
-import ContactView from "@/views/ContactView.vue"
+
+// Login, register views
 import LoginView from "@/views/LoginView.vue"
-import UserRegisterView from "@/views/UserRegisterView.vue"
 import RegisterView from "@/views/admin/RegisterView.vue"
+import UserRegisterView from "@/views/UserRegisterView.vue"
+
+// Admin product management views
 import ProductsView from "@/views/admin/ProductsView.vue"
-import CreateProductView from "@/views/admin/products/CreateProductView.vue"
 import ModifyProductView from "@/views/admin/products/ModifyProductView.vue"
 import ManageProductAvailabilityView from "@/views/admin/products/ManageProductAvailabilityView.vue"
+
+// Admin product management forms
+import CreateProductForm from "@/views/admin/products/forms/CreateProductForm.vue"
+import ModifyProductForm from "@/views/admin/products/forms/ModifyProductForm.vue"
+
+// 404 error!
 import NotFoundView from "@/views/NotFoundView.vue"
+
 import { useAuthStore } from "@/stores/auth"
 
 const router = createRouter({
@@ -78,7 +94,12 @@ const router = createRouter({
         {
             path: '/admin/products/create',
             name: 'admin-products-create',
-            component: CreateProductView
+            component: CreateProductForm
+        },
+        {
+            path: '/admin/products/modify/:code',
+            name: 'admin-products-modify-form',
+            component: ModifyProductForm
         },
         {
             path: '/admin/products/modify',

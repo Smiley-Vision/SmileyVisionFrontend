@@ -21,7 +21,7 @@ const fetchFilteredProducts = async () => {
     try {
         if (searchQuery.value === '') {
             isSearchQueryEmpty.value = true
-            return   
+            return
         }
 
         isLoading.value = true
@@ -79,11 +79,10 @@ onMounted(async () => {
                 name="type"
                 id="type"
                 :class="[
-                    'lg:w-1/3 w-full p-2 border border-2 border-solid border-slate-300 rounded-xl',
-                    selectedType === 0 ? 'text-slate-400' : 'text-black'
+                    'lg:w-1/3 w-full p-2 border border-2 border-solid border-slate-300 rounded-xl text-black'
                 ]"
                 >
-                <option disabled hidden value="0">Todas las categorías</option>
+                <option value="0">Todas las categorías</option>
                 <option
                     v-for="(type, index) in productTypes"
                     :key="index"
@@ -115,11 +114,13 @@ onMounted(async () => {
                 </div>
 
                 <!-- Product image -->
-                <img
-                    :src="`${backendUrl}/storage/${product.image_url}`"
-                    class="lg:size-60 size-40 border-solid border-2 border-sky-600 rounded-xl shadow-lg
-                            hover:shadow-2xl transform transition duration-200 hover:scale-105"
-                >
+                <RouterLink :to="{ name: 'admin-products-modify-form', params: { code: product.code } }">
+                    <img
+                        :src="`${backendUrl}/storage/${product.image_url}`"
+                        class="lg:size-60 size-40 border-solid border-2 border-sky-600 rounded-xl shadow-lg
+                                hover:shadow-2xl transform transition duration-200 hover:scale-105"
+                    >
+                </RouterLink>
 
                 <!-- Product Code -->
                 <div class="flex flex-row gap-x-4">

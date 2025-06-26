@@ -7,6 +7,7 @@ import { onMounted } from 'vue';
 
 const toast = useToast()
 const productTypes = ref([])
+const imagePreview = ref(null)
 
 const initialState = {
     'image': null,
@@ -21,17 +22,12 @@ const initialState = {
 // Form object; request body
 const form = reactive({ ...initialState })
 
-const imagePreview = ref(null)
-
 function retrieveImage(event) {
     const file = event.target.files[0]
 
     if (file) {
         form.image = file
         form.file_name = file.name
-
-        console.log(form.image);
-        console.log(form.file_name);
 
         imagePreview.value = URL.createObjectURL(file)
     }
@@ -49,10 +45,6 @@ const submitForm = async () => {
     formData.append('price', form.price)
 
     try {
-        for (const [key, value] of formData.entries()) {
-            console.log(`${key}:`, value)
-        }
-
         const response = await fetchData('products', 'POST', formData)
 
         if (response.message === 'Product created successfully') {
