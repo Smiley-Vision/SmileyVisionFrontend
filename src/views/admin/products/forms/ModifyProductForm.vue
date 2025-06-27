@@ -47,6 +47,8 @@ const submitForm = async () => {
         const response = await fetchData(`products/${productCode}`, 'PATCH', body)
 
         if (response.message === 'Product updated successfully') {
+            await retrieveProductState()
+
             toast.add({
                 severity: 'success',
                 summary: 'Éxito',
@@ -96,28 +98,31 @@ const deleteProduct = async () => {
 }
 
 // Retrieve the current product's state
+const retrieveProductState = async () => {
+    const response = await fetchData(`products/${productCode}`, 'GET')
+
+    // Fill the form with the product state
+    form.image_url = response.image_url
+    form.name = response.name
+    form.description = response.description
+    form.price = response.price
+    imagePreview.value = `${backendUrl}/storage/${form.image_url}`
+
+    code.value = response.code
+
+    // Save initial state for comparison
+    initialState.value = {
+        image: response.image,
+        name: response.name,
+        description: response.description,
+        price: response.price,
+        image_url: response.image_url
+    }
+}
+
 onMounted(async () => {
     try {
-        // Retrieve the product state
-        const response = await fetchData(`products/${productCode}`, 'GET')
-
-        // Fill the form with the product state
-        form.image_url = response.image_url
-        form.name = response.name
-        form.description = response.description
-        form.price = response.price
-        imagePreview.value = `${backendUrl}/storage/${form.image_url}`
-
-        code.value = response.code
-
-        // Save initial state for comparison
-        initialState.value = {
-            image: response.image,
-            name: response.name,
-            description: response.description,
-            price: response.price,
-            image_url: response.image_url
-        }
+        await retrieveProductState()
 
         isLoading.value = false
         
