@@ -114,11 +114,13 @@ onMounted(async () => {
                 </div>
 
                 <!-- Product image -->
-                <img
-                    :src="`${backendUrl}/storage/${product.image_url}`"
-                    class="lg:size-60 size-40 border-solid border-2 border-sky-600 rounded-xl shadow-lg
-                            hover:shadow-2xl transform transition duration-200 hover:scale-105"
-                >
+                <RouterLink :to="{ name: 'admin-products-availability-form', params: { code: product.code } }">
+                    <img
+                        :src="`${backendUrl}/storage/${product.image_url}`"
+                        class="lg:size-60 size-40 border-solid border-2 border-sky-600 rounded-xl shadow-lg
+                                hover:shadow-2xl transform transition duration-200 hover:scale-105"
+                    >
+                </RouterLink>
 
                 <!-- Product Code -->
                 <div class="flex flex-row gap-x-4">

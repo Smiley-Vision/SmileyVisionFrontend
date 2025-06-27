@@ -27,6 +27,7 @@ import ManageProductAvailabilityView from "@/views/admin/products/ManageProductA
 // Admin product management forms
 import CreateProductForm from "@/views/admin/products/forms/CreateProductForm.vue"
 import ModifyProductForm from "@/views/admin/products/forms/ModifyProductForm.vue"
+import ManageProductAvailabilityForm from "@/views/admin/products/forms/ManageProductAvailabilityForm.vue"
 
 // 404 error!
 import NotFoundView from "@/views/NotFoundView.vue"
@@ -97,19 +98,24 @@ const router = createRouter({
             component: CreateProductForm
         },
         {
-            path: '/admin/products/modify/:code',
-            name: 'admin-products-modify-form',
-            component: ModifyProductForm
-        },
-        {
             path: '/admin/products/modify',
             name: 'admin-products-modify',
             component: ModifyProductView
         },
         {
+            path: '/admin/products/modify/:code',
+            name: 'admin-products-modify-form',
+            component: ModifyProductForm
+        },
+        {
             path: '/admin/products/availability',
             name: 'admin-products-availability',
             component: ManageProductAvailabilityView
+        },
+        {
+            path: '/admin/products/availability/:code',
+            name: 'admin-products-availability-form',
+            component: ManageProductAvailabilityForm
         },
         {
             path: '/admin/register',

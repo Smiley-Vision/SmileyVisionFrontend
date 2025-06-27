@@ -68,8 +68,6 @@ const submitForm = async () => {
             detail: message,
             life: 4000
         })
-
-        throw error
     }
 }
 
@@ -149,16 +147,17 @@ onMounted(async () => {
         </div>
     </div>
 
+    <!-- Form content -->
     <form v-else @submit.prevent="submitForm"
         class="flex flex-col items-center max-w-2xl mx-auto my-12 p-10 gap-10 bg-white rounded-3xl shadow-2xl">
 
         <!-- Title -->
         <h2 class="text-3xl font-bold text-sky-800 text-center">Editar {{ form.name }}</h2>
 
-        <!-- Image Upload with Preview -->
+        <!-- Image preview -->
         <div class="w-48 h-48 relative group">
             <div
-                class="w-full h-full flex items-center justify-center bg-slate-100 border-2 border-dashed border-sky-400 rounded-2xl transition hover:bg-sky-50">
+                class="w-full h-full flex items-center justify-center bg-slate-100 border-2 border-solid border-sky-400 rounded-2xl transition hover:bg-sky-50">
                 <img v-if="imagePreview" :src="imagePreview" alt="Vista previa"
                     class="object-cover w-full h-full rounded-2xl" />
             </div>
