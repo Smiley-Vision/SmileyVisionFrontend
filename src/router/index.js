@@ -11,6 +11,11 @@ import MicasView from "@/views/shop/MicasView.vue"
 import ArmazonesView from "@/views/shop/ArmazonesView.vue"
 import EquiposView from "@/views/shop/EquiposView.vue"
 
+// Search product views
+import SearchArmazonesView from "@/views/shop/search/SearchArmazonesView.vue"
+import SearchEquiposView from "@/views/shop/search/SearchEquiposView.vue"
+import SearchMicasView from "@/views/shop/search/SearchMicasView.vue"
+
 // Product views
 import ProductView from "@/views/shop/products/ProductView.vue"
 
@@ -58,14 +63,29 @@ const router = createRouter({
             component: MicasView
         },
         {
+            path: '/shop/micas/search',
+            name: 'shop-search-Micas',
+            component: SearchMicasView
+        },
+        {
             path: '/shop/armazones',
             name: 'shop-Armazones',
             component: ArmazonesView
         },
         {
+            path: '/shop/armazones/search',
+            name: 'shop-search-Armazones',
+            component: SearchArmazonesView
+        },
+        {
             path: '/shop/equipos',
             name: 'shop-Equipos',
             component: EquiposView
+        },
+        {
+            path: '/shop/equipos/search',
+            name: 'shop-search-Equipos',
+            component: SearchEquiposView
         },
         {
             path: '/shop/products/:code',

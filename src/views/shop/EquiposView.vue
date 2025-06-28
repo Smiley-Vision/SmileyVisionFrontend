@@ -44,19 +44,22 @@ onMounted(async () => {
 
     <!-- Content -->
     <div v-else class="flex flex-col lg:px-20 px-14 mt-14 lg:gap-y-16 gap-y-10 2xl:mb-8 mb-12">
-        <!-- Title and description -->
-        <div class="flex flex-col gap-y-8">
-            <div class="md:text-6xl text-4xl font-semibold text-sky-800 -mb-4">
-                Equipos ópticos
+        <!-- Descriptive title and search bar -->
+        <div class="flex lg:flex-row flex-col items-center lg:gap-y-0 gap-y-8 justify-between">
+            <div class="text-3xl font-semibold text-sky-800">
+                Catálogo de equipos ópticos
             </div>
-            <div class="text-lg font-medium text-sky-800">
-                Explore el catálogo de productos
-            </div>
+            <RouterLink :to="{ name: 'shop-search-Equipos' }" class="bg-sky-700 hover:bg-sky-800 text-sky-100 px-6 py-4 rounded-xl shadow-xl">
+                <div class="flex flex-row items-center gap-x-4">
+                    <div class="pi pi-search font-semibold"></div>
+                    <div class="font-semibold">Buscar</div>
+                </div>
+            </RouterLink>
         </div>
         
         <!-- Product grid (list, on phone) -->
         <div class="flex justify-center">
-            <div class="grid lg:grid-cols-4 grid-cols-2 lg:gap-x-12 gap-x-8 lg:gap-y-10 gap-y-8 text-center">
+            <div class="grid lg:grid-cols-4 sm:grid-cols-2 grid-cols-1 lg:gap-x-12 gap-x-8 lg:gap-y-10 gap-y-8 text-center">
                 <div v-for="(equipo, index) in equipos" :key="index">
                     <div class="flex flex-col items-center gap-y-4">
                         <RouterLink :to="{ name: 'product', params: { code: equipo.code } }" :productID="equipo.code">
