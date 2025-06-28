@@ -155,8 +155,7 @@ onMounted(async () => {
                 </button>
     
                 <input
-                    min="1"
-                    :value="productStock"
+                    v-model="productStock"
                     class="w-14 text-center border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
     
