@@ -91,7 +91,7 @@ onMounted(async () => {
 
 <template>
     <form @submit.prevent="submitForm"
-        class="flex flex-col items-center max-w-2xl mx-auto my-12 p-10 gap-10 bg-white rounded-3xl shadow-2xl">
+        class="flex flex-col items-center max-w-2xl mx-auto my-12 p-10 gap-10 md:bg-white md:rounded-3xl md:shadow-2xl">
 
         <!-- Title -->
         <h2 class="text-3xl font-bold text-sky-800 text-center">Subir producto al sistema</h2>
@@ -123,7 +123,11 @@ onMounted(async () => {
         <div class="w-full">
             <label for="code" class="block text-sky-700 font-medium mb-1">Código del producto</label>
             <input v-model="form.code" id="code" type="text"
-                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required />
+                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300 mb-2" required />
+            <div class="flex flex-row gap-x-2 select-none items-center font-normal text-md text-sky-500">
+                <div class="pi pi-info-circle"></div>
+                <div>Este código identificará al producto en el sistema</div>
+            </div>
         </div>
 
         <!-- Name -->
