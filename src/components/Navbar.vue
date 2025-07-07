@@ -142,15 +142,15 @@ onUnmounted(() => {
                     </div>
                 </div>
                 <div v-else class="xl:flex hidden">
-                    <div v-if="isAdmin" class="text-xl">
-                        <div class="flex 2xl:flex-row flex-col lg:gap-x-2">
-                            <div>[ADMIN]</div>
+                    <div v-if="isAdmin" class="text-xl p-3 hover:bg-sky-700 hover:rounded-xl">
+                        <div class="flex 2xl:flex-row flex-col items-center lg:gap-x-3">
+                            <div class="pi pi-key" style="font-size: 1.4rem;"></div>
                             <div>{{ user.name }}</div>
                         </div>
                     </div>
-                    <div v-else-if="!isAdmin" class="text-xl">
-                        <div class="flex 2xl:flex-row flex-col lg:gap-x-2">
-                            <div>[USER]</div>
+                    <div v-else-if="!isAdmin" class="text-xl p-3 hover:bg-sky-700 hover:rounded-xl">
+                        <div class="flex 2xl:flex-row flex-col items-center lg:gap-x-3">
+                            <div class="pi pi-user" style="font-size: 1.4rem;"></div>
                             <div>{{ user.name }}</div>
                         </div>
                     </div>
