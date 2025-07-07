@@ -48,8 +48,8 @@ onMounted(() => {
 
 <template>
     <div class="flex flex-col px-20 mt-14 gap-12 2xl:mb-0 mb-12">
-        <div class="flex flex-col gap-y-2">
-            <div class="font-semibold text-6xl text-sky-800">
+        <div class="flex flex-col gap-y-4">
+            <div class="font-semibold xl:text-6xl text-4xl text-sky-800">
                 Inicio de sesión
             </div>
             <div class="font-lg text-xl text-sky-800">

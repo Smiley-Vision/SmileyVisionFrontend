@@ -88,16 +88,11 @@ onMounted(async () => {
     </div>
 
     <!-- Content -->
-    <div v-else class="flex flex-col lg:px-20 px-6 mt-10 gap-y-10 2xl:mb-8 mb-12">
-        <!-- Title and description -->
-        <div class="flex flex-col gap-y-2">
-            <h1 class="md:text-5xl text-3xl font-bold text-sky-800">
-                Solicitudes de registro
-            </h1>
-            <p class="text-base md:text-lg text-sky-700">
-                Elija qué usuarios pueden registrarse en el sistema.
-            </p>
-        </div>
+    <div v-else class="flex flex-col xl:px-20 md:px-12 px-8 px-14 lg:mt-14 lg:py-0 md:py-10 py-8 lg:gap-y-10 gap-y-6">
+        <!-- Descriptive title -->
+        <h1 class="lg:text-4xl text-2xl font-bold text-sky-800">
+            Solicitudes de registro
+        </h1>
 
         <!-- Registration requests list -->
         <div class="grid gap-4 max-w-3xl mx-auto w-full">

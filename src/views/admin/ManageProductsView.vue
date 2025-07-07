@@ -10,7 +10,7 @@ const images = ['create', 'modify', 'availability']
         <!-- Title and description -->
         <div
             class="flex flex-col gap-y-8">
-            <div class="md:text-6xl text-4xl font-semibold text-sky-800 -mb-4">
+            <div class="xl:text-6xl md:text-5xl text-4xl font-semibold text-sky-800 -mb-4">
                 Administración de productos
             </div>
             <div class="text-lg font-medium text-sky-800">
@@ -25,7 +25,7 @@ const images = ['create', 'modify', 'availability']
                     <RouterLink :to="{ name: `admin-products-${image}` }">
                         <img
                             :src="`/src/assets/images/admin/products/admin-products-${image}.png`"
-                            class="lg:size-52 md:size-36 size-36 border-solid border-4 border-sky-600 rounded-xl shadow-lg p-6
+                            class="lg:size-52 size-36 border-solid border-4 border-sky-600 rounded-xl shadow-lg p-6
                                     hover:shadow-2xl transform transition duration-200 hover:scale-105"
                         >
                     </RouterLink>

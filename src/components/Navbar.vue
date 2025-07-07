@@ -65,7 +65,7 @@ onUnmounted(() => {
 
 <template>
     <!-- Navbar - Desktop -->
-    <div class="flex flex-row justify-between text-white mx-auto lg:px-20 md:px-12 px-8 py-6 bg-sky-800 min-w-full max-w-full shadow-2xl">
+    <div class="sticky top-0 z-50 flex flex-row justify-between text-white mx-auto lg:px-20 md:px-12 px-8 py-6 bg-sky-800 min-w-full max-w-full shadow-2xl">
             
             <!-- Logo section -->
             <div class="flex justify-center items-center gap-x-4">
@@ -144,7 +144,7 @@ onUnmounted(() => {
                 <div v-else class="xl:flex hidden">
                     <div v-if="isAdmin" class="text-xl p-3 hover:bg-sky-700 hover:rounded-xl">
                         <div class="flex 2xl:flex-row flex-col items-center lg:gap-x-3">
-                            <div class="pi pi-key" style="font-size: 1.4rem;"></div>
+                            <div class="pi pi-wrench" style="font-size: 1.4rem;"></div>
                             <div>{{ user.name }}</div>
                         </div>
                     </div>
