@@ -36,17 +36,17 @@ onMounted(() => {
 
 <template>
     <!-- Home view container -->
-    <div class="flex lg:flex-row flex-col px-20 mt-14 lg:gap-28 gap-10">
+    <div class="flex lg:flex-row flex-col items-center xl:px-20 md:px-12 px-8 lg:mt-14 lg:py-0 md:py-10 py-8 lg:gap-28 gap-10">
 
         <!-- Left sub-container -->
-        <div class="flex-1">
+        <div>
 
             <!-- Title and subtitle -->
             <div class="flex flex-col gap-y-4 mb-8">
-                <div class="md:text-8xl text-4xl font-semibold text-sky-800">
+                <div class="xl:text-8xl lg:text-6xl text-4xl font-semibold text-sky-800">
                     Somos Distribuidores
                 </div>
-                <div class="md:text-4xl text-xl font-normal text-sky-800">
+                <div class="lg:text-4xl md:text-2xl text-xl font-normal text-sky-800">
                     Tenemos lo mejor para tu óptica
                 </div>
             </div>
@@ -61,7 +61,7 @@ onMounted(() => {
                     variedad de productos para tu óptica que serán
                     de un gran atractivo para el público.
                 </div>
-                <div class="flex md:flex-row flex-col gap-6 p-4 mx-auto">
+                <div class="flex sm:flex-row flex-col gap-6 p-4 mx-auto">
                     <Button to="/shop" :is-hollow="false" :width="12" text="Ver productos"></Button>
                     <Button to="/contact" :is-hollow="true" :width="12" text="Contáctanos"></Button>
                 </div>
@@ -69,8 +69,8 @@ onMounted(() => {
         </div>
 
         <!-- Right sub-container -->
-        <div class="flex-1">
-            <img src="@/assets/images/home_image.jpeg" alt="home_image" class="w-full h-full object-cover object-left lg:mb-0 mb-8">
+        <div class="size-2/3">
+            <img src="@/assets/images/home_image.jpeg" alt="home_image">
         </div>
 
         <!-- Toast -->

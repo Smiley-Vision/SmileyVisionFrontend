@@ -133,7 +133,7 @@ onUnmounted(() => {
 
             <!-- Navbar Icons - Desktop -->
             <div class="lg:flex items-center gap-8 hidden">
-                <div v-if="!isAuthenticated" class="flex gap-x-8">
+                <div v-if="!isAuthenticated" class="xl:flex gap-x-6 hidden">
                     <div class="min-w-8 max-w-16">
                         <RouterLink class="pi pi-info-circle" style="font-size: 1.5rem" :to="{ name: 'about' }"></RouterLink>
                     </div>
