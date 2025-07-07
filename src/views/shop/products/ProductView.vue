@@ -5,11 +5,13 @@ import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL
+
 const route = useRoute()
 const toast = useToast()
 
-// ID of the current product
-const productID = route.params.id
+const productCode = route.params.code
+const productID = ref(0)
 
 const isLoading = ref(true)
 const product = ref({})
@@ -53,11 +55,12 @@ const formatPrice = (price) => {
 // Get the product associated with the ID
 onMounted(async () => {
     try {
-        const response = await fetchData(`products/${productID}`, 'GET')
+        const response = await fetchData(`products/${productCode}`, 'GET')
         product.value = response
+        productID.value = response.id
 
         // Get the availability of the product
-        productAvailability.value = await fetchData(`product-existence/${productID}`)
+        productAvailability.value = await fetchData(`product-existence/${productID.value}`)
 
         isLoading.value = false
     } catch (error) {
@@ -84,94 +87,99 @@ onMounted(async () => {
     </div>
 
     <!-- Content -->
-    <div v-else class="flex flex-col lg:px-20 px-14 mt-14 lg:gap-y-8 gap-y-6 2xl:mb-8 mb-12">
+    <div v-else class="flex flex-col items-center lg:px-20 px-14 mt-14 lg:gap-y-8 gap-y-6 2xl:mb-8 mb-12">
 
-        <!-- Product details text -->
-        <div class="font-semibold text-2xl text-sky-700">
-            Detalles del producto
-        </div>
+        <!-- Grouped left-aligned section -->
+        <div class="flex flex-col items-start gap-y-6">
 
-        <!-- Product image and details -->
-        <div class="flex lg:flex-row flex-col justify-center lg:gap-x-10 gap-y-4">
-            
-            <!-- Product image -->
-            <img
-                :src="`/src/assets/images/shop/products/equipos/${product.code}.jpeg`"
-                alt="Imagen del producto"
-                class="lg:size-[28rem]"
-            >
-
-            <!-- Product details -->
-            <div class="flex flex-col justify-center gap-y-4">
-
-                <!-- Product name -->
-                <div class="font-semibold text-xl text-sky-800">
-                    {{ product.name }}
-                </div>
-
-                <!-- Product price -->
-                <div class="font-bold text-2xl text-sky-600">
-                    {{ '$' + formatPrice(product.price) }}
-                </div>
-
-                <!-- Description -->
-                <div class="flex flex-col gap-y-2">
-                    <div class="font-semibold text-lg text-sky-800">
-                        Descripción
-                    </div>
-                    <div class="text-justify font-medium text-sky-800 max-w-md">
-                        {{ product.description }}
-                    </div>
-                </div>
-
-                <!-- Products in existence -->
-                <div class="flex flex-row gap-x-4">
-                    <div class="font-semibold text-sky-800">
-                        En existencia:
-                    </div>
-                    <div v-if="productAvailability != 0" class="font-bold text-sky-600">
-                        {{ productAvailability }}
-                    </div>
-                    <div v-else class="font-bold text-gray-400">
-                        NO DISPONIBLE
-                    </div>
-                </div>
+            <!-- Product details text -->
+            <div class="font-semibold text-2xl text-sky-700">
+                Detalles del producto
+            </div>
+    
+            <!-- Product image and details -->
+            <div class="flex lg:flex-row flex-col justify-center lg:gap-x-10 gap-y-4">
                 
-                <div v-if="productAvailability != 0" class="flex flex-row gap-x-4">
-                    <div class="font-semibold text-sky-800">
-                        Cantidad:
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button @click="decrease"
-                                class="w-8 h-8 rounded bg-sky-600 text-white font-bold hover:bg-sky-700">
-                        −
-                        </button>
+                <!-- Product image -->
+                <img
+                    :src="`${backendUrl}/storage/${product.image_url}`"
+                    alt="Imagen del producto"
+                    class="lg:size-[28rem] border-solid border-2 border-sky-600 rounded-lg shadow-xl"
+                >
     
-                        <input
-                            v-model="quantity"
-                            min="1"
-                            disabled
-                            class="w-14 text-center border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        />
+                <!-- Product details -->
+                <div class="flex flex-col justify-center gap-y-4">
     
-                        <button @click="increase(productAvailability)"
-                                class="w-8 h-8 rounded bg-sky-600 text-white font-bold hover:bg-sky-700">
-                        +
-                        </button>
+                    <!-- Product name -->
+                    <div class="font-semibold text-xl text-sky-800">
+                        {{ product.name }}
                     </div>
+    
+                    <!-- Product price -->
+                    <div class="font-bold text-2xl text-sky-600">
+                        {{ '$' + formatPrice(product.price) }}
+                    </div>
+    
+                    <!-- Description -->
+                    <div class="flex flex-col gap-y-2">
+                        <div class="font-semibold text-lg text-sky-800">
+                            Descripción
+                        </div>
+                        <div class="text-justify font-medium text-sky-800 max-w-md">
+                            {{ product.description }}
+                        </div>
+                    </div>
+    
+                    <!-- Products in existence -->
+                    <div class="flex flex-row gap-x-4">
+                        <div class="font-semibold text-sky-800">
+                            En existencia:
+                        </div>
+                        <div v-if="productAvailability != 0" class="font-bold text-sky-600">
+                            {{ productAvailability }}
+                        </div>
+                        <div v-else class="font-bold text-gray-400">
+                            NO DISPONIBLE
+                        </div>
+                    </div>
+                    
+                    <!-- Product quantity selector -->
+                    <div v-if="productAvailability != 0" class="flex flex-row gap-x-4">
+                        <div class="font-semibold text-sky-800">
+                            Cantidad:
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button @click="decrease"
+                                    class="w-8 h-8 rounded bg-sky-600 text-white font-bold hover:bg-sky-700">
+                            −
+                            </button>
+        
+                            <input
+                                v-model="quantity"
+                                min="1"
+                                disabled
+                                class="w-14 text-center border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            />
+        
+                            <button @click="increase(productAvailability)"
+                                    class="w-8 h-8 rounded bg-sky-600 text-white font-bold hover:bg-sky-700">
+                            +
+                            </button>
+                        </div>
+                    </div>
+    
+                    <!-- 'Add to cart' button -->
+                    <button
+                        v-if="productAvailability != 0"
+                        class="bg-sky-600 text-white px-3 py-1 rounded-md hover:bg-sky-700"
+                    >Añadir al carrito</button>
+    
+                    <button
+                        v-else
+                        class="bg-gray-400 text-white px-3 py-1 rounded-md disabled"
+                        disabled
+                    >Añadir al carrito</button>
                 </div>
-
-                <!-- 'Add to cart' button -->
-                <button
-                    v-if="productAvailability != 0"
-                    class="bg-sky-600 text-white px-3 py-1 rounded-md hover:bg-sky-700"
-                >Añadir al carrito</button>
-
-                <button
-                    v-else
-                    class="bg-gray-400 text-white px-3 py-1 rounded-md disabled"
-                    disabled
-                >Añadir al carrito</button>
             </div>
         </div>
     </div>

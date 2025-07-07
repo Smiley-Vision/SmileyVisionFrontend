@@ -1,17 +1,42 @@
 import { createRouter, createWebHistory } from "vue-router"
+
+// General, guest views
 import HomeView from "@/views/HomeView.vue"
 import AboutView from "@/views/AboutView.vue"
 import ShopView from "@/views/ShopView.vue"
+import ContactView from "@/views/ContactView.vue"
+
+// Type-specific product views
 import MicasView from "@/views/shop/MicasView.vue"
 import ArmazonesView from "@/views/shop/ArmazonesView.vue"
 import EquiposView from "@/views/shop/EquiposView.vue"
+
+// Search product views
+import SearchArmazonesView from "@/views/shop/search/SearchArmazonesView.vue"
+import SearchEquiposView from "@/views/shop/search/SearchEquiposView.vue"
+import SearchMicasView from "@/views/shop/search/SearchMicasView.vue"
+
+// Product views
 import ProductView from "@/views/shop/products/ProductView.vue"
-import ContactView from "@/views/ContactView.vue"
+
+// Login, register views
 import LoginView from "@/views/LoginView.vue"
-import UserRegisterView from "@/views/UserRegisterView.vue"
 import RegisterView from "@/views/admin/RegisterView.vue"
+import UserRegisterView from "@/views/UserRegisterView.vue"
+
+// Admin product management views
 import ProductsView from "@/views/admin/ProductsView.vue"
+import ModifyProductView from "@/views/admin/products/ModifyProductView.vue"
+import ManageProductAvailabilityView from "@/views/admin/products/ManageProductAvailabilityView.vue"
+
+// Admin product management forms
+import CreateProductForm from "@/views/admin/products/forms/CreateProductForm.vue"
+import ModifyProductForm from "@/views/admin/products/forms/ModifyProductForm.vue"
+import ManageProductAvailabilityForm from "@/views/admin/products/forms/ManageProductAvailabilityForm.vue"
+
+// 404 error!
 import NotFoundView from "@/views/NotFoundView.vue"
+
 import { useAuthStore } from "@/stores/auth"
 
 const router = createRouter({
@@ -38,9 +63,19 @@ const router = createRouter({
             component: MicasView
         },
         {
+            path: '/shop/micas/search',
+            name: 'shop-search-Micas',
+            component: SearchMicasView
+        },
+        {
             path: '/shop/armazones',
             name: 'shop-Armazones',
             component: ArmazonesView
+        },
+        {
+            path: '/shop/armazones/search',
+            name: 'shop-search-Armazones',
+            component: SearchArmazonesView
         },
         {
             path: '/shop/equipos',
@@ -48,7 +83,12 @@ const router = createRouter({
             component: EquiposView
         },
         {
-            path: '/shop/products/:id',
+            path: '/shop/equipos/search',
+            name: 'shop-search-Equipos',
+            component: SearchEquiposView
+        },
+        {
+            path: '/shop/products/:code',
             name: 'product',
             component: ProductView
         },
@@ -71,6 +111,31 @@ const router = createRouter({
             path: '/admin/products',
             name: 'admin-products',
             component: ProductsView
+        },
+        {
+            path: '/admin/products/create',
+            name: 'admin-products-create',
+            component: CreateProductForm
+        },
+        {
+            path: '/admin/products/modify',
+            name: 'admin-products-modify',
+            component: ModifyProductView
+        },
+        {
+            path: '/admin/products/modify/:code',
+            name: 'admin-products-modify-form',
+            component: ModifyProductForm
+        },
+        {
+            path: '/admin/products/availability',
+            name: 'admin-products-availability',
+            component: ManageProductAvailabilityView
+        },
+        {
+            path: '/admin/products/availability/:code',
+            name: 'admin-products-availability-form',
+            component: ManageProductAvailabilityForm
         },
         {
             path: '/admin/register',
