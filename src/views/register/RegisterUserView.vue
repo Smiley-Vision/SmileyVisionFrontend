@@ -76,7 +76,7 @@ const submitRegistration = async () => {
         await fetchData('mark-register-token', 'POST', { token: props.token })
 
         auth.justRegistered = true
-        router.push({ name: 'login' })
+        router.push({ name: 'login', query: { justRegistered: 'true' } })
 
     } catch (error) {
         // Show the first validation error

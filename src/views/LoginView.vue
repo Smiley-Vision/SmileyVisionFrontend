@@ -3,8 +3,9 @@ import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'primevue';
 import { onMounted } from 'vue';
 import { reactive } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
 
+const route = useRoute()
 const toast = useToast()
 const auth = useAuthStore()
 const router = useRouter()
@@ -17,7 +18,7 @@ const form = reactive({
 const submitLogin = async () => {
     try {
         await auth.login(form.email, form.password)
-        router.push({ name: 'home' })
+        router.push({ name: 'home', query: { justLoggedIn: 'true' }})
     } catch (error) {
         // Show the first validation error
         const firstField = Object.keys(error.errors)[0]
@@ -33,7 +34,7 @@ const submitLogin = async () => {
 }
 
 onMounted(() => {
-    if (auth.justRegistered) {
+    if (route.query.justRegistered === 'true') {
         toast.add({
             severity: 'success',
             summary: 'Éxito',
@@ -88,6 +89,6 @@ onMounted(() => {
         </div>
 
         <!-- Toast -->
-        <Toast position="top-right"/>
+        <Toast position="bottom-right"/>
     </div>
 </template>

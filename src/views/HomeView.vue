@@ -2,31 +2,33 @@
 import Button from '@/components/Button.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'primevue';
-import { onMounted } from 'vue';
+import { nextTick, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 
-const auth = useAuthStore()
+const route = useRoute()
 const toast = useToast()
-
+const auth = useAuthStore()
 const user = auth.user
 
-onMounted(() => {
-    if (auth.justLoggedIn && user.name) {
+onMounted(async () => {
+    await nextTick() // Let Toast render first
+
+    if (route.query.justLoggedIn === 'true') {
         toast.add({
             severity: 'success',
             summary: 'Éxito',
             detail: `Bienvenido, ${user.name}`,
-            life: 4000 // 4 seconds
+            life: 4000
         })
 
         auth.justLoggedIn = false
-    }
 
-    if (auth.justSubmittedRequest) {
+    } else if (route.query.justSubmittedRequest === 'true') {
         toast.add({
             severity: 'success',
             summary: 'Éxito',
             detail: 'Solicitud enviada correctamente',
-            life: 4000 // 4 seconds
+            life: 4000
         })
 
         auth.justSubmittedRequest = false
@@ -72,8 +74,7 @@ onMounted(() => {
         <div class="size-2/3">
             <img src="@/assets/images/home_image.jpeg" alt="home_image">
         </div>
-
-        <!-- Toast -->
-        <Toast position="top-left"/>
     </div>
+
+    <Toast position="top-left"/>
 </template>

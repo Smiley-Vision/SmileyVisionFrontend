@@ -22,10 +22,10 @@ const submitRegistrationRequest = async () => {
             message: form.message
         }
 
-        const data = await fetchData('register-requests', 'POST', body)
+        await fetchData('register-requests', 'POST', body)
 
         auth.justSubmittedRequest = true
-        router.push({ name: 'home' })
+        router.push({ name: 'home', query: { justSubmittedRequest: 'true' } })
     } catch (error) {
         // Show the first validation error
         const firstField = Object.keys(error.errors)[0]
