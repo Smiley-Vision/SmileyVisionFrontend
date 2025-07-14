@@ -90,7 +90,7 @@ onMounted(async () => {
     <!-- Content -->
     <div v-else class="flex flex-col xl:px-20 md:px-12 px-8 px-14 lg:mt-14 lg:py-0 md:py-10 py-8 lg:gap-y-10 gap-y-6">
         <!-- Descriptive title -->
-        <h1 class="lg:text-4xl text-2xl font-bold text-sky-800">
+        <h1 class="lg:text-4xl sm:text-3xl text-2xl font-bold text-sky-800">
             Solicitudes de registro
         </h1>
 
