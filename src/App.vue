@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterView } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
+import Footer from '@/components/Footer.vue'
 
 const isMenuOpen = ref(false)
 
@@ -11,7 +12,7 @@ function handleToggleMenu(state) {
 </script>
 
 <template>
-  <div class="relative">
+  <div class="relative h-screen">
     <!-- Navbar -->
     <Navbar @toggle-menu="handleToggleMenu" />
 
@@ -23,5 +24,8 @@ function handleToggleMenu(state) {
     <div class="relative z-10">
       <RouterView />
     </div>
+
+    <!-- Footer -->
+    <Footer></Footer>
   </div>
 </template>
