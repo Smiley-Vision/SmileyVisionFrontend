@@ -170,11 +170,11 @@ onUnmounted(() => {
         </div>
 
     <!-- Mobile Menu -->
-    <div ref="dropDownMenu" class="absolute right-0 shadow-xl z-50">
-        <ul :class="`flex flex-col max-w-40 bg-sky-600 text-white px-6 py-4 gap-y-4 lg:hidden
+    <div ref="dropDownMenu" class="flex justify-end sticky top-28 shadow-xl z-50">
+        <ul :class="`absolute flex flex-col max-w-40 bg-sky-600 text-white px-6 py-4 gap-y-4 lg:hidden
             ${isMenuOpen ? '' : 'hidden'}`">
             <li>
-                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'home' }">Principal
+                <RouterLink class="focus:bg-sky-700 focus:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'home' }">Principal
                 </RouterLink>
             </li>
             <li>
