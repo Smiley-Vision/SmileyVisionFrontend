@@ -6,7 +6,7 @@ const images = ['create', 'modify', 'availability']
 </script>
 
 <template>
-    <div class="flex flex-col lg:px-20 md:px-12 px-8 lg:mt-14 lg:py-0 md:py-10 py-8 lg:gap-y-10 gap-y-6 2xl:mb-0 mb-12">
+    <div class="flex flex-col lg:px-20 md:px-12 px-8 lg:mt-14 lg:py-0 md:py-10 py-8 lg:gap-y-10 gap-y-6">
         <!-- Title and description -->
         <div
             class="flex flex-col gap-y-8">
@@ -19,7 +19,7 @@ const images = ['create', 'modify', 'availability']
         </div>
 
         <!-- Content -->
-        <div class="flex md:flex-row xl:gap-x-36 lg:gap-x-22 md:gap-x-20 flex-col gap-y-12 max-w-full mx-auto my-auto p-4">
+        <div class="flex md:flex-row xl:gap-x-36 lg:gap-x-22 md:gap-x-20 flex-col gap-y-12 max-w-full mx-auto my-auto pt-4">
             <div v-for="(image, index) in images" :key="index" class="min-w-2xl rounded-xl">
                 <div class="flex flex-col items-center gap-y-4 max-w-sm max-h-sm">
                     <RouterLink :to="{ name: `admin-products-${image}` }">

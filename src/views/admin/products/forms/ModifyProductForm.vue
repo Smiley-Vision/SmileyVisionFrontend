@@ -149,7 +149,7 @@ onMounted(async () => {
 
     <!-- Form content -->
     <form v-else @submit.prevent="submitForm"
-        class="flex flex-col items-center max-w-2xl mx-auto my-12 p-10 gap-10 bg-white rounded-3xl shadow-2xl">
+        class="flex flex-col items-center max-w-2xl mx-auto mt-12 md:mb-0 mb-12 md:px-10 md:py-10 px-8 gap-10 md:bg-white md:rounded-3xl md:shadow-2xl">
 
         <!-- Title -->
         <h2 class="text-3xl font-bold text-sky-800 text-center">Editar {{ form.name }}</h2>
@@ -192,7 +192,7 @@ onMounted(async () => {
         </div>
 
         <!-- Submit and delete buttons -->
-        <div class="flex flex-row justify-between w-2/3">
+        <div class="flex flex-row justify-between md:w-2/3 w-full">
             <button
                 type="submit"
                 :disabled="!isFormModified"

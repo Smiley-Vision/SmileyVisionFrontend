@@ -145,13 +145,13 @@ onUnmounted(() => {
                     <div v-if="isAdmin" class="text-xl p-3 hover:bg-sky-700 hover:rounded-xl">
                         <div class="flex 2xl:flex-row flex-col items-center lg:gap-x-3">
                             <div class="pi pi-wrench" style="font-size: 1.4rem;"></div>
-                            <div>{{ user.name }}</div>
+                            <div class="select-none">{{ user.name }}</div>
                         </div>
                     </div>
                     <div v-else-if="!isAdmin" class="text-xl p-3 hover:bg-sky-700 hover:rounded-xl">
                         <div class="flex 2xl:flex-row flex-col items-center lg:gap-x-3">
                             <div class="pi pi-user" style="font-size: 1.4rem;"></div>
-                            <div>{{ user.name }}</div>
+                            <div class="select-none">{{ user.name }}</div>
                         </div>
                     </div>
                 </div>

@@ -55,7 +55,7 @@ onMounted(async() => {
         </div>
 
         <!-- Product types list -->
-        <div class="flex md:flex-row w-full justify-evenly flex-col items-center gap-y-16 mx-auto my-auto p-4">
+        <div class="flex md:flex-row w-full justify-evenly flex-col items-center gap-y-12 mx-auto md:p-4">
             <div v-for="(product, index) in products" :key="index" class="min-w-2xl rounded-xl">
                 <div class="flex flex-col items-center gap-y-4 max-w-sm max-h-sm">
                     <RouterLink :to="{ name: 'shop-' + `${product.name}` }">

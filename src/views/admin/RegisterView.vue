@@ -57,7 +57,6 @@ const acceptRequest = async (id) => {
 const rejectRequest = async (id) => {
     try {
         const response = await fetchData(`register-requests/${id}`, 'DELETE')
-        console.log(response);
 
         // Remove the rejected request from the list
         registrationRequests.value = registrationRequests.value.filter(request => request.id !== id)
