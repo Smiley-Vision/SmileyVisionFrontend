@@ -12,7 +12,7 @@ function handleToggleMenu(state) {
 </script>
 
 <template>
-  <div class="relative h-screen">
+  <div class="min-h-screen flex flex-col">
     <!-- Navbar -->
     <Navbar @toggle-menu="handleToggleMenu" />
 
@@ -21,7 +21,7 @@ function handleToggleMenu(state) {
     w-full h-full lg:bg-black/0 bg-black/30 z-40"></div>
 
     <!-- Main Content -->
-    <div class="relative z-10">
+    <div class="flex-grow relative z-10">
       <RouterView />
     </div>
 
