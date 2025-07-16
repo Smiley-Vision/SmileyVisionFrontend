@@ -43,13 +43,13 @@ onMounted(async () => {
     </div>
 
     <!-- Content -->
-    <div v-else class="flex flex-col lg:px-20 px-14 mt-14 lg:gap-y-16 gap-y-10 2xl:mb-8 mb-12">
+    <div v-else class="flex flex-col xl:px-20 md:px-12 px-8 px-14 lg:mt-14 lg:py-0 md:py-10 py-8 lg:gap-y-16 gap-y-12">
         <!-- Descriptive title and search bar -->
-        <div class="flex lg:flex-row flex-col items-center lg:gap-y-0 gap-y-8 justify-between">
-            <div class="text-3xl font-semibold text-sky-800">
-                Catálogo de equipos ópticos
+        <div class="flex lg:flex-row flex-col items-center center lg:gap-y-0 gap-y-8 justify-between">
+            <div class="lg:text-4xl text-3xl font-semibold text-sky-800">
+                Catálogo de equipos
             </div>
-            <RouterLink :to="{ name: 'shop-search-Equipos' }" class="bg-sky-700 hover:bg-sky-800 text-sky-100 px-6 py-4 rounded-xl shadow-xl">
+            <RouterLink :to="{ name: 'shop-search-Equipos' }" class="flex lg:w-auto w-full bg-sky-200 hover:bg-sky-300 text-sky-800 px-6 py-3 rounded-xl shadow-xl">
                 <div class="flex flex-row items-center gap-x-4">
                     <div class="pi pi-search font-semibold"></div>
                     <div class="font-semibold">Buscar</div>
@@ -59,17 +59,17 @@ onMounted(async () => {
         
         <!-- Product grid (list, on phone) -->
         <div class="flex justify-center">
-            <div class="grid lg:grid-cols-4 sm:grid-cols-2 grid-cols-1 lg:gap-x-12 gap-x-8 lg:gap-y-10 gap-y-8 text-center">
+            <div class="grid xl:grid-cols-4 sm:grid-cols-3 grid-cols-2 lg:gap-x-12 gap-x-8 lg:gap-y-10 gap-y-8 text-center">
                 <div v-for="(equipo, index) in equipos" :key="index">
                     <div class="flex flex-col items-center gap-y-4">
                         <RouterLink :to="{ name: 'product', params: { code: equipo.code } }" :productID="equipo.code">
                             <img
                                 :src="`${backendUrl}/storage/${equipo.image_url}`"
-                                class="lg:size-60 size-40 border-solid border-4 border-sky-600 rounded-xl shadow-lg
+                                class="lg:size-60 md:size-40 size-32 border-solid border-4 border-sky-600 rounded-xl shadow-lg
                                         hover:shadow-2xl transform transition duration-200 hover:scale-105"
                             >
                         </RouterLink>
-                        <div class="font-semibold lg:text-lg text-sm text-sky-800">
+                        <div class="font-semibold lg:text-lg sm:text-sm text-xs text-sky-800">
                             {{ equipo.name }}
                         </div>
                     </div>

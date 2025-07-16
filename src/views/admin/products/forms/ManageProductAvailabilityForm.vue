@@ -112,7 +112,7 @@ onMounted(async () => {
 
     <!-- Form content -->
     <form v-else @submit.prevent="submitForm"
-        class="flex flex-col items-center max-w-2xl mx-auto my-12 p-10 gap-10 bg-white rounded-3xl shadow-2xl">
+        class="flex flex-col items-center max-w-2xl mx-auto mt-12 md:mb-0 mb-12 md:px-10 md:py-10 px-8 gap-10 md:bg-white md:rounded-3xl md:shadow-2xl">
 
         <!-- Title -->
         <h2 class="text-3xl font-bold text-sky-800 text-center">Editar disponibilidad de {{ product.name }}</h2>
@@ -170,7 +170,7 @@ onMounted(async () => {
         <!-- Current total product stock -->
         <div class="flex flex-row items-center gap-x-4">
             <div class="text-blue-400 pi pi-info-circle"></div>
-            <div class="text-md text-blue-400 font-bold">
+            <div class="text-md text-blue-400 text-center font-bold">
                 El stock total actual del producto es de {{ totalScotk }} unidades
             </div>
         </div>

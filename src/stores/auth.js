@@ -5,9 +5,6 @@ import { computed, ref } from "vue";
 export const useAuthStore = defineStore('auth', () => {
     const token = ref(localStorage.getItem('token'))
     const user = ref(JSON.parse(localStorage.getItem('user')) || '{}')
-    const justLoggedIn = ref(false)
-    const justRegistered = ref(false)
-    const justSubmittedRequest = ref(false)
 
     const isAuthenticated = computed(() => !!token.value)
     const isAdmin = computed(() => user.value?.role_id === 1 || false)
@@ -19,7 +16,6 @@ export const useAuthStore = defineStore('auth', () => {
 
             token.value = data.token
             user.value = data.user
-            justLoggedIn.value = true
 
             localStorage.setItem('token', data.token)
             localStorage.setItem('user', JSON.stringify(data.user))
@@ -54,9 +50,6 @@ export const useAuthStore = defineStore('auth', () => {
     return {
         token,
         user,
-        justLoggedIn,
-        justRegistered,
-        justSubmittedRequest,
         isAuthenticated,
         isAdmin,
         login,

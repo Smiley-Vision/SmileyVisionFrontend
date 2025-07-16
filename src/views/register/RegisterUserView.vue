@@ -76,7 +76,7 @@ const submitRegistration = async () => {
         await fetchData('mark-register-token', 'POST', { token: props.token })
 
         auth.justRegistered = true
-        router.push({ name: 'login' })
+        router.push({ name: 'login', query: { justRegistered: 'true' } })
 
     } catch (error) {
         // Show the first validation error
@@ -98,87 +98,88 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="flex flex-col px-8 lg:px-24 mt-14 gap-12 2xl:mb-0 mb-12">
-        <div class="flex flex-col gap-y-2">
-            <div class="font-semibold text-6xl text-sky-800">
-                Registro en el sistema
-            </div>
-            <div class="font-lg text-xl text-sky-800 text-justify max-w-2xl">
-                Su solicitud de registro ha sido aceptada. Por favor,
-                llene correctamente el siguiente formulario para poder
-                realizar acciones en el sistema.
-            </div>
-        </div>
+    <div class="flex items-center justify-center bg-white px-4 pt-14">
+        <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl p-10 flex flex-col gap-y-8">
 
-        <form @submit.prevent="submitRegistration">
-            <div class="flex lg:flex-row flex-col gap-x-12 max-w-2xl">
-                <!-- Column 1 -->
-                <div class="flex flex-col gap-y-6 flex-1">
-                    <!-- Name -->
+            <!-- Encabezado -->
+            <div class="flex flex-col gap-y-3 text-center">
+                <h1 class="text-3xl md:text-4xl font-bold text-sky-800">Registro en el sistema</h1>
+                <p class="text-sky-700 text-md md:text-center text-justify md:text-lg max-w-3xl mx-auto">
+                    Su solicitud de registro ha sido aceptada. Por favor, llene correctamente el siguiente formulario
+                    para poder realizar acciones en el sistema.
+                </p>
+            </div>
+
+            <!-- Formulario -->
+            <form @submit.prevent="submitRegistration" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Columna 1 -->
+                <div class="flex flex-col gap-y-6">
+                    <!-- Nombre -->
                     <div class="flex flex-col gap-y-1">
-                        <label for="name" class="font-medium text-lg text-gray-700">Nombre:</label>
+                        <label for="name" class="font-medium text-lg text-gray-700">Nombre completo:</label>
                         <input v-model="form.name" type="text" id="name" name="name"
-                            class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            placeholder="Ingrese su nombre y apellido" required>
+                            class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            placeholder="Ingrese su nombre completo" required />
                     </div>
-                    <!-- Email -->
+
+                    <!-- Correo electrónico -->
                     <div class="flex flex-col gap-y-1">
                         <label for="email" class="font-medium text-lg text-gray-700">Correo electrónico:</label>
-                        <input v-model="form.email" type="email" id="email" name="email"
-                            class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            placeholder="Ingrese su correo electrónico" disabled required>
+                        <input v-model="form.email" type="email" id="email" name="email" disabled
+                            class="w-full p-3 border rounded-md bg-gray-100 cursor-not-allowed focus:outline-none"
+                            required />
                     </div>
-                    <!-- Password -->
+
+                    <!-- Contraseña -->
                     <div class="flex flex-col gap-y-1">
                         <label for="password" class="font-medium text-lg text-gray-700">Contraseña:</label>
                         <input v-model="form.password" type="password" id="password" name="password"
-                            class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            placeholder="Ingrese su contraseña" required>
+                            class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            placeholder="Ingrese su contraseña" required />
                     </div>
                 </div>
 
-                <!-- Column 2 -->
-                <div class="flex flex-col gap-y-6 flex-1">
-                    <!-- Phone -->
-                    <div class="flex flex-col gap-y-1 lg:pt-0 pt-6">
+                <!-- Columna 2 -->
+                <div class="flex flex-col gap-y-6">
+                    <!-- Teléfono -->
+                    <div class="flex flex-col gap-y-1">
                         <label for="phone" class="font-medium text-lg text-gray-700">Teléfono:</label>
                         <input v-model="form.phone" type="tel" id="phone" name="phone"
-                            class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            placeholder="Ingrese su número" required>
+                            class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            placeholder="Ingrese su número" required />
                     </div>
-                    <!-- Role -->
+
+                    <!-- Rol -->
                     <div class="flex flex-col gap-y-1">
                         <label for="role" class="font-medium text-lg text-gray-700">Tipo de usuario:</label>
-                        <select
-                            id="role"
-                            v-model="selectedRoleIndex"
-                            class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        >
+                        <select id="role" v-model="selectedRoleIndex"
+                            class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500">
                             <option v-for="(role, index) in roles" :key="index" :value="index">
                                 {{ role }}
                             </option>
                         </select>
                     </div>
-                    <!-- Store (optometrists only) -->
+
+                    <!-- Tienda (solo ópticos) -->
                     <div v-if="selectedRoleIndex == 0" class="flex flex-col gap-y-1">
                         <label for="store" class="font-medium text-lg text-gray-700">Tienda asociada:</label>
-                        <select
-                            id="store"
-                            v-model="selectedStoreIndex"
-                            class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        >
+                        <select id="store" v-model="selectedStoreIndex"
+                            class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500">
                             <option v-for="(store, index) in stores" :key="index" :value="index">
                                 {{ store }}
                             </option>
                         </select>
                     </div>
                 </div>
-            </div>
 
-            <button type="submit"
-                class="px-4 py-2 mt-6 bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700">
-                Registrarse
-            </button>
-        </form>
+                <!-- Botón de registro -->
+                <div class="lg:col-span-2">
+                    <button type="submit"
+                        class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-lg rounded-md transition">
+                        Registrarse
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </template>

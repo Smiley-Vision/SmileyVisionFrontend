@@ -25,7 +25,7 @@ import RegisterView from "@/views/admin/RegisterView.vue"
 import UserRegisterView from "@/views/UserRegisterView.vue"
 
 // Admin product management views
-import ProductsView from "@/views/admin/ProductsView.vue"
+import ProductsView from "@/views/admin/ManageProductsView.vue"
 import ModifyProductView from "@/views/admin/products/ModifyProductView.vue"
 import ManageProductAvailabilityView from "@/views/admin/products/ManageProductAvailabilityView.vue"
 

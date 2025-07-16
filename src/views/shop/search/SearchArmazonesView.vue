@@ -41,11 +41,11 @@ const fetchFilteredProducts = async () => {
 </script>
 
 <template>
-    <div class="flex flex-col lg:px-20 px-14 py-14 lg:gap-y-10 gap-y-10 2xl:mb-0 mb-12">
+    <div class="flex flex-col xl:px-20 md:px-12 px-8 px-14 lg:mt-14 lg:py-0 md:py-10 py-8 lg:gap-y-16 gap-y-8">
         
         <div class="flex lg:flex-row flex-col justify-between lg:gap-y-0 gap-y-8">
             <!-- Descriptive title -->
-            <div class="text-3xl font-semibold text-sky-800">
+            <div class="lg:text-4xl text-3xl font-semibold text-sky-800">
                 Buscar armazones
             </div>
             
@@ -53,7 +53,7 @@ const fetchFilteredProducts = async () => {
             <input
                 v-model="searchQuery"
                 @input="fetchFilteredProducts"
-                placeholder="Buscar por nombre o por código..."
+                placeholder="Buscar por nombre, código o descripción..."
                 class="lg:w-2/3 w-full p-2 border border-2 border-solid border-slate-300 rounded-xl"
             >
         </div>
