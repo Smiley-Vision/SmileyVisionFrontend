@@ -192,7 +192,7 @@ onMounted(async () => {
         </div>
 
         <!-- Submit and delete buttons -->
-        <div class="flex flex-row justify-between md:w-2/3 w-full">
+        <div class="flex flex-row justify-around md:w-2/3 w-full">
             <button
                 type="submit"
                 :disabled="!isFormModified"

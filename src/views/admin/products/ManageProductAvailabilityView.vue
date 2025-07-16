@@ -59,7 +59,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="flex flex-col lg:px-20 px-14 py-14 lg:gap-y-10 gap-y-10 2xl:mb-0 mb-12">
+    <div class="flex flex-col lg:px-20 md:px-12 px-8 lg:mt-14 lg:py-0 md:py-10 py-8 lg:gap-y-10 gap-y-6">
         <!-- Descriptive title -->
         <div class="text-3xl font-semibold text-sky-800">
             Busque un producto para disponibilidad

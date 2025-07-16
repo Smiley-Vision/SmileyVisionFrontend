@@ -42,48 +42,45 @@ const submitRegistrationRequest = async () => {
 </script>
 
 <template>
-    <div class="flex flex-col px-20 mt-14 gap-12 2xl:mb-0 mb-12">
-        <div class="flex flex-col gap-y-4">
-            <div class="font-semibold xl:text-6xl text-4xl text-sky-800">
-                Solicitud de registro
+    <div class="mt-14 md:mb-0 mb-14 flex items-center justify-center bg-white px-4">
+        <div class="flex flex-col gap-y-8 p-10 rounded-2xl shadow-2xl bg-white w-full max-w-md">
+
+            <!-- Title and subtitle -->
+            <div class="flex flex-col gap-y-2 text-center">
+                <h1 class="font-bold text-3xl text-sky-800">Solicitud de registro</h1>
+                <p class="text-sky-700 text-lg">
+                    ¿Ya tienes una cuenta?
+                    <RouterLink to="/login" class="text-sky-500 hover:underline">
+                        Inicia sesión
+                    </RouterLink>
+                </p>
             </div>
-            <div class="font-lg text-xl text-sky-800 text-justify max-w-2xl">
-                Si eres un óptico, puedes solicitar registrarte al sistema.
-                En caso de aceptar tu solicitud, se te enviará un enlace
-                para el registro a tu correo, a la brevedad.
-                <span class="font-medium">
-                    ¿Ya tienes cuenta?
-                    <RouterLink
-                        to="/login"
-                        class="text-sky-500 hover:underline"
-                    >Inicia sesión</RouterLink>
-                </span>
-            </div>
+
+            <!-- Request register form -->
+            <form @submit.prevent="submitRegistrationRequest" class="flex flex-col gap-y-6">
+                <div class="flex flex-col gap-y-1">
+                    <label for="email" class="font-medium text-lg text-gray-700">Correo electrónico:</label>
+                    <input v-model="form.email" type="email" id="email" name="email"
+                        class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="Ingresa tu correo electrónico" required />
+                </div>
+
+                <div class="flex flex-col gap-y-1">
+                    <label for="message" class="font-medium text-lg text-gray-700">Descripción:</label>
+                    <input 
+                        v-model="form.message" type="text" id="message" name="message" 
+                        class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="Al menos 10 caracteres" required />
+                </div>
+
+                <button type="submit"
+                    class="w-full px-4 py-3 bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700">
+                    Solicitar registro
+                </button>
+            </form>
+
+            <!-- Toast -->
+            <Toast position="bottom-right" />
         </div>
-        <form @submit.prevent="submitRegistrationRequest">
-            <div class="flex flex-col gap-y-1">
-                <label for="email" class="font-medium text-lg text-gray-700">Correo electrónico:</label>
-                <input 
-                    v-model="form.email" type="email" id="email" name="email"
-                    class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 max-w-xs"
-                    placeholder="Ingresa tu correo electrónico" required
-                >
-            </div>
-            <div class="flex flex-col gap-y-1">
-                <label for="message" class="font-medium text-lg text-gray-700">Descripción:</label>
-                <input 
-                    v-model="form.message" type="text" id="message" name="message" 
-                    class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 max-w-xs"
-                    placeholder="Al menos 10 caracteres" required
-                >
-            </div>
-            <button 
-                type="submit" 
-                class="px-4 py-2 mt-4 bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700 max-w-xs"
-            >
-                Solicitar registro
-            </button>
-        </form>
-        <Toast position="bottom-right"/>
     </div>
 </template>

@@ -18,7 +18,7 @@ const form = reactive({
 const submitLogin = async () => {
     try {
         await auth.login(form.email, form.password)
-        router.push({ name: 'home', query: { justLoggedIn: 'true' }})
+        router.push({ name: 'home', query: { justLoggedIn: 'true' } })
     } catch (error) {
         // Show the first validation error
         const firstField = Object.keys(error.errors)[0]
@@ -48,47 +48,44 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="flex flex-col px-20 mt-14 gap-12 2xl:mb-0 mb-12">
-        <div class="flex flex-col gap-y-4">
-            <div class="font-semibold xl:text-6xl text-4xl text-sky-800">
-                Inicio de sesión
+    <div class="mt-14 md:mb-0 mb-14 flex items-center justify-center bg-white px-4">
+        <div class="flex flex-col gap-y-8 p-10 rounded-2xl shadow-2xl bg-white w-full max-w-md">
+
+            <!-- Title and subtitle -->
+            <div class="flex flex-col gap-y-2 text-center">
+                <h1 class="font-bold text-3xl text-sky-800">Inicio de sesión</h1>
+                <p class="text-sky-700 text-lg">
+                    ¿No tienes una cuenta?
+                    <RouterLink to="/register" class="text-sky-500 hover:underline">
+                        Solicita una
+                    </RouterLink>
+                </p>
             </div>
-            <div class="font-lg text-xl text-sky-800">
-                ¿No tienes una cuenta?
-                <RouterLink
-                    to="/register"
-                    class="text-sky-500 hover:underline"
-                >Solicita una</RouterLink>
-            </div>
-        </div>
-        <div class="flex flex-col gap-y-8">
-            <form @submit.prevent="submitLogin">
+
+            <!-- Login form -->
+            <form @submit.prevent="submitLogin" class="flex flex-col gap-y-6">
                 <div class="flex flex-col gap-y-1">
                     <label for="email" class="font-medium text-lg text-gray-700">Correo electrónico:</label>
-                    <input 
-                        v-model="form.email" type="email" id="email" name="email"
-                        class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 max-w-xs"
-                        placeholder="Ingresa tu correo electrónico" required
-                    >
+                    <input v-model="form.email" type="email" id="email" name="email"
+                        class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="Ingresa tu correo electrónico" required />
                 </div>
+
                 <div class="flex flex-col gap-y-1">
                     <label for="password" class="font-medium text-lg text-gray-700">Contraseña:</label>
-                    <input 
-                        v-model="form.password" type="password" id="password" name="password" 
-                        class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 max-w-xs"
-                        placeholder="Ingresa tu contraseña" required
-                    >
+                    <input v-model="form.password" type="password" id="password" name="password"
+                        class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="Ingresa tu contraseña" required />
                 </div>
-                <button 
-                    type="submit" 
-                    class="px-4 py-2 mt-4 bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700 max-w-xs"
-                >
+
+                <button type="submit"
+                    class="w-full px-4 py-3 bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700">
                     Iniciar sesión
                 </button>
             </form>
-        </div>
 
-        <!-- Toast -->
-        <Toast position="bottom-right"/>
+            <!-- Toast -->
+            <Toast position="bottom-right" />
+        </div>
     </div>
 </template>
