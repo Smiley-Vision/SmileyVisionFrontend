@@ -1,12 +1,12 @@
 <script setup>
-import { fetchData } from '@/shared/infrastructure/http/api';
+import { api } from '@/shared/infrastructure/http/api';
 import { useToast } from 'primevue';
 import { computed } from 'vue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL
+const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 const route = useRoute()
 const toast = useToast()
@@ -24,7 +24,7 @@ const totalScotk = ref(null)
 const productCode = route.params.code
 
 const getOfficeAvailability = async () => {
-    const result = productStock.value = await fetchData(`product-existence/${product.value.id}/${selectedOfficeID.value}`, 'GET')
+    const result = productStock.value = (await api.get(`product-existence/${product.value.id}/${selectedOfficeID.value}`)).data
     productStock.value = result
     initialStock.value = result
 }
@@ -51,11 +51,11 @@ const submitForm = async () => {
             stock: productStock.value
         }
 
-        const response = await fetchData('product-existence', 'POST', body)
+        const response = (await api.post('product-existence', body)).data
 
         if (response.message === 'Product stock updated successfully') {
             initialStock.value = productStock.value
-            totalScotk.value = await fetchData(`product-existence/${product.value.id}`, 'GET')
+            totalScotk.value = (await api.get(`product-existence/${product.value.id}`)).data
             
             toast.add({
                 severity: 'success',
@@ -76,9 +76,9 @@ const submitForm = async () => {
 
 // Retrieve the product and available offices
 const retrieveData = async () => {
-    product.value = await fetchData(`products/${productCode}`, 'GET')
-    offices.value = await fetchData('offices', 'GET')
-    totalScotk.value = await fetchData(`product-existence/${product.value.id}`, 'GET')
+    product.value = (await api.get(`products/${productCode}`)).data
+    offices.value = (await api.get('offices')).data
+    totalScotk.value = (await api.get(`product-existence/${product.value.id}`)).data
 }
 
 onMounted(async () => {

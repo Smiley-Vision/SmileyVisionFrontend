@@ -1,33 +1,33 @@
-import { fetchData } from '@/shared/infrastructure/http/api'
+import { api } from '@/shared/infrastructure/http/api'
 
 export async function createRegistrationRequestService(body) {
-    return fetchData('register-requests', 'POST', body)
+    return (await api.post('register-requests', body)).data
 }
 
 export async function getRegistrationRequestsService() {
-    return fetchData('register-requests', 'GET')
+    return (await api.get('register-requests')).data
 }
 
 export async function getRegistrationRequestByIdService(id) {
-    return fetchData(`register-requests/${id}`, 'GET')
+    return (await api.get(`register-requests/${id}`)).data
 }
 
 export async function deleteRegistrationRequestService(id) {
-    return fetchData(`register-requests/${id}`, 'DELETE')
+    return (await api.delete(`register-requests/${id}`)).data
 }
 
 export async function sendRegisterMailService(body) {
-    return fetchData('send-register-mail', 'POST', body)
+    return (await api.post('send-register-mail', body)).data
 }
 
 export async function getStoresService() {
-    return fetchData('stores', 'GET')
+    return (await api.get('stores')).data
 }
 
 export async function registerService(body) {
-    return fetchData('register', 'POST', body)
+    return (await api.post('register', body)).data
 }
 
 export async function markRegisterTokenService(token) {
-    return fetchData('mark-register-token', 'POST', { token })
+    return (await api.post('mark-register-token', { token })).data
 }

@@ -1,6 +1,6 @@
 <script setup>
 import { useAuthStore } from '@/contexts/identity/stores/auth';
-import { fetchData } from '@/shared/infrastructure/http/api';
+import { api } from '@/shared/infrastructure/http/api';
 import { useToast } from 'primevue';
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
@@ -22,7 +22,7 @@ const submitRegistrationRequest = async () => {
             message: form.message
         }
 
-        await fetchData('register-requests', 'POST', body)
+        await api.post('register-requests', body)
 
         auth.justSubmittedRequest = true
         router.push({ name: 'home', query: { justSubmittedRequest: 'true' } })

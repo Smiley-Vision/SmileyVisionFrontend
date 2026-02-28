@@ -1,5 +1,5 @@
 <script setup>
-import { fetchData } from '@/shared/infrastructure/http/api';
+import { api } from '@/shared/infrastructure/http/api';
 import { useToast } from 'primevue';
 import { computed } from 'vue';
 import { reactive } from 'vue';
@@ -7,7 +7,7 @@ import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL
+const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 const route = useRoute()
 const toast = useToast()
@@ -44,7 +44,7 @@ const submitForm = async () => {
             price: form.price
         }
 
-        const response = await fetchData(`products/${productCode}`, 'PATCH', body)
+        const response = (await api.patch(`products/${productCode}`, body)).data
 
         if (response.message === 'Product updated successfully') {
             await retrieveProductState()
@@ -73,7 +73,7 @@ const submitForm = async () => {
 
 const deleteProduct = async () => {
     try {
-        const response = await fetchData(`products/${productCode}`, 'DELETE')
+        const response = (await api.delete(`products/${productCode}`)).data
 
         toast.add({
             severity: 'success',
@@ -97,7 +97,7 @@ const deleteProduct = async () => {
 
 // Retrieve the current product's state
 const retrieveProductState = async () => {
-    const response = await fetchData(`products/${productCode}`, 'GET')
+    const response = (await api.get(`products/${productCode}`)).data
 
     // Fill the form with the product state
     form.image_url = response.image_url

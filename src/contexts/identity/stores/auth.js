@@ -1,4 +1,4 @@
-import { fetchData } from "@/shared/infrastructure/http/api";
+import { api } from "@/shared/infrastructure/http/api";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 
@@ -12,7 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
     const login = async (email, password) => {
         try {
             const body = { email, password }
-            const data = await fetchData('login', 'POST', body)
+            const data = (await api.post('login', body)).data
 
             token.value = data.token
             user.value = data.user
@@ -26,7 +26,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     const logout = async () => {
         try {
-            await fetchData('logout', 'POST')
+            await api.post('logout')
 
             token.value = null
             user.value = null
@@ -40,7 +40,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     const checkToken = async (token) => {
         try {
-            const response = await fetchData(`check-register-token?token=${token}`, 'GET')
+            const response = (await api.get(`check-register-token?token=${token}`)).data
             return response
         } catch (error) {
             throw error

@@ -1,25 +1,25 @@
-import { fetchData } from '@/shared/infrastructure/http/api'
+import { api } from '@/shared/infrastructure/http/api'
 
 export async function getAdminProductTypesService() {
-    return fetchData('product-types', 'GET')
+    return (await api.get('product-types')).data
 }
 
 export async function searchAdminProductsService(query, typeId) {
-    return fetchData(`products/query/${query}/${typeId}`, 'GET')
+    return (await api.get(`products/query/${query}/${typeId}`)).data
 }
 
 export async function createProductService(formData) {
-    return fetchData('products', 'POST', formData)
+    return (await api.post('products', formData)).data
 }
 
 export async function getProductStateService(code) {
-    return fetchData(`products/${code}`, 'GET')
+    return (await api.get(`products/${code}`)).data
 }
 
 export async function updateProductService(code, body) {
-    return fetchData(`products/${code}`, 'PATCH', body)
+    return (await api.patch(`products/${code}`, body)).data
 }
 
 export async function deleteProductService(code) {
-    return fetchData(`products/${code}`, 'DELETE')
+    return (await api.delete(`products/${code}`)).data
 }

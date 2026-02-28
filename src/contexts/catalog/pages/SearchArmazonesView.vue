@@ -1,9 +1,9 @@
 <script setup>
-import { fetchData } from '@/shared/infrastructure/http/api';
+import { api } from '@/shared/infrastructure/http/api';
 import { useToast } from 'primevue';
 import { ref } from 'vue';
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL
+const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 const toast = useToast()
 
@@ -23,7 +23,7 @@ const fetchFilteredProducts = async () => {
 
         isLoading.value = true
         isSearchQueryEmpty.value = false
-        const response = await fetchData(`products/query/${searchQuery.value}/2`, 'GET')
+        const response = (await api.get(`products/query/${searchQuery.value}/2`)).data
 
         isLoading.value = false
         products.value = response.products

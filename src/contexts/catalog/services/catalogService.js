@@ -1,33 +1,33 @@
-import { fetchData } from '@/shared/infrastructure/http/api'
+import { api } from '@/shared/infrastructure/http/api'
 
 export async function getProductTypesService() {
-    return fetchData('product-types', 'GET')
+    return (await api.get('product-types')).data
 }
 
 export async function getMicasService() {
-    return fetchData('micas', 'GET')
+    return (await api.get('micas')).data
 }
 
 export async function getArmazonesService() {
-    return fetchData('armazones', 'GET')
+    return (await api.get('armazones')).data
 }
 
 export async function getEquiposService() {
-    return fetchData('equipos', 'GET')
+    return (await api.get('equipos')).data
 }
 
 export async function searchProductsService(query, typeId) {
-    return fetchData(`products/query/${query}/${typeId}`, 'GET')
+    return (await api.get(`products/query/${query}/${typeId}`)).data
 }
 
 export async function getProductByCodeService(code) {
-    return fetchData(`products/${code}`, 'GET')
+    return (await api.get(`products/${code}`)).data
 }
 
 export async function getProductExistenceService(productId, officeId = null) {
     if (officeId) {
-        return fetchData(`product-existence/${productId}/${officeId}`, 'GET')
+        return (await api.get(`product-existence/${productId}/${officeId}`)).data
     }
 
-    return fetchData(`product-existence/${productId}`, 'GET')
+    return (await api.get(`product-existence/${productId}`)).data
 }

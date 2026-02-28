@@ -1,10 +1,10 @@
 <script setup>
-import { fetchData } from '@/shared/infrastructure/http/api';
+import { api } from '@/shared/infrastructure/http/api';
 import { useToast } from 'primevue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL
+const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 const toast = useToast()
 
@@ -14,7 +14,7 @@ const products = ref([])
 // Retrieve the product type objects
 onMounted(async() => {
     try {
-        const response = await fetchData('product-types', 'GET')
+        const response = (await api.get('product-types')).data
 
         products.value = response
         isLoading.value = false

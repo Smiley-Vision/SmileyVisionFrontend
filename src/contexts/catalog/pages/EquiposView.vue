@@ -1,10 +1,10 @@
 <script setup>
-import { fetchData } from '@/shared/infrastructure/http/api';
+import { api } from '@/shared/infrastructure/http/api';
 import { useToast } from 'primevue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL
+const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 const toast = useToast()
 
@@ -14,7 +14,7 @@ const equipos = ref([])
 // Retrieve all the 'Equipos' labeled products
 onMounted(async () => {
     try {
-        const response = await fetchData('equipos', 'GET')
+        const response = (await api.get('equipos')).data
 
         equipos.value = response
         isLoading.value = false
