@@ -70,9 +70,10 @@ npm -v
 
 ## Instalación y puesta en marcha
 
-1. Instala dependencias:
+1. Instala dependencias (actualiza si es necesario):
 
 ```bash
+npm update
 npm install
 ```
 

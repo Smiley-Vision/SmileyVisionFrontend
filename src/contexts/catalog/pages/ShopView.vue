@@ -14,7 +14,7 @@ const products = ref([])
 // Retrieve the product type objects
 onMounted(async() => {
     try {
-        const response = (await api.get('product-types')).data
+        const response = (await api.get('product-categories')).data
 
         products.value = response
         isLoading.value = false
