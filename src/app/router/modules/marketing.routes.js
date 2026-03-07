@@ -1,6 +1,6 @@
-import HomeView from '@/contexts/marketing/pages/HomeView.vue'
-import AboutView from '@/contexts/marketing/pages/AboutView.vue'
-import ContactView from '@/contexts/marketing/pages/ContactView.vue'
+const HomeView = () => import('@/contexts/marketing/pages/HomeView.vue')
+const AboutView = () => import('@/contexts/marketing/pages/AboutView.vue')
+const ContactView = () => import('@/contexts/marketing/pages/ContactView.vue')
 
 export const marketingRoutes = [
     {

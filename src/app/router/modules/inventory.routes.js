@@ -1,5 +1,5 @@
-import ManageProductAvailabilityView from '@/contexts/inventory/pages/ManageProductAvailabilityView.vue'
-import ManageProductAvailabilityForm from '@/contexts/inventory/pages/ManageProductAvailabilityForm.vue'
+const ManageProductAvailabilityView = () => import('@/contexts/inventory/pages/ManageProductAvailabilityView.vue')
+const ManageProductAvailabilityForm = () => import('@/contexts/inventory/pages/ManageProductAvailabilityForm.vue')
 
 export const inventoryRoutes = [
     {
