@@ -1,5 +1,5 @@
 <script setup>
-import { fetchData } from '@/shared/infrastructure/http/api';
+import { api } from '@/shared/infrastructure/http/api';
 import { useToast } from 'primevue';
 import { reactive } from 'vue';
 import { ref } from 'vue';
@@ -45,7 +45,7 @@ const submitForm = async () => {
     formData.append('price', form.price)
 
     try {
-        const response = await fetchData('products', 'POST', formData)
+        const response = (await api.post('products', formData)).data
 
         if (response.message === 'Product created successfully') {
             // Reset the form
@@ -77,7 +77,7 @@ const submitForm = async () => {
 // Retrieve the product types
 onMounted(async () => {
     try {
-        productTypes.value = await fetchData('product-types', 'GET')
+        productTypes.value = (await api.get('product-types')).data
     } catch (error) {
         toast.add({
             severity: 'error',

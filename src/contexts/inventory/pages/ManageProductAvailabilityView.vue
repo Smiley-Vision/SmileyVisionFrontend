@@ -1,10 +1,10 @@
 <script setup>
-import { fetchData } from '@/shared/infrastructure/http/api';
+import { api } from '@/shared/infrastructure/http/api';
 import { useToast } from 'primevue';
 import { onMounted } from 'vue';
 import { ref } from 'vue';
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL
+const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 const toast = useToast()
 
@@ -26,7 +26,7 @@ const fetchFilteredProducts = async () => {
 
         isLoading.value = true
         isSearchQueryEmpty.value = false
-        const response = await fetchData(`products/query/${searchQuery.value}/${selectedType.value}`, 'GET')
+        const response = (await api.get(`products/query/${searchQuery.value}/${selectedType.value}`)).data
 
         isLoading.value = false
         products.value = response.products
@@ -45,7 +45,7 @@ const fetchFilteredProducts = async () => {
 // Fetch the product types
 onMounted(async () => {
     try {
-        const response = await fetchData('product-types', 'GET')
+        const response = (await api.get('product-types')).data
         productTypes.value = response   
     } catch (error) {
         toast.add({

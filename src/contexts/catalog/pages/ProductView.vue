@@ -1,11 +1,11 @@
 <script setup>
-import { fetchData } from '@/shared/infrastructure/http/api';
+import { api } from '@/shared/infrastructure/http/api';
 import { useToast } from 'primevue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL
+const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 const route = useRoute()
 const toast = useToast()
@@ -55,12 +55,12 @@ const formatPrice = (price) => {
 // Get the product associated with the ID
 onMounted(async () => {
     try {
-        const response = await fetchData(`products/${productCode}`, 'GET')
+        const response = (await api.get(`products/${productCode}`)).data
         product.value = response
         productID.value = response.id
 
         // Get the availability of the product
-        productAvailability.value = await fetchData(`product-existence/${productID.value}`)
+        productAvailability.value = (await api.get(`product-existence/${productID.value}`)).data
 
         isLoading.value = false
     } catch (error) {

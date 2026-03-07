@@ -1,13 +1,13 @@
-import { fetchData } from '@/shared/infrastructure/http/api'
+import { api } from '@/shared/infrastructure/http/api'
 
 export async function loginService(email, password) {
-    return fetchData('login', 'POST', { email, password })
+    return (await api.post('login', { email, password })).data
 }
 
 export async function logoutService() {
-    return fetchData('logout', 'POST')
+    return (await api.post('logout')).data
 }
 
 export async function checkRegisterTokenService(token) {
-    return fetchData(`check-register-token?token=${token}`, 'GET')
+    return (await api.get(`check-register-token?token=${token}`)).data
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { fetchData } from '@/shared/infrastructure/http/api';
+import { api } from '@/shared/infrastructure/http/api';
 import { useToast } from 'primevue';
 import { onMounted, ref } from 'vue';
 
@@ -22,14 +22,14 @@ const acceptRequest = async (id) => {
         })
 
         // Get the request associated with the ID
-        const registrationRequest = await fetchData(`register-requests/${id}`, 'GET')
+        const registrationRequest = (await api.get(`register-requests/${id}`)).data
         const email = registrationRequest.email
 
         // POST request body
         const body = { email }
 
         // Accept the request 
-        await fetchData('send-register-mail', 'POST', body)
+        await api.post('send-register-mail', body)
 
         // Delete the request when accepted
         await rejectRequest(id)
@@ -56,7 +56,7 @@ const acceptRequest = async (id) => {
 
 const rejectRequest = async (id) => {
     try {
-        const response = await fetchData(`register-requests/${id}`, 'DELETE')
+        const response = (await api.delete(`register-requests/${id}`)).data
 
         // Remove the rejected request from the list
         registrationRequests.value = registrationRequests.value.filter(request => request.id !== id)
@@ -68,7 +68,7 @@ const rejectRequest = async (id) => {
 // Retrieve the pending registration requests
 onMounted(async () => {
     try {
-        registrationRequests.value = await fetchData('register-requests', 'GET')
+        registrationRequests.value = (await api.get('register-requests')).data
         isLoading.value = false
     } catch (error) {
         throw error

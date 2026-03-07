@@ -47,6 +47,7 @@ La arquitectura está orientada a mantener el crecimiento por dominio, evitando 
 - `Vite`
 - `Vue Router`
 - `Pinia`
+- `Axios`
 - `Tailwind CSS`
 - `PrimeVue` + `PrimeIcons`
 
@@ -69,9 +70,10 @@ npm -v
 
 ## Instalación y puesta en marcha
 
-1. Instala dependencias:
+1. Instala dependencias (actualiza si es necesario):
 
 ```bash
+npm update
 npm install
 ```
 
@@ -100,19 +102,10 @@ VITE_API_BASE=http://127.0.0.1:8000/api
 VITE_BACKEND_BASE=http://127.0.0.1:8000/
 ```
 
-### Importante de compatibilidad actual
-
-En el estado actual del código, varias vistas leen `VITE_BACKEND_URL` para construir URLs de imágenes. Para evitar que fallen imágenes en desarrollo, agrega también:
-
-```env
-VITE_BACKEND_URL=http://127.0.0.1:8000/
-```
-
 ### Significado de cada variable
 
 - `VITE_API_BASE`: base para llamadas REST (`/api/...`).
-- `VITE_BACKEND_BASE`: estándar documental del proyecto para base del backend.
-- `VITE_BACKEND_URL`: variable actualmente usada por páginas para URLs de storage.
+- `VITE_BACKEND_BASE`: base del backend para recursos públicos (ej. imágenes en `/storage`).
 
 ---
 
@@ -169,8 +162,8 @@ src/
 2. `main.js` registra router, pinia y PrimeVue.
 3. `App.vue` renderiza layout global (`Navbar`, contenido de ruta y `Footer`).
 4. `Vue Router` resuelve ruta y aplica guards para rutas admin.
-5. Las vistas llaman `fetchData(...)` (o services) para comunicarse con backend.
-6. `fetchData` añade token Bearer cuando existe sesión.
+5. Las vistas llaman `api` (instancia Axios) o `services` para comunicarse con backend.
+6. La instancia Axios añade token Bearer cuando existe sesión.
 
 ---
 
@@ -406,7 +399,7 @@ A continuación, se describe cada archivo de `src/` y para qué modificarlo.
 
 - `src/contexts/registration/services/registrationService.js`
   - Capa de funciones API para registro.
-  - Ideal para desacoplar completamente las páginas de `fetchData` directo.
+  - Ideal para desacoplar completamente las páginas de llamadas Axios directas.
 
 #### Composables (scaffold actual)
 
@@ -559,16 +552,16 @@ A continuación, se describe cada archivo de `src/` y para qué modificarlo.
 #### Infrastructure
 
 - `src/shared/infrastructure/http/api.js`
-  - Wrapper HTTP central.
+  - Instancia central de Axios.
   - Adjunta `Authorization: Bearer <token>` si hay sesión.
   - Soporta JSON y `FormData`.
-  - Lanza error parseado si `response.ok === false`.
+  - Normaliza errores para exponer `error.response.data` cuando aplica.
 
 #### Config
 
 - `src/shared/config/env.js`
   - Objeto de variables de entorno para consumo centralizado.
-  - Actualmente lee `VITE_API_BASE`, `VITE_BACKEND_URL`, `BASE_URL`.
+  - Actualmente lee `VITE_API_BASE`, `VITE_BACKEND_BASE`, `BASE_URL`.
 
 #### UI
 

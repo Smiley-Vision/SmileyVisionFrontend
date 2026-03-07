@@ -1,6 +1,6 @@
 <script setup>
 import { useAuthStore } from '@/contexts/identity/stores/auth';
-import { fetchData } from '@/shared/infrastructure/http/api';
+import { api } from '@/shared/infrastructure/http/api';
 import { useToast } from 'primevue';
 import { watch } from 'vue';
 import { ref } from 'vue';
@@ -46,7 +46,7 @@ watch(selectedStoreIndex, (newIndex) => {
 // Retrieve the available stores as an array
 const retrieveStores = async () => {
     try {
-        const response = await fetchData('stores', 'GET')
+        const response = (await api.get('stores')).data
         stores.value = response.map(store => store['name'])
     } catch (error) {
         toast.add({
@@ -70,10 +70,10 @@ const submitRegistration = async () => {
             store_id: form.store_id
         }
 
-        await fetchData('register', 'POST', body)
+        await api.post('register', body)
 
         // Registration successful. Mark the registration token as used
-        await fetchData('mark-register-token', 'POST', { token: props.token })
+        await api.post('mark-register-token', { token: props.token })
 
         auth.justRegistered = true
         router.push({ name: 'login', query: { justRegistered: 'true' } })

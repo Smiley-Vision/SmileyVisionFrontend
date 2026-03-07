@@ -1,25 +1,25 @@
-import { fetchData } from '@/shared/infrastructure/http/api'
+import { api } from '@/shared/infrastructure/http/api'
 
 export async function getInventoryProductTypesService() {
-    return fetchData('product-types', 'GET')
+    return (await api.get('product-types')).data
 }
 
 export async function searchInventoryProductsService(query, typeId) {
-    return fetchData(`products/query/${query}/${typeId}`, 'GET')
+    return (await api.get(`products/query/${query}/${typeId}`)).data
 }
 
 export async function getOfficesService() {
-    return fetchData('offices', 'GET')
+    return (await api.get('offices')).data
 }
 
 export async function getProductStockService(productId, officeId = null) {
     if (officeId) {
-        return fetchData(`product-existence/${productId}/${officeId}`, 'GET')
+        return (await api.get(`product-existence/${productId}/${officeId}`)).data
     }
 
-    return fetchData(`product-existence/${productId}`, 'GET')
+    return (await api.get(`product-existence/${productId}`)).data
 }
 
 export async function updateProductStockService(body) {
-    return fetchData('product-existence', 'POST', body)
+    return (await api.post('product-existence', body)).data
 }
