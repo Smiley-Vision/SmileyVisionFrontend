@@ -1,4 +1,4 @@
-import LoginView from '@/contexts/identity/pages/LoginView.vue'
+const LoginView = () => import('@/contexts/identity/pages/LoginView.vue')
 
 export const identityRoutes = [
     {

@@ -1,11 +1,11 @@
-import ShopView from '@/contexts/catalog/pages/ShopView.vue'
-import MicasView from '@/contexts/catalog/pages/MicasView.vue'
-import SearchMicasView from '@/contexts/catalog/pages/SearchMicasView.vue'
-import ArmazonesView from '@/contexts/catalog/pages/ArmazonesView.vue'
-import SearchArmazonesView from '@/contexts/catalog/pages/SearchArmazonesView.vue'
-import EquiposView from '@/contexts/catalog/pages/EquiposView.vue'
-import SearchEquiposView from '@/contexts/catalog/pages/SearchEquiposView.vue'
-import ProductView from '@/contexts/catalog/pages/ProductView.vue'
+const ShopView = () => import('@/contexts/catalog/pages/ShopView.vue')
+const MicasView = () => import('@/contexts/catalog/pages/MicasView.vue')
+const SearchMicasView = () => import('@/contexts/catalog/pages/SearchMicasView.vue')
+const ArmazonesView = () => import('@/contexts/catalog/pages/ArmazonesView.vue')
+const SearchArmazonesView = () => import('@/contexts/catalog/pages/SearchArmazonesView.vue')
+const EquiposView = () => import('@/contexts/catalog/pages/EquiposView.vue')
+const SearchEquiposView = () => import('@/contexts/catalog/pages/SearchEquiposView.vue')
+const ProductView = () => import('@/contexts/catalog/pages/ProductView.vue')
 
 export const catalogRoutes = [
     {

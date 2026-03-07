@@ -1,5 +1,5 @@
-import UserRegisterView from '@/contexts/registration/pages/UserRegisterView.vue'
-import RegisterView from '@/contexts/registration/pages/RegisterView.vue'
+const UserRegisterView = () => import('@/contexts/registration/pages/UserRegisterView.vue')
+const RegisterView = () => import('@/contexts/registration/pages/RegisterView.vue')
 
 export const registrationRoutes = [
     {

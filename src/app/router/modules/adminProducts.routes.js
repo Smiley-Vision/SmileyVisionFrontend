@@ -1,7 +1,7 @@
-import ManageProductsView from '@/contexts/admin-products/pages/ManageProductsView.vue'
-import CreateProductForm from '@/contexts/admin-products/pages/CreateProductForm.vue'
-import ModifyProductView from '@/contexts/admin-products/pages/ModifyProductView.vue'
-import ModifyProductForm from '@/contexts/admin-products/pages/ModifyProductForm.vue'
+const ManageProductsView = () => import('@/contexts/admin-products/pages/ManageProductsView.vue')
+const CreateProductForm = () => import('@/contexts/admin-products/pages/CreateProductForm.vue')
+const ModifyProductView = () => import('@/contexts/admin-products/pages/ModifyProductView.vue')
+const ModifyProductForm = () => import('@/contexts/admin-products/pages/ModifyProductForm.vue')
 
 export const adminProductsRoutes = [
     {
