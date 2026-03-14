@@ -21,7 +21,7 @@ export async function sendRegisterMailService(body) {
 }
 
 export async function getStoresService() {
-    return (await api.get('stores')).data
+    return []
 }
 
 export async function registerService(body) {

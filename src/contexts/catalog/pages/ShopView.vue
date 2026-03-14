@@ -1,5 +1,6 @@
 <script setup>
 import { api } from '@/shared/infrastructure/http/api';
+import { getShopRouteNameByCategory, normalizeCategoriesPayload } from '@/shared/utils/productApiAdapters';
 import { useToast } from 'primevue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
@@ -16,7 +17,7 @@ onMounted(async() => {
     try {
         const response = (await api.get('product-categories')).data
 
-        products.value = response
+        products.value = normalizeCategoriesPayload(response).filter((category) => category.parent_category_id === null)
         isLoading.value = false
     } catch (error) {
         toast.add({
@@ -58,7 +59,7 @@ onMounted(async() => {
         <div class="flex md:flex-row w-full justify-evenly flex-col items-center gap-y-12 mx-auto md:p-4">
             <div v-for="(product, index) in products" :key="index" class="min-w-2xl rounded-xl">
                 <div class="flex flex-col items-center gap-y-4 max-w-sm max-h-sm">
-                    <RouterLink :to="{ name: 'shop-' + `${product.name}` }">
+                    <RouterLink :to="{ name: getShopRouteNameByCategory(product.name) }">
                         <img
                             :src="`${backendUrl}/storage/shop/${index}.jpg`"
                             class="xl:size-64 size-40 border-solid border-4 border-sky-600 rounded-xl shadow-lg

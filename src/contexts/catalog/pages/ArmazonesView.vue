@@ -1,5 +1,6 @@
 <script setup>
 import { api } from '@/shared/infrastructure/http/api';
+import { buildProductItemsByProductId, enrichProducts, normalizeProductListPayload } from '@/shared/utils/productApiAdapters';
 import { useToast } from 'primevue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
@@ -14,9 +15,14 @@ const armazones = ref([])
 // Retrieve all the 'Armazones' labeled products
 onMounted(async () => {
     try {
-        const response = (await api.get('armazones')).data
+        const [productsResponse, productItemsResponse] = await Promise.all([
+            api.get('products/armazones'),
+            api.get('product-items')
+        ])
+        const productItemsByProductId = buildProductItemsByProductId(productItemsResponse.data)
+        const products = normalizeProductListPayload(productsResponse.data)
 
-        armazones.value = response
+        armazones.value = enrichProducts(products, productItemsByProductId)
         isLoading.value = false
         
     } catch (error) {
@@ -62,7 +68,7 @@ onMounted(async () => {
             <div class="grid xl:grid-cols-4 sm:grid-cols-3 grid-cols-2 lg:gap-x-12 gap-x-8 lg:gap-y-10 gap-y-8 text-center">
                 <div v-for="(armazon, index) in armazones" :key="index">
                     <div class="flex flex-col items-center gap-y-4">
-                        <RouterLink :to="{ name: 'product', params: { code: armazon.code } }" :productID="armazon.code">
+                        <RouterLink :to="{ name: 'product', params: { code: armazon.id } }" :productID="armazon.id">
                             <img
                                 :src="`${backendUrl}/storage/${armazon.image_url}`"
                                 class="lg:size-60 md:size-40 size-32 border-solid border-4 border-sky-600 rounded-xl shadow-lg

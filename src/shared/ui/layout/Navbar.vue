@@ -1,19 +1,20 @@
 <script setup>
 import router from '@/app/router'
+import { useCartStore } from '@/contexts/catalog/stores/cart'
 import { useAuthStore } from '@/contexts/identity/stores/auth'
 import { useToast } from 'primevue'
-import { computed } from 'vue'
-import { ref, defineEmits, onMounted, onUnmounted } from 'vue'
+import { computed, defineEmits, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 const auth = useAuthStore()
+const cart = useCartStore()
 const toast = useToast()
 
 const isMenuOpen = ref(false)
 const dropDownMenu = ref(null)
 const isAuthenticated = computed(() => auth.isAuthenticated)
 const isAdmin = computed(() => auth.isAdmin)
-const user = computed(() => auth.user)
+const cartCount = computed(() => cart.itemCount)
 const emit = defineEmits(['toggle-menu'])
 
 const isActiveLink = (routePath) => {
@@ -55,12 +56,21 @@ const toggleMenu = () => {
 }
 
 onMounted(() => {
+    void cart.initializeForSession().catch(() => {})
     document.body.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
     document.body.removeEventListener('click', handleClickOutside)
 })
+
+watch(
+    () => [auth.isAuthenticated, auth.user?.id],
+    () => {
+        void cart.initializeForSession().catch(() => {})
+    },
+    { immediate: true }
+)
 </script>
 
 <template>
@@ -141,19 +151,23 @@ onUnmounted(() => {
                         <RouterLink class="pi pi-shopping-bag" style="font-size: 1.5rem" :to="{ name: 'shop' }"></RouterLink>
                     </div>
                 </div>
-                <div v-else class="xl:flex hidden">
-                    <div v-if="isAdmin" class="text-xl p-3 hover:bg-sky-700 hover:rounded-xl">
-                        <div class="flex 2xl:flex-row flex-col items-center lg:gap-x-3">
-                            <div class="pi pi-wrench" style="font-size: 1.4rem;"></div>
-                            <div class="select-none">{{ user.name }}</div>
+                <div v-else class="flex items-center gap-2 shrink-0">
+                    <RouterLink v-if="!isAdmin" :to="{ name: 'cart' }" class="text-xl p-3 hover:bg-sky-700 hover:rounded-xl">
+                        <div class="relative">
+                            <div class="pi pi-shopping-cart" style="font-size: 1.4rem;"></div>
+                            <div
+                                v-if="cartCount > 0"
+                                class="absolute -top-2 -right-3 bg-red-600 text-white text-[0.7rem] min-w-5 h-5 px-1 rounded-full flex items-center justify-center font-semibold"
+                            >
+                                {{ cartCount > 99 ? '99+' : cartCount }}
+                            </div>
                         </div>
-                    </div>
-                    <div v-else-if="!isAdmin" class="text-xl p-3 hover:bg-sky-700 hover:rounded-xl">
+                    </RouterLink>
+                    <RouterLink :to="{ name: 'profile' }" class="text-xl p-3 hover:bg-sky-700 hover:rounded-xl">
                         <div class="flex 2xl:flex-row flex-col items-center lg:gap-x-3">
-                            <div class="pi pi-user" style="font-size: 1.4rem;"></div>
-                            <div class="select-none">{{ user.name }}</div>
+                            <div :class="isAdmin ? 'pi pi-wrench' : 'pi pi-user'" style="font-size: 1.4rem;"></div>
                         </div>
-                    </div>
+                    </RouterLink>
                 </div>
                 <RouterLink v-if="!isAuthenticated" :to="{ name: 'login' }" class="bg-sky-200 hover:bg-sky-300 text-black px-4 py-2 rounded-xl shadow-xl text-center">
                     Iniciar sesión
@@ -199,7 +213,13 @@ onUnmounted(() => {
                 <RouterLink v-if="!isAuthenticated"
                     class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'login' }">Ingresar
                 </RouterLink>
-                <RouterLink v-else
+                <RouterLink v-if="isAuthenticated && !isAdmin"
+                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-3 font-semibold" :to="{ name: 'cart' }">Carrito
+                </RouterLink>
+                <RouterLink v-if="isAuthenticated"
+                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-3 font-semibold" :to="{ name: 'profile' }">Perfil
+                </RouterLink>
+                <RouterLink v-if="isAuthenticated"
                     class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'home' }" @click.prevent="handleLogout">Salir
                 </RouterLink>
             </li>

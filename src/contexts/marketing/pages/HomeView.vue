@@ -2,13 +2,17 @@
 import Button from '@/shared/ui/components/Button.vue';
 import { useAuthStore } from '@/contexts/identity/stores/auth';
 import { useToast } from 'primevue';
-import { nextTick, onMounted } from 'vue';
+import { computed, nextTick, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute()
 const toast = useToast()
 const auth = useAuthStore()
-const user = auth.user
+const welcomeName = computed(() => {
+    const currentUser = auth.user || {}
+    const fullName = [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ').trim()
+    return fullName || currentUser.name || currentUser.email || 'usuario'
+})
 
 onMounted(async () => {
     await nextTick() // Let Toast render first
@@ -17,7 +21,7 @@ onMounted(async () => {
         toast.add({
             severity: 'success',
             summary: 'Éxito',
-            detail: `Bienvenido, ${user.name}`,
+            detail: `Bienvenido, ${welcomeName.value}`,
             life: 4000
         })
 

@@ -1,5 +1,6 @@
 <script setup>
 import { api } from '@/shared/infrastructure/http/api';
+import { buildProductItemsByProductId, enrichProduct } from '@/shared/utils/productApiAdapters';
 import { useToast } from 'primevue';
 import { computed } from 'vue';
 import { reactive } from 'vue';
@@ -23,16 +24,14 @@ const productCode = route.params.code
 // Form object; request body
 const form = reactive({
     'name': '',
-    'description': '',
-    'price': 0,
+    'description': ''
 })
 
 // Checks if the form has been changed
 const isFormModified = computed(() => {
     return (
         form.name !== initialState.value.name ||
-        form.description !== initialState.value.description ||
-        form.price !== initialState.value.price
+        form.description !== initialState.value.description
     )
 })
 
@@ -40,8 +39,7 @@ const submitForm = async () => {
     try {
         const body = {
             name: form.name,
-            description: form.description,
-            price: form.price
+            description: form.description
         }
 
         const response = (await api.patch(`products/${productCode}`, body)).data
@@ -58,9 +56,9 @@ const submitForm = async () => {
         }
 
     } catch (error) {
-        // Show the first validation error
-        const firstField = Object.keys(error.errors)[0]
-        const message = error.errors[firstField][0]
+        const message = error?.errors
+            ? error.errors[Object.keys(error.errors)[0]][0]
+            : 'No se pudo actualizar el producto'
 
         toast.add({
             severity: 'error',
@@ -73,7 +71,7 @@ const submitForm = async () => {
 
 const deleteProduct = async () => {
     try {
-        const response = (await api.delete(`products/${productCode}`)).data
+        await api.delete(`products/${productCode}`)
 
         toast.add({
             severity: 'success',
@@ -97,13 +95,17 @@ const deleteProduct = async () => {
 
 // Retrieve the current product's state
 const retrieveProductState = async () => {
-    const response = (await api.get(`products/${productCode}`)).data
+    const [productResponse, productItemsResponse] = await Promise.all([
+        api.get(`products/${productCode}`),
+        api.get('product-items')
+    ])
+    const productItemsByProductId = buildProductItemsByProductId(productItemsResponse.data)
+    const response = enrichProduct(productResponse.data, productItemsByProductId)
 
     // Fill the form with the product state
     form.image_url = response.image_url
     form.name = response.name
     form.description = response.description
-    form.price = response.price
     imagePreview.value = `${backendUrl}/storage/${form.image_url}`
 
     code.value = response.code
@@ -113,7 +115,6 @@ const retrieveProductState = async () => {
         image: response.image,
         name: response.name,
         description: response.description,
-        price: response.price,
         image_url: response.image_url
     }
 }
@@ -181,13 +182,6 @@ onMounted(async () => {
         <div class="w-full">
             <label for="description" class="block text-sky-700 font-medium mb-1">Descripción</label>
             <input v-model="form.description" id="description" type="text"
-                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required />
-        </div>
-
-        <!-- Price -->
-        <div class="w-full">
-            <label for="price" class="block text-sky-700 font-medium mb-1">Precio ($)</label>
-            <input v-model="form.price" id="price" type="number" step="0.01"
                 class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required />
         </div>
 

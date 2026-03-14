@@ -1,11 +1,16 @@
 import { api } from '@/shared/infrastructure/http/api'
 
 export async function getAdminProductTypesService() {
-    return (await api.get('product-types')).data
+    return (await api.get('product-categories')).data
 }
 
 export async function searchAdminProductsService(query, typeId) {
-    return (await api.get(`products/query/${query}/${typeId}`)).data
+    return (await api.get('products/search', {
+        params: {
+            searchQuery: query,
+            categoryID: typeId
+        }
+    })).data
 }
 
 export async function createProductService(formData) {

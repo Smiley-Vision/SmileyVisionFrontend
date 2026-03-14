@@ -1,5 +1,11 @@
 <script setup>
 import { api } from '@/shared/infrastructure/http/api';
+import {
+    buildProductItemsByProductId,
+    enrichProducts,
+    normalizeCategoriesPayload,
+    normalizeProductListPayload
+} from '@/shared/utils/productApiAdapters';
 import { useToast } from 'primevue';
 import { onMounted } from 'vue';
 import { ref } from 'vue';
@@ -12,6 +18,7 @@ const searchQuery = ref('')
 const productTypes = ref([])
 const selectedType = ref(0)
 const products = ref([])
+const productItemsByProductId = ref({})
 
 const isLoading = ref(false)
 const isSearchQueryEmpty = ref(true)
@@ -26,10 +33,18 @@ const fetchFilteredProducts = async () => {
 
         isLoading.value = true
         isSearchQueryEmpty.value = false
-        const response = (await api.get(`products/query/${searchQuery.value}/${selectedType.value}`)).data
+        const response = (await api.get('products/search', {
+            params: {
+                searchQuery: searchQuery.value,
+                categoryID: selectedType.value
+            }
+        })).data
 
         isLoading.value = false
-        products.value = response.products
+        products.value = enrichProducts(
+            normalizeProductListPayload(response),
+            productItemsByProductId.value
+        )
         
     } catch (error) {
         isLoading.value = false
@@ -45,8 +60,13 @@ const fetchFilteredProducts = async () => {
 // Fetch the product types
 onMounted(async () => {
     try {
-        const response = (await api.get('product-types')).data
-        productTypes.value = response   
+        const [categoriesResponse, productItemsResponse] = await Promise.all([
+            api.get('product-categories'),
+            api.get('product-items')
+        ])
+
+        productTypes.value = normalizeCategoriesPayload(categoriesResponse.data)
+        productItemsByProductId.value = buildProductItemsByProductId(productItemsResponse.data)
     } catch (error) {
         toast.add({
             severity: 'error',
@@ -86,7 +106,7 @@ onMounted(async () => {
                 <option
                     v-for="(type, index) in productTypes"
                     :key="index"
-                    :value="index + 1"
+                    :value="type.id"
                 >
                     {{ type.name }}
                 </option>
@@ -114,7 +134,7 @@ onMounted(async () => {
                 </div>
 
                 <!-- Product image -->
-                <RouterLink :to="{ name: 'admin-products-availability-form', params: { code: product.code } }">
+                <RouterLink :to="{ name: 'admin-products-availability-form', params: { code: product.id } }">
                     <img
                         :src="`${backendUrl}/storage/${product.image_url}`"
                         class="lg:size-60 size-40 border-solid border-2 border-sky-600 rounded-xl shadow-lg

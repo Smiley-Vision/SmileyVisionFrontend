@@ -99,7 +99,7 @@ Crea un archivo `.env` en la raíz del proyecto con **estas variables obligatori
 
 ```env
 VITE_API_BASE=http://127.0.0.1:8000/api
-VITE_BACKEND_BASE=http://127.0.0.1:8000/
+VITE_BACKEND_BASE=http://127.0.0.1:8000
 ```
 
 ### Significado de cada variable

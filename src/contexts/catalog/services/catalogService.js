@@ -1,33 +1,38 @@
 import { api } from '@/shared/infrastructure/http/api'
 
 export async function getProductTypesService() {
-    return (await api.get('product-types')).data
+    return (await api.get('product-categories')).data
 }
 
 export async function getMicasService() {
-    return (await api.get('micas')).data
+    return (await api.get('products/micas')).data
 }
 
 export async function getArmazonesService() {
-    return (await api.get('armazones')).data
+    return (await api.get('products/armazones')).data
 }
 
 export async function getEquiposService() {
-    return (await api.get('equipos')).data
+    return (await api.get('products/equipos')).data
 }
 
 export async function searchProductsService(query, typeId) {
-    return (await api.get(`products/query/${query}/${typeId}`)).data
+    return (await api.get('products/search', {
+        params: {
+            searchQuery: query,
+            categoryID: typeId
+        }
+    })).data
 }
 
 export async function getProductByCodeService(code) {
     return (await api.get(`products/${code}`)).data
 }
 
-export async function getProductExistenceService(productId, officeId = null) {
-    if (officeId) {
-        return (await api.get(`product-existence/${productId}/${officeId}`)).data
-    }
+export async function getProductsService() {
+    return (await api.get('products')).data
+}
 
-    return (await api.get(`product-existence/${productId}`)).data
+export async function getProductItemsService() {
+    return (await api.get('product-items')).data
 }

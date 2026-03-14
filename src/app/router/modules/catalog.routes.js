@@ -6,6 +6,9 @@ const SearchArmazonesView = () => import('@/contexts/catalog/pages/SearchArmazon
 const EquiposView = () => import('@/contexts/catalog/pages/EquiposView.vue')
 const SearchEquiposView = () => import('@/contexts/catalog/pages/SearchEquiposView.vue')
 const ProductView = () => import('@/contexts/catalog/pages/ProductView.vue')
+const CartView = () => import('@/contexts/catalog/pages/CartView.vue')
+
+import { requireAuth } from '../guards/requireAuth'
 
 export const catalogRoutes = [
     {
@@ -47,5 +50,11 @@ export const catalogRoutes = [
         path: '/shop/products/:code',
         name: 'product',
         component: ProductView
+    },
+    {
+        path: '/shop/cart',
+        name: 'cart',
+        component: CartView,
+        beforeEnter: requireAuth
     }
 ]
