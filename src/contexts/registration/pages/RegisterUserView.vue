@@ -2,9 +2,6 @@
 import { useAuthStore } from '@/contexts/identity/stores/auth';
 import { api } from '@/shared/infrastructure/http/api';
 import { useToast } from 'primevue';
-import { watch } from 'vue';
-import { ref } from 'vue';
-import { onMounted } from 'vue';
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -18,56 +15,22 @@ const props = defineProps({
 })
 
 const form = reactive({
-    'name': '',
+    'first_name': '',
+    'last_name': '',
     'email': props.email,
     'password': '',
-    'phone': '',
-    'role_id': 2,
-    'store_id': null,
+    'phone_number': ''
 })
-
-const roles = ['Óptico', 'Conductor']
-const stores = ref([])
-
-const selectedRoleIndex = ref(0)
-form.role_id = selectedRoleIndex.value + 2
-
-watch(selectedRoleIndex, (newIndex) => {
-    form.role_id = newIndex + 2
-})
-
-const selectedStoreIndex = ref(0)
-form.store_id = selectedRoleIndex.value + 1
-
-watch(selectedStoreIndex, (newIndex) => {
-    form.store_id = newIndex + 1
-})
-
-// Retrieve the available stores as an array
-const retrieveStores = async () => {
-    try {
-        const response = (await api.get('stores')).data
-        stores.value = response.map(store => store['name'])
-    } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error al obtener las tiendas',
-            life: 4000 // 4 seconds
-        })
-    }
-}
 
 // Submit the registration form
 const submitRegistration = async () => {
     try {
         const body = {
-            name: form.name,
+            first_name: form.first_name,
+            last_name: form.last_name,
             email: form.email,
             password: form.password,
-            phone: form.phone,
-            role_id: form.role_id,
-            store_id: form.store_id
+            phone_number: form.phone_number
         }
 
         await api.post('register', body)
@@ -79,9 +42,9 @@ const submitRegistration = async () => {
         router.push({ name: 'login', query: { justRegistered: 'true' } })
 
     } catch (error) {
-        // Show the first validation error
-        const firstField = Object.keys(error.errors)[0]
-        const message = error.errors[firstField][0]
+        const message = error?.errors
+            ? error.errors[Object.keys(error.errors)[0]][0]
+            : 'No se pudo completar el registro'
 
         toast.add({
             severity: 'error',
@@ -91,10 +54,6 @@ const submitRegistration = async () => {
         })
     }
 }
-
-onMounted(async () => {
-    retrieveStores()
-})
 </script>
 
 <template>
@@ -116,10 +75,18 @@ onMounted(async () => {
                 <div class="flex flex-col gap-y-6">
                     <!-- Nombre -->
                     <div class="flex flex-col gap-y-1">
-                        <label for="name" class="font-medium text-lg text-gray-700">Nombre completo:</label>
-                        <input v-model="form.name" type="text" id="name" name="name"
+                        <label for="first_name" class="font-medium text-lg text-gray-700">Nombre:</label>
+                        <input v-model="form.first_name" type="text" id="first_name" name="first_name"
                             class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            placeholder="Ingrese su nombre completo" required />
+                            placeholder="Ingrese su nombre" required />
+                    </div>
+
+                    <!-- Apellido -->
+                    <div class="flex flex-col gap-y-1">
+                        <label for="last_name" class="font-medium text-lg text-gray-700">Apellido:</label>
+                        <input v-model="form.last_name" type="text" id="last_name" name="last_name"
+                            class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            placeholder="Ingrese su apellido" required />
                     </div>
 
                     <!-- Correo electrónico -->
@@ -144,31 +111,9 @@ onMounted(async () => {
                     <!-- Teléfono -->
                     <div class="flex flex-col gap-y-1">
                         <label for="phone" class="font-medium text-lg text-gray-700">Teléfono:</label>
-                        <input v-model="form.phone" type="tel" id="phone" name="phone"
+                        <input v-model="form.phone_number" type="tel" id="phone" name="phone"
                             class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                             placeholder="Ingrese su número" required />
-                    </div>
-
-                    <!-- Rol -->
-                    <div class="flex flex-col gap-y-1">
-                        <label for="role" class="font-medium text-lg text-gray-700">Tipo de usuario:</label>
-                        <select id="role" v-model="selectedRoleIndex"
-                            class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500">
-                            <option v-for="(role, index) in roles" :key="index" :value="index">
-                                {{ role }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- Tienda (solo ópticos) -->
-                    <div v-if="selectedRoleIndex == 0" class="flex flex-col gap-y-1">
-                        <label for="store" class="font-medium text-lg text-gray-700">Tienda asociada:</label>
-                        <select id="store" v-model="selectedStoreIndex"
-                            class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500">
-                            <option v-for="(store, index) in stores" :key="index" :value="index">
-                                {{ store }}
-                            </option>
-                        </select>
                     </div>
                 </div>
 

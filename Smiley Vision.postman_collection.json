@@ -1,0 +1,924 @@
+{
+  "info": {
+    "_postman_id": "ad62c42c-8841-4b98-af48-aad1880a5cde",
+    "name": "Smiley Vision",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52706922",
+    "_collection_link": "https://go.postman.co/collection/52706922-ad62c42c-8841-4b98-af48-aad1880a5cde?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 Users",
+      "item": [
+        {
+          "name": "GET User",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "8A19wxR3rxpewsTQx3X2ex5tJIEm9r9dWAK6kN95f2101a22",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/user",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "user"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"cosmicfabri@gmail.com\",\n    \"password\": \"pass1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{smiley_api}}/login",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "aaIRWWKdMbDXvX8IkITJjy5AyW76NaIMikmluCjL1ff5805b",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/logout",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"Luis\",\n    \"last_name\": \"Guzmán\",\n    \"phone_number\": \"9812244617\",\n    \"email\": \"fabrizzio86@outlook.es\",\n    \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{smiley_api}}/register",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "register"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 Register Requests",
+      "item": [
+        {
+          "name": "Send Mail",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "PpkOjHDN0vKJv7gsi5iUHSQcjhSbyEgDiqnfB96033a4acd6",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"al071274\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{smiley_api}}/send-register-mail",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "send-register-mail"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{smiley_api}}/check-register-token?token=1234",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "check-register-token"
+              ],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "1234"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"token\": \"v0R1r06mehnup7Mm64E1l0XaxD6JWCXk\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{smiley_api}}/mark-register-token",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "mark-register-token"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 Product Categories",
+      "item": [
+        {
+          "name": "GET Categories",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"Andrededashin160596@gmail.com\",\n    \"password\": \"pass1234\"\n}"
+            },
+            "url": {
+              "raw": "{{smiley_api}}/product-categories",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "product-categories"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 Products",
+      "item": [
+        {
+          "name": "GET Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/products",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/products/1",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "products",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET By Query",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/products/search?searchQuery=AUTO&categoryID=3",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "products",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "searchQuery",
+                  "value": "AUTO"
+                },
+                {
+                  "key": "categoryID",
+                  "value": "3"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/products/equipos",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "products",
+                "equipos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "y4r4HxL6PdeT2ORDa742kxJP7u0WDhgxBrCrsU9p45c4f1e8",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "uuid": "95fe90ed-f964-4df5-9336-5c59de781222",
+                  "src": "postman-cloud:///1f119be7-2439-4b70-b172-3cb0e5c54ded"
+                },
+                {
+                  "key": "category_id",
+                  "value": "3",
+                  "type": "text",
+                  "uuid": "5b428fd4-59f0-48d9-9547-4be94724341b"
+                },
+                {
+                  "key": "supplier_id",
+                  "value": "1",
+                  "type": "text",
+                  "uuid": "03569c73-a1f5-4c52-8dc0-a5131257b714"
+                },
+                {
+                  "key": "name",
+                  "value": "Allergy",
+                  "type": "text",
+                  "uuid": "a9368645-5eb2-43b6-a863-b434c06bb45c"
+                },
+                {
+                  "key": "description",
+                  "value": "Some allergies.",
+                  "type": "text",
+                  "uuid": "101a7d04-5f71-482a-9991-a8c29a1d4f30"
+                },
+                {
+                  "key": "file_name",
+                  "value": "alergias.png",
+                  "type": "text",
+                  "uuid": "c8838972-e3dd-4e4f-8792-8ee2e2e57032"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{smiley_api}}/products",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "y4r4HxL6PdeT2ORDa742kxJP7u0WDhgxBrCrsU9p45c4f1e8",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Something1\",\n    \"description\": \"Description\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{smiley_api}}/products/8",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "products",
+                "8"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "y4r4HxL6PdeT2ORDa742kxJP7u0WDhgxBrCrsU9p45c4f1e8",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/products/8",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "products",
+                "8"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 Addresses",
+      "item": [
+        {
+          "name": "GET All",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/addresses",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "addresses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Address",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": 2,\n    \"city_id\": 1,\n    \"street\": \"51\",\n    \"between_a\": \"8\",\n    \"between_b\": \"10\",\n    \"external_number\": 7,\n    \"district\": \"Centro\",\n    \"postal_code\": \"24001\",\n    \"notes\": \"Casa\",\n    \"is_default\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{smiley_api}}/addresses",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "addresses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET By User ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/users/2/addresses",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "users",
+                "2",
+                "addresses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update default address",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{smiley_api}}/addresses/update-default/2/6",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "addresses",
+                "update-default",
+                "2",
+                "6"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07 Product Items",
+      "item": [
+        {
+          "name": "GET All",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "aaIRWWKdMbDXvX8IkITJjy5AyW76NaIMikmluCjL1ff5805b",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/product-items",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "product-items"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Item",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "ZYAPTeEwptFltBtibT3Bv41tREomuHUkGGF7jsmQc845328d",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "uuid": "bdd66153-8a2e-4da6-a196-1c264cd2ccff",
+                  "src": "postman-cloud:///1f119be7-2439-4b70-b172-3cb0e5c54ded"
+                },
+                {
+                  "key": "file_name",
+                  "value": "alergias.png",
+                  "type": "text",
+                  "uuid": "c9c0278c-c470-4eac-892f-1aafdee8e00f"
+                },
+                {
+                  "key": "product_id",
+                  "value": "2",
+                  "type": "text",
+                  "uuid": "45e11fbc-a9b0-49a8-a0e8-3f93a4c267a1"
+                },
+                {
+                  "key": "SKU",
+                  "value": "ALG",
+                  "type": "text",
+                  "uuid": "f8f3dd76-72bf-4c99-8bfd-ef55555ce7f5"
+                },
+                {
+                  "key": "price",
+                  "value": "120.00",
+                  "type": "text",
+                  "uuid": "458a19a3-0895-4cb0-be84-81d1deb3a543"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{smiley_api}}/product-items",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "product-items"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Item",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "aaIRWWKdMbDXvX8IkITJjy5AyW76NaIMikmluCjL1ff5805b",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/product-items/",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "product-items",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Item",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "v1bdlM7M9L2Hcsz4dvfjEgniTO9VMcTuivqEofX1e6d0c12a",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"price\": \"2000.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{smiley_api}}/product-items/4",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "product-items",
+                "4"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET By ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "aaIRWWKdMbDXvX8IkITJjy5AyW76NaIMikmluCjL1ff5805b",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/product-items/4",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "product-items",
+                "4"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 Inventory",
+      "item": [
+        {
+          "name": "POST Inventory Unit",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "nepUCUPbsz7OzDyWAztS7cHFQtAgSuulH1rV9qYB7eb106bf",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"product_item_id\": 4,\n    \"branch_office_id\": 4,\n    \"stock\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{smiley_api}}/inventory",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "inventory"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09 Product Configuration",
+      "item": [
+        {
+          "name": "POST Product Config",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "nepUCUPbsz7OzDyWAztS7cHFQtAgSuulH1rV9qYB7eb106bf",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"product_item_id\": 4,\n    \"variation_option_id\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{smiley_api}}/product-configurations",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "product-configurations"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10 Cart Items",
+      "item": [
+        {
+          "name": "POST Cart Item",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "BmZNQsKvaP8aCWw2jqhdlFu0AtudLlK7Yt8KsdVfb340c303",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"cart_id\": 1,\n    \"product_item_id\": 4,\n    \"quantity\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{smiley_api}}/cart-items",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "cart-items"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Cart Item",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "R6hXPk7uu1znQsA2Fm8L0dAD9Jbx3j8vqmOgmpxs57b3ae0f",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{smiley_api}}/cart-items/1/4",
+              "host": [
+                "{{smiley_api}}"
+              ],
+              "path": [
+                "cart-items",
+                "1",
+                "4"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

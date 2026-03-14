@@ -1,6 +1,14 @@
 <script setup>
 import { api } from '@/shared/infrastructure/http/api';
+import {
+    buildProductItemsByProductId,
+    enrichProducts,
+    findCategoryIdByName,
+    normalizeCategoriesPayload,
+    normalizeProductListPayload
+} from '@/shared/utils/productApiAdapters';
 import { useToast } from 'primevue';
+import { onMounted } from 'vue';
 import { ref } from 'vue';
 
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
@@ -9,6 +17,8 @@ const toast = useToast()
 
 const searchQuery = ref('')
 const products = ref([])
+const categoryID = ref(0)
+const productItemsByProductId = ref({})
 
 const isLoading = ref(false)
 const isSearchQueryEmpty = ref(true)
@@ -23,10 +33,18 @@ const fetchFilteredProducts = async () => {
 
         isLoading.value = true
         isSearchQueryEmpty.value = false
-        const response = (await api.get(`products/query/${searchQuery.value}/1`)).data
+        const response = (await api.get('products/search', {
+            params: {
+                searchQuery: searchQuery.value,
+                categoryID: categoryID.value
+            }
+        })).data
 
         isLoading.value = false
-        products.value = response.products
+        products.value = enrichProducts(
+            normalizeProductListPayload(response),
+            productItemsByProductId.value
+        )
         
     } catch (error) {
         isLoading.value = false
@@ -38,6 +56,26 @@ const fetchFilteredProducts = async () => {
         })
     }
 }
+
+onMounted(async () => {
+    try {
+        const [categoriesResponse, productItemsResponse] = await Promise.all([
+            api.get('product-categories'),
+            api.get('product-items')
+        ])
+        const categories = normalizeCategoriesPayload(categoriesResponse.data)
+
+        categoryID.value = findCategoryIdByName(categories, 'micas') ?? 0
+        productItemsByProductId.value = buildProductItemsByProductId(productItemsResponse.data)
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo inicializar la busqueda',
+            life: 4000
+        })
+    }
+})
 </script>
 
 <template>
@@ -80,7 +118,7 @@ const fetchFilteredProducts = async () => {
                 </div>
 
                 <!-- Product image -->
-                <RouterLink :to="{ name: 'product', params: { code: product.code } }">
+                <RouterLink :to="{ name: 'product', params: { code: product.id } }">
                     <img
                         :src="`${backendUrl}/storage/${product.image_url}`"
                         class="lg:size-60 size-40 border-solid border-2 border-sky-600 rounded-xl shadow-lg

@@ -1,37 +1,31 @@
 <script setup>
+import router from '@/app/router';
+import { useCartStore } from '@/contexts/catalog/stores/cart';
+import { useAuthStore } from '@/contexts/identity/stores/auth';
 import { api } from '@/shared/infrastructure/http/api';
+import { buildProductItemsByProductId, enrichProduct } from '@/shared/utils/productApiAdapters';
+import Button from 'primevue/button';
 import { useToast } from 'primevue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
-const backendUrl = import.meta.env.VITE_BACKEND_BASE
+const backendUrl = import.meta.env.VITE_BACKEND_URL
 
 const route = useRoute()
 const toast = useToast()
+const auth = useAuthStore()
+const cart = useCartStore()
 
 const productCode = route.params.code
-const productID = ref(0)
 
 const isLoading = ref(true)
+const isAddingToCart = ref(false)
 const product = ref({})
-const productAvailability = ref(0)
-const quantity = ref(1)
-
-// Increse the product quantity
-const increase = (availability) => {
-    if (quantity.value < availability)
-        quantity.value++
-}
-
-// Decrease the product quantity
-const decrease = () => {
-  if (quantity.value > 1) quantity.value--;
-}
 
 // Format the price of the product (commas)
 const formatPrice = (price) => {
-    const priceString = price.toString()
+    const priceString = String(price ?? '')
     const priceDigits = priceString.length
     const commas = Math.floor(priceDigits / 3)
     let commaPosition = priceDigits % 3;
@@ -55,12 +49,14 @@ const formatPrice = (price) => {
 // Get the product associated with the ID
 onMounted(async () => {
     try {
-        const response = (await api.get(`products/${productCode}`)).data
-        product.value = response
-        productID.value = response.id
+        await cart.initializeForSession()
 
-        // Get the availability of the product
-        productAvailability.value = (await api.get(`product-existence/${productID.value}`)).data
+        const [productResponse, productItemsResponse] = await Promise.all([
+            api.get(`products/${productCode}`),
+            api.get('product-items')
+        ])
+        const productItemsByProductId = buildProductItemsByProductId(productItemsResponse.data)
+        product.value = enrichProduct(productResponse.data, productItemsByProductId)
 
         isLoading.value = false
     } catch (error) {
@@ -72,6 +68,51 @@ onMounted(async () => {
         })
     }
 })
+
+const addToCart = async () => {
+    if (!auth.isAuthenticated) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Inicia sesión',
+            detail: 'Debes iniciar sesión para agregar productos al carrito.',
+            life: 4000
+        })
+        router.push({ name: 'login' })
+        return
+    }
+
+    if (!product.value?.product_item_id) {
+        toast.add({
+            severity: 'error',
+            summary: 'No disponible',
+            detail: 'Este producto no tiene item de inventario asociado para carrito.',
+            life: 4500
+        })
+        return
+    }
+
+    try {
+        isAddingToCart.value = true
+
+        await cart.addProduct(product.value, 1)
+
+        toast.add({
+            severity: 'success',
+            summary: 'Agregado',
+            detail: 'Producto agregado al carrito.',
+            life: 3000
+        })
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: error?.message ?? 'No se pudo agregar el producto al carrito.',
+            life: 4500
+        })
+    } finally {
+        isAddingToCart.value = false
+    }
+}
 </script>
 
 <template>
@@ -116,8 +157,21 @@ onMounted(async () => {
                     </div>
     
                     <!-- Product price -->
-                    <div class="font-bold text-2xl text-sky-600">
+                    <div v-if="product.price !== null" class="font-bold text-2xl text-sky-600">
                         {{ '$' + formatPrice(product.price) }}
+                    </div>
+                    <div v-else class="font-semibold text-lg text-slate-500">
+                        Precio no disponible
+                    </div>
+
+                    <!-- Product code -->
+                    <div class="flex flex-row gap-x-2">
+                        <div class="font-semibold text-sky-800">
+                            Codigo:
+                        </div>
+                        <div class="font-semibold text-sky-600">
+                            {{ product.code }}
+                        </div>
                     </div>
     
                     <!-- Description -->
@@ -130,55 +184,18 @@ onMounted(async () => {
                         </div>
                     </div>
     
-                    <!-- Products in existence -->
-                    <div class="flex flex-row gap-x-4">
-                        <div class="font-semibold text-sky-800">
-                            En existencia:
-                        </div>
-                        <div v-if="productAvailability != 0" class="font-bold text-sky-600">
-                            {{ productAvailability }}
-                        </div>
-                        <div v-else class="font-bold text-gray-400">
-                            NO DISPONIBLE
-                        </div>
+                    <div class="font-semibold text-slate-500">
+                        Disponibilidad no visible en esta version.
                     </div>
-                    
-                    <!-- Product quantity selector -->
-                    <div v-if="productAvailability != 0" class="flex flex-row gap-x-4">
-                        <div class="font-semibold text-sky-800">
-                            Cantidad:
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button @click="decrease"
-                                    class="w-8 h-8 rounded bg-sky-600 text-white font-bold hover:bg-sky-700">
-                            −
-                            </button>
-        
-                            <input
-                                v-model="quantity"
-                                min="1"
-                                disabled
-                                class="w-14 text-center border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            />
-        
-                            <button @click="increase(productAvailability)"
-                                    class="w-8 h-8 rounded bg-sky-600 text-white font-bold hover:bg-sky-700">
-                            +
-                            </button>
-                        </div>
-                    </div>
-    
-                    <!-- 'Add to cart' button -->
-                    <button
-                        v-if="productAvailability != 0"
-                        class="bg-sky-600 text-white px-3 py-1 rounded-md hover:bg-sky-700"
-                    >Añadir al carrito</button>
-    
-                    <button
-                        v-else
-                        class="bg-gray-400 text-white px-3 py-1 rounded-md disabled"
-                        disabled
-                    >Añadir al carrito</button>
+
+                    <Button
+                        label="Agregar al carrito"
+                        icon="pi pi-shopping-cart"
+                        class="!bg-sky-700 !border-sky-700 hover:!bg-sky-800 hover:!border-sky-800 mt-3"
+                        :loading="isAddingToCart"
+                        :disabled="!product?.product_item_id"
+                        @click="addToCart"
+                    />
                 </div>
             </div>
         </div>

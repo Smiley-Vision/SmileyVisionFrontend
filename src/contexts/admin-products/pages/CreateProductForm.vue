@@ -1,5 +1,6 @@
 <script setup>
 import { api } from '@/shared/infrastructure/http/api';
+import { normalizeCategoriesPayload } from '@/shared/utils/productApiAdapters';
 import { useToast } from 'primevue';
 import { reactive } from 'vue';
 import { ref } from 'vue';
@@ -12,11 +13,10 @@ const imagePreview = ref(null)
 const initialState = {
     'image': null,
     'file_name': '',
-    'type_id': 1,
-    'code': '',
+    'category_id': null,
+    'supplier_id': 1,
     'name': '',
-    'description': '',
-    'price': 0,
+    'description': ''
 }
 
 // Form object; request body
@@ -38,11 +38,10 @@ const submitForm = async () => {
     const formData = new FormData()
     formData.append('image', form.image)
     formData.append('file_name', form.file_name)
-    formData.append('type_id', form.type_id)
-    formData.append('code', form.code)
+    formData.append('category_id', form.category_id)
+    formData.append('supplier_id', form.supplier_id)
     formData.append('name', form.name)
     formData.append('description', form.description)
-    formData.append('price', form.price)
 
     try {
         const response = (await api.post('products', formData)).data
@@ -50,6 +49,7 @@ const submitForm = async () => {
         if (response.message === 'Product created successfully') {
             // Reset the form
             Object.assign(form, initialState)
+            form.category_id = productTypes.value[0]?.id ?? null
             imagePreview.value = null
 
             toast.add({
@@ -61,9 +61,9 @@ const submitForm = async () => {
         }
 
     } catch (error) {
-        // Show the first validation error
-        const firstField = Object.keys(error.errors)[0]
-        const message = error.errors[firstField][0]
+        const message = error?.errors
+            ? error.errors[Object.keys(error.errors)[0]][0]
+            : 'No se pudo crear el producto'
 
         toast.add({
             severity: 'error',
@@ -77,7 +77,8 @@ const submitForm = async () => {
 // Retrieve the product types
 onMounted(async () => {
     try {
-        productTypes.value = (await api.get('product-types')).data
+        productTypes.value = normalizeCategoriesPayload((await api.get('product-categories')).data)
+        form.category_id = productTypes.value[0]?.id ?? null
     } catch (error) {
         toast.add({
             severity: 'error',
@@ -110,24 +111,20 @@ onMounted(async () => {
 
         <!-- Type -->
         <div class="w-full">
-            <label for="type_id" class="block text-sky-700 font-medium mb-1">Tipo de producto</label>
-            <select v-model="form.type_id" id="type_id"
+            <label for="category_id" class="block text-sky-700 font-medium mb-1">Categoria de producto</label>
+            <select v-model="form.category_id" id="category_id"
                 class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required>
-                <option v-for="(type, index) in productTypes" :key="index" :value="index + 1">
+                <option v-for="(type, index) in productTypes" :key="index" :value="type.id">
                     {{ type.name }}
                 </option>
             </select>
         </div>
 
-        <!-- Code -->
+        <!-- Supplier -->
         <div class="w-full">
-            <label for="code" class="block text-sky-700 font-medium mb-1">Código del producto</label>
-            <input v-model="form.code" id="code" type="text"
-                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300 mb-2" required />
-            <div class="flex flex-row gap-x-2 select-none items-center font-normal text-md text-sky-500">
-                <div class="pi pi-info-circle"></div>
-                <div>Este código identificará al producto en el sistema</div>
-            </div>
+            <label for="supplier_id" class="block text-sky-700 font-medium mb-1">ID de proveedor</label>
+            <input v-model="form.supplier_id" id="supplier_id" type="number"
+                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required />
         </div>
 
         <!-- Name -->
@@ -141,13 +138,6 @@ onMounted(async () => {
         <div class="w-full">
             <label for="description" class="block text-sky-700 font-medium mb-1">Descripción</label>
             <input v-model="form.description" id="description" type="text"
-                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required />
-        </div>
-
-        <!-- Price -->
-        <div class="w-full">
-            <label for="price" class="block text-sky-700 font-medium mb-1">Precio ($)</label>
-            <input v-model="form.price" id="price" type="number" step="0.01"
                 class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required />
         </div>
 

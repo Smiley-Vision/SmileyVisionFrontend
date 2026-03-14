@@ -11,7 +11,7 @@ const router = useRouter()
 
 const form = reactive({
     'email': '',
-    'message': ''
+    'request_body': ''
 })
 
 // Submit the registration request
@@ -19,7 +19,7 @@ const submitRegistrationRequest = async () => {
     try {
         const body = {
             email: form.email,
-            message: form.message
+            request_body: form.request_body
         }
 
         await api.post('register-requests', body)
@@ -27,9 +27,9 @@ const submitRegistrationRequest = async () => {
         auth.justSubmittedRequest = true
         router.push({ name: 'home', query: { justSubmittedRequest: 'true' } })
     } catch (error) {
-        // Show the first validation error
-        const firstField = Object.keys(error.errors)[0]
-        const message = error.errors[firstField][0]
+        const message = error?.errors
+            ? error.errors[Object.keys(error.errors)[0]][0]
+            : 'No se pudo enviar la solicitud'
 
         toast.add({
             severity: 'error',
@@ -66,9 +66,9 @@ const submitRegistrationRequest = async () => {
                 </div>
 
                 <div class="flex flex-col gap-y-1">
-                    <label for="message" class="font-medium text-lg text-gray-700">Descripción:</label>
+                    <label for="request_body" class="font-medium text-lg text-gray-700">Descripción:</label>
                     <input 
-                        v-model="form.message" type="text" id="message" name="message" 
+                        v-model="form.request_body" type="text" id="request_body" name="request_body" 
                         class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                         placeholder="Al menos 10 caracteres" required />
                 </div>

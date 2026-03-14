@@ -1,6 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&display=swap');
 @import "primeicons/primeicons.css";
 
+:root {
+    --sv-primary-color: #0c5e89;
+    --sv-primary-hover: #0a4f74;
+    --sv-border-color: #d9e2ec;
+    --sv-surface-100: #f4f7fb;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
