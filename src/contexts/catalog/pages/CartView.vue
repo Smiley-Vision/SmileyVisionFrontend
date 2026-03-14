@@ -8,7 +8,7 @@ import Button from 'primevue/button'
 import { useToast } from 'primevue'
 import { computed, onMounted, ref } from 'vue'
 
-const backendUrl = import.meta.env.VITE_BACKEND_BASE
+const backendUrl = import.meta.env.VITE_BACKEND_URL
 
 const toast = useToast()
 const auth = useAuthStore()
@@ -201,7 +201,7 @@ onMounted(async () => {
             <section class="bg-white border border-slate-200 rounded-2xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-5">
                     <h2 class="text-2xl font-semibold text-sky-800">Productos</h2>
-                    <span class="text-slate-500 font-medium">{{ cart.itemCount }} unidades</span>
+                    <span class="text-slate-500 font-medium">Total: {{ cart.itemCount }} unidades</span>
                 </div>
 
                 <div class="flex flex-col divide-y divide-slate-200">

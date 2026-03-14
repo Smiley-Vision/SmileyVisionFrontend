@@ -10,7 +10,7 @@ import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
-const backendUrl = import.meta.env.VITE_BACKEND_BASE
+const backendUrl = import.meta.env.VITE_BACKEND_URL
 
 const route = useRoute()
 const toast = useToast()

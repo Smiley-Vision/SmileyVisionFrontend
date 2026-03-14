@@ -5,7 +5,7 @@ import { useToast } from 'primevue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 
-const backendUrl = import.meta.env.VITE_BACKEND_BASE
+const backendUrl = import.meta.env.VITE_BACKEND_URL
 
 const toast = useToast()
 
