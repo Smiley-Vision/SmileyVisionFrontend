@@ -11,7 +11,7 @@ const router = useRouter()
 
 const form = reactive({
     'email': '',
-    'request_body': ''
+    'message': ''
 })
 
 // Submit the registration request
@@ -19,7 +19,7 @@ const submitRegistrationRequest = async () => {
     try {
         const body = {
             email: form.email,
-            request_body: form.request_body
+            message: form.message
         }
 
         await api.post('register-requests', body)
@@ -66,9 +66,9 @@ const submitRegistrationRequest = async () => {
                 </div>
 
                 <div class="flex flex-col gap-y-1">
-                    <label for="request_body" class="font-medium text-lg text-gray-700">Descripción:</label>
+                    <label for="message" class="font-medium text-lg text-gray-700">Descripción:</label>
                     <input 
-                        v-model="form.request_body" type="text" id="request_body" name="request_body" 
+                        v-model="form.message" type="text" id="message" name="message" 
                         class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                         placeholder="Al menos 10 caracteres" required />
                 </div>
