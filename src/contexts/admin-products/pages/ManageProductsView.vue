@@ -33,5 +33,12 @@ const images = ['create', 'modify', 'availability']
                 </div>
             </div>
         </div>
+
+        <RouterLink
+            :to="{ name: 'admin-products-create-lenses-batch' }"
+            class="w-fit mx-auto mt-2 bg-sky-500 text-white font-semibold px-8 py-3 rounded-xl hover:bg-sky-600 transition"
+        >
+            Crear items de lentes en lote
+        </RouterLink>
     </div>
 </template>

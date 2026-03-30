@@ -2,6 +2,7 @@
 import { api } from '@/shared/infrastructure/http/api';
 import { normalizeCategoriesPayload } from '@/shared/utils/productApiAdapters';
 import { useToast } from 'primevue';
+import { computed } from 'vue';
 import { reactive } from 'vue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
@@ -21,6 +22,13 @@ const initialState = {
 
 // Form object; request body
 const form = reactive({ ...initialState })
+
+const isMicasCategorySelected = computed(() => {
+    const selectedCategory = productTypes.value.find((type) => type.id === form.category_id)
+    const selectedName = String(selectedCategory?.name ?? '').toLowerCase()
+
+    return selectedName.includes('mica')
+})
 
 function retrieveImage(event) {
     const file = event.target.files[0]
@@ -140,6 +148,14 @@ onMounted(async () => {
             <input v-model="form.description" id="description" type="text"
                 class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required />
         </div>
+
+        <RouterLink
+            v-if="isMicasCategorySelected"
+            :to="{ name: 'admin-products-create-lenses-batch' }"
+            class="w-full text-center bg-sky-100 border border-sky-300 text-sky-800 font-semibold px-6 py-3 rounded-xl hover:bg-sky-200 transition"
+        >
+            Crear items de lentes en lote
+        </RouterLink>
 
         <!-- Submit Button -->
         <button type="submit"

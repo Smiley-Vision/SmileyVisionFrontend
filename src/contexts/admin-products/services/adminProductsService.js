@@ -17,6 +17,14 @@ export async function createProductService(formData) {
     return (await api.post('products', formData)).data
 }
 
+export async function getMicasProductsService() {
+    return (await api.get('products/micas')).data
+}
+
+export async function batchCreateLensItemsService(payload) {
+    return (await api.post('product-items/batch-lenses', payload)).data
+}
+
 export async function getProductStateService(code) {
     return (await api.get(`products/${code}`)).data
 }

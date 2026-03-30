@@ -1,5 +1,6 @@
 const ManageProductsView = () => import('@/contexts/admin-products/pages/ManageProductsView.vue')
 const CreateProductForm = () => import('@/contexts/admin-products/pages/CreateProductForm.vue')
+const CreateLensBatchForm = () => import('@/contexts/admin-products/pages/CreateLensBatchForm.vue')
 const ModifyProductView = () => import('@/contexts/admin-products/pages/ModifyProductView.vue')
 const ModifyProductForm = () => import('@/contexts/admin-products/pages/ModifyProductForm.vue')
 
@@ -13,6 +14,11 @@ export const adminProductsRoutes = [
         path: '/admin/products/create',
         name: 'admin-products-create',
         component: CreateProductForm
+    },
+    {
+        path: '/admin/products/create/lenses-batch',
+        name: 'admin-products-create-lenses-batch',
+        component: CreateLensBatchForm
     },
     {
         path: '/admin/products/modify',
