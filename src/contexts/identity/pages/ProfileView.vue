@@ -13,6 +13,7 @@ import Tag from 'primevue/tag'
 const {
     cityOptions,
     isLoading,
+    isLoggingOut,
     isSavingProfile,
     isSavingAddress,
     user,
@@ -36,6 +37,7 @@ const {
     openEditProfile,
     openAddAddressModal,
     toggleAddressActionsMenu,
+    handleLogout,
     submitProfileChanges,
     submitCreateAddress,
     submitEditAddress,
@@ -72,12 +74,21 @@ function handleAddressActions(payload) {
                         </div>
                     </div>
 
-                    <Button
-                        label="Editar información"
-                        icon="pi pi-pen-to-square"
-                        class="!bg-[#075985] !border-[#075985] hover:!bg-[#1373aa] hover:!border-[#1373aa]"
-                        @click="openEditProfile"
-                    />
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <Button
+                            label="Editar información"
+                            icon="pi pi-pen-to-square"
+                            class="!bg-[#075985] !border-[#075985] hover:!bg-[#1373aa] hover:!border-[#1373aa]"
+                            @click="openEditProfile"
+                        />
+                        <Button
+                            label="Cerrar sesión"
+                            icon="pi pi-sign-out"
+                            severity="danger"
+                            :loading="isLoggingOut"
+                            @click="handleLogout"
+                        />
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 border-y border-slate-200">

@@ -7,6 +7,7 @@ import {
 } from '@/contexts/identity/services/profileService'
 import { useToast } from 'primevue'
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const roleLabels = {
     1: 'Admin',
@@ -68,12 +69,14 @@ function sortAddresses(list) {
 export function useProfileView() {
     const toast = useToast()
     const auth = useAuthStore()
+    const router = useRouter()
 
     const googleMapsEmbedApiKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_API_KEY
     const mapFallbackThumbnail = 'https://maps.google.com/maps?q=19.833141,-90.521352&z=17&hl=es&output=embed'
 
     const cityOptions = ref([...defaultCityOptions])
     const isLoading = ref(true)
+    const isLoggingOut = ref(false)
     const isSavingProfile = ref(false)
     const isSavingAddress = ref(false)
     const user = ref(null)
@@ -545,6 +548,31 @@ export function useProfileView() {
         })
     }
 
+    async function handleLogout() {
+        try {
+            isLoggingOut.value = true
+
+            await auth.logout()
+            await router.push({ name: 'home' })
+
+            toast.add({
+                severity: 'success',
+                summary: 'Éxito',
+                detail: 'Sesión cerrada',
+                life: 3500
+            })
+        } catch (error) {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudo cerrar la sesión.',
+                life: 4000
+            })
+        } finally {
+            isLoggingOut.value = false
+        }
+    }
+
     onMounted(async () => {
         try {
             await loadProfileData()
@@ -563,6 +591,7 @@ export function useProfileView() {
     return {
         cityOptions,
         isLoading,
+        isLoggingOut,
         isSavingProfile,
         isSavingAddress,
         user,
@@ -586,6 +615,7 @@ export function useProfileView() {
         openEditProfile,
         openAddAddressModal,
         toggleAddressActionsMenu,
+        handleLogout,
         submitProfileChanges,
         submitCreateAddress,
         submitEditAddress,

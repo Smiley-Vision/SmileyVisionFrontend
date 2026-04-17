@@ -94,7 +94,7 @@ onMounted(async () => {
         </h1>
 
         <!-- Registration requests list -->
-        <div class="grid gap-4 max-w-3xl mx-auto w-full">
+        <div v-if="registrationRequests.length > 0" class="grid gap-4 max-w-3xl mx-auto w-full">
             <div v-for="request in registrationRequests" :key="request.id"
                 class="border border-gray-200 rounded-xl p-6 shadow-sm bg-white flex flex-col md:flex-row md:items-center md:justify-between transition duration-200 hover:shadow-md">
 
@@ -114,6 +114,15 @@ onMounted(async () => {
                         Rechazar
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <div v-else class="max-w-3xl mx-auto w-full px-8 pb-12 text-center">
+            <div class="text-2xl font-semibold text-sky-800">
+                No hay solicitudes aún.
+            </div>
+            <div class="mt-2 text-sky-600">
+                Cuando llegue una nueva solicitud de registro, aparecerá aquí.
             </div>
         </div>
     </div>

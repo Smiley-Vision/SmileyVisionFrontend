@@ -23,11 +23,38 @@ const productItemsByProductId = ref({})
 const isLoading = ref(false)
 const isSearchQueryEmpty = ref(true)
 
+const getProductRecencyValue = (product) => {
+    const candidateDate = product?.created_at ?? product?.updated_at ?? null
+    const timestamp = candidateDate ? new Date(candidateDate).getTime() : Number.NaN
+
+    if (!Number.isNaN(timestamp)) return timestamp
+
+    return Number(product?.id ?? 0)
+}
+
+const sortProductsByRecency = (items) => {
+    return [...items].sort((left, right) => getProductRecencyValue(right) - getProductRecencyValue(left))
+}
+
+const loadRecentProducts = async () => {
+    isLoading.value = true
+    isSearchQueryEmpty.value = true
+
+    const response = (await api.get('products')).data
+    const normalizedProducts = normalizeProductListPayload(response)
+
+    products.value = sortProductsByRecency(
+        enrichProducts(normalizedProducts, productItemsByProductId.value)
+    ).slice(0, 10)
+
+    isLoading.value = false
+}
+
 // Fetch products with the search query
 const fetchFilteredProducts = async () => {
     try {
         if (searchQuery.value === '') {
-            isSearchQueryEmpty.value = true
+            await loadRecentProducts()
             return   
         }
 
@@ -67,7 +94,9 @@ onMounted(async () => {
 
         productTypes.value = normalizeCategoriesPayload(categoriesResponse.data)
         productItemsByProductId.value = buildProductItemsByProductId(productItemsResponse.data)
+        await loadRecentProducts()
     } catch (error) {
+        isLoading.value = false
         toast.add({
             severity: 'error',
             summary: 'Error',
@@ -125,8 +154,8 @@ onMounted(async () => {
         </div>
 
         <!-- Products grid -->
-        <div v-else class="flex mx-auto items-center xl:grid xl:grid-cols-4 lg:grid lg:grid-cols-3 sm:grid sm:grid-cols-2 text-center flex-col gap-x-20 gap-y-12 pt-4">
-            <div v-for="product in products" class="flex flex-col items-center gap-y-4 font-semibold text-xl text-sky-700">
+        <div v-else-if="products.length > 0" class="flex mx-auto items-center xl:grid xl:grid-cols-4 lg:grid lg:grid-cols-3 sm:grid sm:grid-cols-2 text-center flex-col gap-x-20 gap-y-12 pt-4">
+            <div v-for="product in products" :key="product.id" class="flex flex-col items-center gap-y-4 font-semibold text-xl text-sky-700">
                 
                 <!-- Product name -->
                 <div class="text-lg text-sky-700 font-semibold">
@@ -151,6 +180,15 @@ onMounted(async () => {
                         {{ product.code }}
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div v-else class="mx-auto max-w-2xl px-8 pb-12 text-center">
+            <div class="text-2xl font-semibold text-sky-800">
+                No se encontraron productos.
+            </div>
+            <div class="mt-2 text-sky-600">
+                Intente con otro nombre, código o categoría.
             </div>
         </div>
     </div>

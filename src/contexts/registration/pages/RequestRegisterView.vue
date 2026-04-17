@@ -1,40 +1,29 @@
 <script setup>
 import { useAuthStore } from '@/contexts/identity/stores/auth';
-import { api } from '@/shared/infrastructure/http/api';
+import { useRegistrationRequestForm } from '@/contexts/registration/composables/useRegistrationRequestForm';
 import { useToast } from 'primevue';
-import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
 
 const auth = useAuthStore()
 const toast = useToast()
 const router = useRouter()
-
-const form = reactive({
-    'email': '',
-    'message': ''
-})
+const { apiError, clearFeedback, errors, form, isSubmitting, submit } = useRegistrationRequestForm()
 
 // Submit the registration request
 const submitRegistrationRequest = async () => {
-    try {
-        const body = {
-            email: form.email,
-            message: form.message
-        }
+    const wasSuccessful = await submit()
 
-        await api.post('register-requests', body)
-
+    if (wasSuccessful) {
         auth.justSubmittedRequest = true
         router.push({ name: 'home', query: { justSubmittedRequest: 'true' } })
-    } catch (error) {
-        const message = error?.errors
-            ? error.errors[Object.keys(error.errors)[0]][0]
-            : 'No se pudo enviar la solicitud'
+        return
+    }
 
+    if (apiError.value) {
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: message,
+            detail: apiError.value,
             life: 4000
         })
     }
@@ -62,20 +51,25 @@ const submitRegistrationRequest = async () => {
                     <label for="email" class="font-medium text-lg text-gray-700">Correo electrónico:</label>
                     <input v-model="form.email" type="email" id="email" name="email"
                         class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        placeholder="Ingresa tu correo electrónico" required />
+                        placeholder="Ingresa tu correo electrónico" @input="clearFeedback('email')" />
+                    <p v-if="errors.email" class="mt-2 text-sm text-red-600">{{ errors.email }}</p>
                 </div>
 
                 <div class="flex flex-col gap-y-1">
-                    <label for="message" class="font-medium text-lg text-gray-700">Descripción:</label>
-                    <input 
-                        v-model="form.message" type="text" id="message" name="message" 
+                    <label for="message" class="font-medium text-lg text-gray-700">Descripción de tu negocio:</label>
+                    <textarea
+                        v-model="form.message" id="message" name="message" rows="4"
                         class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        placeholder="Al menos 10 caracteres" required />
+                        placeholder="Ingresa los detalles de su óptica para la verificación del negocio."
+                        @input="clearFeedback('message')"
+                    ></textarea>
+                    <p v-if="errors.message" class="mt-2 text-sm text-red-600">{{ errors.message }}</p>
                 </div>
 
                 <button type="submit"
+                    :disabled="isSubmitting"
                     class="w-full px-4 py-3 bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700">
-                    Solicitar registro
+                    {{ isSubmitting ? 'Enviando...' : 'Solicitar registro' }}
                 </button>
             </form>
 

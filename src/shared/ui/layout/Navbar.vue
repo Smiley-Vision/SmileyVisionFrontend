@@ -1,62 +1,161 @@
 <script setup>
-import router from '@/app/router'
+import { getUserAddressesService } from '@/contexts/identity/services/profileService'
 import { useCartStore } from '@/contexts/catalog/stores/cart'
 import { useAuthStore } from '@/contexts/identity/stores/auth'
-import { useToast } from 'primevue'
-import { computed, defineEmits, onMounted, onUnmounted, ref, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 const auth = useAuthStore()
 const cart = useCartStore()
-const toast = useToast()
+const route = useRoute()
+const router = useRouter()
+const emit = defineEmits(['toggle-menu'])
 
 const isMenuOpen = ref(false)
 const dropDownMenu = ref(null)
-const isAuthenticated = computed(() => auth.isAuthenticated)
-const isAdmin = computed(() => auth.isAdmin)
-const cartCount = computed(() => cart.itemCount)
-const emit = defineEmits(['toggle-menu'])
+const searchQuery = ref('')
+const primaryAddress = ref(null)
 
-const isActiveLink = (routePath) => {
-    const route = useRoute() // Current route path we're in
-    return route.path === routePath
+const roleId = computed(() => Number(auth.user?.role_id ?? 0))
+const isAuthenticated = computed(() => auth.isAuthenticated)
+const isAdmin = computed(() => roleId.value === 1)
+const isBuyer = computed(() => roleId.value === 2)
+const isDriver = computed(() => roleId.value === 3)
+const cartCount = computed(() => cart.itemCount)
+
+const userDisplayName = computed(() => {
+    const currentUser = auth.user ?? {}
+    const fullName = [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ').trim()
+
+    return fullName || currentUser.name || currentUser.email || 'Mi perfil'
+})
+
+const roleLabel = computed(() => {
+    if (isAdmin.value) return 'Admin'
+    if (isBuyer.value) return 'Comprador'
+    if (isDriver.value) return 'Conductor'
+    return 'Invitado'
+})
+
+const locationLabel = computed(() => {
+    if (!isAuthenticated.value || !primaryAddress.value) {
+        return 'Sin ubicación principal'
+    }
+
+    const street = String(primaryAddress.value.street ?? '').trim()
+
+    return street ? `Calle ${street}` : 'Sin ubicación principal'
+})
+
+const leftNavItems = computed(() => {
+    if (isAdmin.value) {
+        return [
+            { label: 'Tienda', routeName: 'shop' },
+            { label: 'Productos', routeName: 'admin-products' },
+            { label: 'Inventario', routeName: 'admin-products-availability' },
+            { label: 'Solicitudes', routeName: 'admin-register' }
+        ]
+    }
+
+    if (isBuyer.value) {
+        return [
+            { label: 'Tienda', routeName: 'shop' },
+            { label: 'Micas', routeName: 'shop-Micas' },
+            { label: 'Armazones', routeName: 'shop-Armazones' },
+            { label: 'Equipos', routeName: 'shop-Equipos' }
+        ]
+    }
+
+    if (isDriver.value) {
+        return [
+            { label: 'Perfil', routeName: 'profile' }
+        ]
+    }
+
+    return [
+        { label: 'Tienda', routeName: 'shop' },
+        { label: 'Micas', routeName: 'shop-Micas' },
+        { label: 'Armazones', routeName: 'shop-Armazones' },
+        { label: 'Equipos', routeName: 'shop-Equipos' }
+    ]
+})
+
+const rightNavItems = computed(() => {
+    if (isAdmin.value) {
+        return [
+            { label: 'Productos', routeName: 'admin-products', icon: 'pi pi-box' }
+        ]
+    }
+
+    if (isBuyer.value) {
+        return [
+            { label: 'Carrito', routeName: 'cart', icon: 'pi pi-shopping-cart', badge: cartCount.value }
+        ]
+    }
+
+    return [
+        { label: 'Ingresar', routeName: 'login', icon: 'pi pi-sign-in' }
+    ]
+})
+
+function isRouteActive(routeName) {
+    return route.name === routeName
 }
 
-// User clicks outside the drop-down menu
 function handleClickOutside(event) {
-    if (dropDownMenu.value &&
+    if (
+        dropDownMenu.value &&
         isMenuOpen.value &&
         !dropDownMenu.value.contains(event.target) &&
-        event.target !== document.getElementById('menu-button')) {
-            isMenuOpen.value = false;
-            emit('toggle-menu', false);
+        event.target !== document.getElementById('menu-button')
+    ) {
+        isMenuOpen.value = false
+        emit('toggle-menu', false)
     }
 }
 
-const handleLogout = async () => {
-    try {
-        const data = await auth.logout()
-
-        router.push('/')
-
-        toast.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Sesión cerrada',
-            life: 4000 // 4 seconds
-        })
-    } catch (error) {
-        throw error
-    }
-}
-
-const toggleMenu = () => {
+function toggleMenu() {
     isMenuOpen.value = !isMenuOpen.value
     emit('toggle-menu', isMenuOpen.value)
 }
 
+function closeMenu() {
+    isMenuOpen.value = false
+    emit('toggle-menu', false)
+}
+
+function submitSearch() {
+    const query = searchQuery.value.trim()
+
+    if (!query) {
+        router.push({ name: isAdmin.value ? 'admin-products' : 'shop' })
+        return
+    }
+
+    router.push({
+        name: isAdmin.value ? 'admin-products' : 'shop',
+        query: { search: query }
+    })
+}
+
+async function loadPrimaryAddress() {
+    if (!isAuthenticated.value || !auth.user?.id) {
+        primaryAddress.value = null
+        return
+    }
+
+    try {
+        const response = await getUserAddressesService(auth.user.id)
+        const addresses = Array.isArray(response?.addresses) ? response.addresses : []
+        primaryAddress.value = addresses.find((address) => address?.is_default) ?? addresses[0] ?? null
+    } catch {
+        primaryAddress.value = null
+    }
+}
+
 onMounted(() => {
     void cart.initializeForSession().catch(() => {})
+    void loadPrimaryAddress()
     document.body.addEventListener('click', handleClickOutside)
 })
 
@@ -68,161 +167,231 @@ watch(
     () => [auth.isAuthenticated, auth.user?.id],
     () => {
         void cart.initializeForSession().catch(() => {})
+        void loadPrimaryAddress()
     },
     { immediate: true }
+)
+
+watch(
+    () => route.fullPath,
+    () => {
+        closeMenu()
+    }
 )
 </script>
 
 <template>
-    <!-- Navbar - Desktop -->
-    <div class="sticky top-0 z-50 flex flex-row justify-between text-white mx-auto lg:px-20 md:px-12 px-8 py-6 bg-sky-800 min-w-full max-w-full shadow-2xl">
-            
-            <!-- Logo section -->
-            <div class="flex justify-center items-center gap-x-4">
-                <div class="min-w-16 max-w-16">
-                    <img src="@/assets/images/smiley_logo.png" alt="Smiley Vision Logo">
+    <header class="sticky top-0 z-50 border-b border-sky-900/10 bg-sky-800 text-white shadow-[0_10px_24px_rgba(7,89,133,0.18)]">
+        <div class="mx-auto max-w-[1600px] px-4 py-2.5 sm:px-6 lg:px-12">
+            <div class="hidden items-center gap-5 lg:grid lg:grid-cols-[220px_minmax(320px,1fr)_260px_220px]">
+                <RouterLink :to="{ name: 'home' }" class="flex items-center gap-3">
+                    <div class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+                        <img src="@/assets/images/smiley_logo.png" alt="Smiley Vision Logo" class="h-10 w-10 object-contain">
+                    </div>
+                    <div class="flex flex-col leading-none text-white">
+                        <span class="text-xl font-extrabold">Smiley</span>
+                        <span class="-mt-1 text-xl font-extrabold">Vision</span>
+                    </div>
+                </RouterLink>
+
+                <form class="flex items-center overflow-hidden rounded-[0.55rem] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.16)]" @submit.prevent="submitSearch">
+                    <input
+                        v-model="searchQuery"
+                        type="search"
+                        placeholder="Buscar productos, marcas y más..."
+                        class="h-11 w-full border-0 px-5 text-base font-medium text-slate-700 outline-none placeholder:text-slate-400"
+                    >
+                    <button
+                        type="submit"
+                        class="flex h-11 w-14 items-center justify-center border-l border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+                    >
+                        <i class="pi pi-search text-lg"></i>
+                    </button>
+                </form>
+
+                <div class="flex items-center text-slate-100">
+                    <span class="flex h-10 w-10 items-center justify-center text-white">
+                        <i class="pi pi-map-marker text-[1.35rem]"></i>
+                    </span>
+                    <div class="leading-tight">
+                        <p class="text-sm font-bold text-white">{{ locationLabel }}</p>
+                    </div>
                 </div>
-                <div class="flex xl:flex-row flex-col lg:gap-x-2 lg:gap-y-0 gap-y-1">
-                    <div class="flex lg:text-2xl text-xl font-semibold shrink-0">
-                        Smiley
-                    </div>
-                    <div class="flex lg:text-2xl text-xl font-semibold shrink-0">
-                        Vision
-                    </div>
+
+                <div class="flex items-center justify-end gap-2">
+                    <RouterLink
+                        v-for="item in rightNavItems"
+                        :key="`top-right-${item.routeName}`"
+                        :to="{ name: item.routeName }"
+                        :class="[
+                            isRouteActive(item.routeName) ? 'bg-sky-900 text-white' : 'text-slate-100 hover:bg-sky-700/70',
+                            'flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition'
+                        ]"
+                    >
+                        <i :class="item.icon"></i>
+                        <span>{{ item.label }}</span>
+                        <span
+                            v-if="item.badge > 0"
+                            class="inline-flex min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[0.72rem] font-bold text-white"
+                        >
+                            {{ item.badge > 99 ? '99+' : item.badge }}
+                        </span>
+                    </RouterLink>
+
+                    <RouterLink
+                        v-if="isAuthenticated"
+                        :to="{ name: 'profile' }"
+                        class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-sky-800 shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition hover:scale-[1.03]"
+                        aria-label="Ir al perfil"
+                    >
+                        <i :class="isAdmin ? 'pi pi-wrench' : isDriver ? 'pi pi-truck' : 'pi pi-user'" class="text-base"></i>
+                    </RouterLink>
                 </div>
             </div>
-            <!-- Nabar Links - Desktop -->
-            <ul class="lg:flex items-center justify-between my-4 xl:gap-x-4 hidden">
-                <li>
-                    <!-- Home -->
-                    <RouterLink
-                        :class="[isActiveLink('/') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
-                                    'p-4 font-semibold rounded-xl']"
-                        :to="{ name: 'home' }">Principal
-                    </RouterLink>
-                </li>
-                <li>
-                    <!-- About -->
-                    <RouterLink
-                        :class="[isActiveLink('/about') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
-                                    'p-4 font-semibold rounded-xl']"
-                        :to="{ name: 'about' }">Acerca
-                    </RouterLink>
-                </li>
-                <li>
-                    <!-- Shop / Products (admin) -->
-                    <RouterLink
-                        v-if="!isAuthenticated || isAuthenticated && !isAdmin"
-                        :class="[isActiveLink('/shop') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
-                                    'p-4 font-semibold rounded-xl']"
-                        :to="{ name: 'shop' }">Comprar
-                    </RouterLink>
-                    <RouterLink
-                        v-else
-                        :class="[isActiveLink('/admin/products') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
-                                    'p-4 font-semibold rounded-xl']"
-                        :to="{ name: 'admin-products' }">Productos
-                    </RouterLink>
-                </li>
-                <li>
-                    <!-- Contact / Register (admin) -->
-                    <RouterLink
-                        v-if="!isAuthenticated || isAuthenticated && !isAdmin"
-                        :class="[isActiveLink('/contact') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
-                                    'p-4 font-semibold rounded-xl']"
-                        :to="{ name: 'contact' }">Contacto
-                    </RouterLink>
-                    <RouterLink
-                        v-else
-                        :class="[isActiveLink('/admin/register') ? 'bg-sky-900' : 'hover:bg-sky-700 hover:rounded-xl',
-                                    'p-4 font-semibold rounded-xl']"
-                        :to="{ name: 'admin-register' }">Registrar
-                    </RouterLink>
-                </li>
-            </ul>
 
-            <!-- Navbar Icons - Desktop -->
-            <div class="lg:flex items-center gap-8 hidden">
-                <div v-if="!isAuthenticated" class="xl:flex gap-x-6 hidden">
-                    <div class="min-w-8 max-w-16">
-                        <RouterLink class="pi pi-info-circle" style="font-size: 1.5rem" :to="{ name: 'about' }"></RouterLink>
-                    </div>
-                    <div class="min-w-8 max-w-16">
-                        <RouterLink class="pi pi-shopping-bag" style="font-size: 1.5rem" :to="{ name: 'shop' }"></RouterLink>
-                    </div>
+            <div class="hidden items-center justify-between gap-6 pt-2 lg:flex">
+                <div class="flex flex-wrap items-center gap-1">
+                    <RouterLink
+                        v-for="item in leftNavItems"
+                        :key="item.routeName"
+                        :to="{ name: item.routeName }"
+                        :class="[
+                            isRouteActive(item.routeName) ? 'bg-sky-900 text-white' : 'text-slate-200 hover:bg-sky-700/70 hover:text-white',
+                            'rounded-xl px-3 py-2 text-[0.98rem] font-medium transition'
+                        ]"
+                    >
+                        {{ item.label }}
+                    </RouterLink>
                 </div>
-                <div v-else class="flex items-center gap-2 shrink-0">
-                    <RouterLink v-if="!isAdmin" :to="{ name: 'cart' }" class="text-xl p-3 hover:bg-sky-700 hover:rounded-xl">
-                        <div class="relative">
-                            <div class="pi pi-shopping-cart" style="font-size: 1.4rem;"></div>
-                            <div
+
+                <div v-if="isAuthenticated" class="flex items-center gap-2 text-sm font-medium text-slate-300">
+                    <span>{{ userDisplayName }}</span>
+                    <span class="text-slate-400">|</span>
+                    <span>{{ roleLabel }}</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3 lg:hidden">
+                <div class="flex items-center justify-between gap-4">
+                    <RouterLink :to="{ name: 'home' }" class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+                            <img src="@/assets/images/smiley_logo.png" alt="Smiley Vision Logo" class="h-10 w-10 object-contain">
+                        </div>
+                        <div class="flex flex-col leading-none text-white">
+                            <span class="font-extrabold">Smiley</span>
+                            <span class="-mt-1 font-extrabold">Vision</span>
+                        </div>
+                    </RouterLink>
+
+                    <div class="flex items-center gap-2">
+                        <RouterLink
+                            v-if="isBuyer"
+                            :to="{ name: 'cart' }"
+                            class="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-sky-800 shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+                        >
+                            <i class="pi pi-shopping-cart"></i>
+                            <span
                                 v-if="cartCount > 0"
-                                class="absolute -top-2 -right-3 bg-red-600 text-white text-[0.7rem] min-w-5 h-5 px-1 rounded-full flex items-center justify-center font-semibold"
+                                class="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[0.65rem] font-bold text-white"
                             >
                                 {{ cartCount > 99 ? '99+' : cartCount }}
-                            </div>
-                        </div>
-                    </RouterLink>
-                    <RouterLink :to="{ name: 'profile' }" class="text-xl p-3 hover:bg-sky-700 hover:rounded-xl">
-                        <div class="flex 2xl:flex-row flex-col items-center lg:gap-x-3">
-                            <div :class="isAdmin ? 'pi pi-wrench' : 'pi pi-user'" style="font-size: 1.4rem;"></div>
-                        </div>
-                    </RouterLink>
+                            </span>
+                        </RouterLink>
+                        <RouterLink
+                            v-if="isAuthenticated"
+                            :to="{ name: 'profile' }"
+                            class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sky-800 shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+                        >
+                            <i :class="isAdmin ? 'pi pi-wrench' : isDriver ? 'pi pi-truck' : 'pi pi-user'"></i>
+                        </RouterLink>
+                        <button
+                            id="menu-button"
+                            :class="`pi ${isMenuOpen ? 'pi-times' : 'pi-bars'}`"
+                            class="rounded-xl p-2 text-white"
+                            style="font-size: 1.6rem"
+                            @click="toggleMenu"
+                        ></button>
+                    </div>
                 </div>
-                <RouterLink v-if="!isAuthenticated" :to="{ name: 'login' }" class="bg-sky-200 hover:bg-sky-300 text-black px-4 py-2 rounded-xl shadow-xl text-center">
-                    Iniciar sesión
-                </RouterLink>
-                <RouterLink v-else :to="{ name: 'home' }" @click.prevent="handleLogout" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-xl shadow-xl text-center">
-                    Cerrar sesión
-                </RouterLink>
-            </div>
-            <!-- Mobile Menu Icon -->
-            <div class="flex lg:hidden">
-                <button id="menu-button" :class="`pi ${isMenuOpen ? 'pi-times' : 'pi-bars'}`" style="font-size: 2rem"
-                    @click="toggleMenu"></button>
+
+                <form class="flex items-center overflow-hidden rounded-[0.55rem] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.16)]" @submit.prevent="submitSearch">
+                    <input
+                        v-model="searchQuery"
+                        type="search"
+                        placeholder="Buscar productos..."
+                        class="h-10 w-full border-0 px-4 text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400"
+                    >
+                    <button
+                        type="submit"
+                        class="flex h-10 w-12 items-center justify-center border-l border-slate-200 text-slate-500"
+                    >
+                        <i class="pi pi-search text-lg"></i>
+                    </button>
+                </form>
+
+                <div class="flex items-center gap-3 text-slate-100">
+                    <span class="flex h-9 w-9 items-center justify-center text-white">
+                        <i class="pi pi-map-marker text-[1.2rem]"></i>
+                    </span>
+                    <div class="leading-tight">
+                        <p class="text-sm font-bold text-white">{{ locationLabel }}</p>
+                    </div>
+                </div>
             </div>
         </div>
+    </header>
 
-    <!-- Mobile Menu -->
-    <div ref="dropDownMenu" class="flex justify-end sticky top-28 shadow-xl z-50">
-        <ul :class="`absolute flex flex-col max-w-40 bg-sky-600 text-white px-6 py-4 gap-y-4 lg:hidden
-            ${isMenuOpen ? '' : 'hidden'}`">
-            <li>
-                <RouterLink class="focus:bg-sky-700 focus:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'home' }">Principal
+    <div ref="dropDownMenu" class="sticky top-[76px] z-50 flex justify-end lg:hidden">
+        <div
+            :class="[
+                isMenuOpen ? 'translate-y-0 opacity-100 pointer-events-auto' : 'pointer-events-none -translate-y-2 opacity-0',
+                'absolute right-4 w-[min(22rem,calc(100vw-2rem))] rounded-[1.2rem] border border-sky-700/30 bg-sky-800 px-4 py-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)] transition duration-200'
+            ]"
+        >
+            <div class="flex flex-col gap-2">
+                <RouterLink
+                    v-for="item in leftNavItems"
+                    :key="`mobile-left-${item.routeName}`"
+                    :to="{ name: item.routeName }"
+                    :class="[isRouteActive(item.routeName) ? 'bg-sky-900 text-white' : 'hover:bg-sky-700/70 text-slate-100', 'rounded-xl px-4 py-3 font-bold']"
+                >
+                    {{ item.label }}
                 </RouterLink>
-            </li>
-            <li>
-                <RouterLink class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'about' }">Acerca
+
+                <RouterLink
+                    v-if="isAuthenticated"
+                    :to="{ name: 'profile' }"
+                    class="mt-2 rounded-xl bg-sky-900/80 px-4 py-3"
+                >
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sky-800">
+                            <i :class="isAdmin ? 'pi pi-wrench' : isDriver ? 'pi pi-truck' : 'pi pi-user'"></i>
+                        </span>
+                        <span class="flex flex-col leading-tight">
+                            <span class="max-w-[180px] truncate font-bold text-white">{{ userDisplayName }}</span>
+                            <span class="text-xs text-slate-300">{{ roleLabel }}</span>
+                        </span>
+                    </div>
                 </RouterLink>
-            </li>
-            <li>
-                <RouterLink v-if="!isAuthenticated || isAuthenticated && !isAdmin"
-                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'shop' }">Comprar
+
+                <RouterLink
+                    v-for="item in rightNavItems"
+                    :key="`mobile-right-${item.routeName}`"
+                    :to="{ name: item.routeName }"
+                    :class="[isRouteActive(item.routeName) ? 'bg-sky-900 text-white' : 'hover:bg-sky-700/70 text-slate-100', 'flex items-center justify-between rounded-xl px-4 py-3 font-bold']"
+                >
+                    <span class="flex items-center gap-3">
+                        <i :class="item.icon"></i>
+                        <span>{{ item.label }}</span>
+                    </span>
+                    <span
+                        v-if="item.badge > 0"
+                        class="inline-flex min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[0.72rem] font-bold text-white"
+                    >
+                        {{ item.badge > 99 ? '99+' : item.badge }}
+                    </span>
                 </RouterLink>
-                <RouterLink v-else class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'admin-products' }">Productos
-                </RouterLink>
-            </li>
-            <li>
-                <RouterLink v-if="!isAuthenticated || isAuthenticated && !isAdmin"
-                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'contact' }">Contacto
-                </RouterLink>
-                <RouterLink v-else class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'admin-register' }">Registrar
-                </RouterLink>
-            </li>
-            <li class="mb-1">
-                <RouterLink v-if="!isAuthenticated"
-                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'login' }">Ingresar
-                </RouterLink>
-                <RouterLink v-if="isAuthenticated && !isAdmin"
-                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-3 font-semibold" :to="{ name: 'cart' }">Carrito
-                </RouterLink>
-                <RouterLink v-if="isAuthenticated"
-                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-3 font-semibold" :to="{ name: 'profile' }">Perfil
-                </RouterLink>
-                <RouterLink v-if="isAuthenticated"
-                    class="hover:bg-sky-700 hover:rounded-xl px-4 py-2 font-semibold" :to="{ name: 'home' }" @click.prevent="handleLogout">Salir
-                </RouterLink>
-            </li>
-        </ul>
+            </div>
+        </div>
     </div>
 </template>

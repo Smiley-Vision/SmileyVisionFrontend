@@ -1,11 +1,79 @@
-@import url('https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&display=swap');
 @import "primeicons/primeicons.css";
+@import "leaflet/dist/leaflet.css";
 
 :root {
     --sv-primary-color: #0c5e89;
     --sv-primary-hover: #0a4f74;
     --sv-border-color: #d9e2ec;
     --sv-surface-100: #f4f7fb;
+    --sv-surface-200: #eef6fc;
+    --sv-surface-300: #d9efff;
+    --sv-text-color: #164260;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: "Prompt", sans-serif;
+    font-weight: 500;
+    background: #fff;
+    color: var(--sv-text-color);
+}
+
+#app {
+    min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+.p-component {
+    font-family: "Prompt", sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: 700;
+}
+
+.sv-reveal {
+    opacity: 0;
+    transform: translate3d(var(--sv-reveal-x, 0), var(--sv-reveal-y, 34px), 0)
+        scale(var(--sv-reveal-scale-start, 1));
+    filter: blur(var(--sv-reveal-blur, 8px));
+    transition:
+        opacity var(--sv-reveal-duration, 760ms) cubic-bezier(0.22, 1, 0.36, 1),
+        transform var(--sv-reveal-duration, 760ms) cubic-bezier(0.22, 1, 0.36, 1),
+        filter var(--sv-reveal-duration, 760ms) cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--sv-reveal-delay, 0ms);
+    will-change: opacity, transform, filter;
+}
+
+.sv-reveal.is-visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sv-reveal,
+    .sv-reveal.is-visible {
+        opacity: 1;
+        filter: none;
+        transform: none;
+        transition: none;
+    }
 }
 
 @tailwind base;
