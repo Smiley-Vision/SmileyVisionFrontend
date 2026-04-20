@@ -34,65 +34,61 @@ onMounted(async () => {
 </script>
 
 <template>
-    <section id="hero" class="px-6 pt-8 sm:px-8 lg:px-20">
+    <section id="hero" class="px-6 sm:px-8 lg:px-20">
         <div class="mx-auto max-w-7xl">
-            <div class="relative overflow-hidden px-0 py-8 sm:px-2 sm:py-12 lg:px-4 lg:py-14">
-                <div class="pointer-events-none absolute inset-x-0 top-10 z-0 hidden leading-none sm:block">
-                    <span class="hero-word hero-word--smiley hero-word--animated absolute left-0 top-0 text-left text-[clamp(5rem,14vw,11rem)] font-extrabold uppercase tracking-[0.04em]">
-                        Smiley
-                    </span>
-                    <span class="hero-word hero-word--vision hero-word--animated hero-word--animated-delayed absolute right-0 top-[7.5rem] text-right text-[clamp(4.8rem,13vw,10.5rem)] font-extrabold uppercase tracking-[0.03em] lg:top-[8.5rem]">
-                        Vision
-                    </span>
-                </div>
-
-                <div class="relative z-10 flex flex-col items-center gap-8 pt-6 sm:pt-16 lg:pt-20">
-                    <div class="pointer-events-none mb-2 flex w-full flex-col leading-none sm:hidden">
-                        <span class="hero-word hero-word--smiley hero-word--animated text-left text-[clamp(4rem,18vw,6rem)] font-extrabold uppercase tracking-[0.04em]">
-                            Smiley
-                        </span>
-                        <span class="hero-word hero-word--vision hero-word--animated hero-word--animated-delayed -mt-2 self-end text-right text-[clamp(4rem,17vw,5.8rem)] font-extrabold uppercase tracking-[0.04em]">
-                            Vision
-                        </span>
-                    </div>
-
+            <div class="relative overflow-hidden px-0 sm:px-2 sm:pb-12 lg:px-4 lg:pb-14">
+                <div class="relative z-10 flex flex-col items-center gap-8 sm:pt-8 lg:pt-12">
                     <div
-                        v-reveal="{ origin: 'zoom', scale: 0.9, duration: 900 }"
-                        class="hero-model-wrap relative h-[300px] w-full sm:h-[180px] lg:h-[220px]"
+                        class="hero-showcase pointer-events-none relative flex w-full max-w-6xl items-center justify-center"
+                        aria-hidden="true"
                     >
-                        <model-viewer
-                            v-if="isModelAvailable"
-                            :src="glassesModel"
-                            auto-rotate
-                            alt="Modelo 3D de lentes Smiley Vision"
-                            rotation-per-second="18deg"
-                            interaction-prompt="none"
-                            disable-pan
-                            disable-zoom
-                            shadow-intensity="0"
-                            exposure="1.05"
-                            camera-target="0m 0m 0m"
-                            camera-orbit="0deg 90deg 3.8m"
-                            min-camera-orbit="0deg 90deg 10m"
-                            max-camera-orbit="0deg 90deg 10m"
-                            field-of-view="18deg"
-                            style="background-color: transparent;"
-                            class="hero-model absolute left-[50%] top-[30%] h-full w-full -translate-x-1/2 -translate-y-1/2"
-                        />
+                        <div class="hero-wording flex w-full flex-col leading-none">
+                            <span class="hero-word hero-word--smiley hero-word--animated block text-left text-[clamp(4.25rem,18vw,11rem)] font-extrabold uppercase tracking-[0.04em] sm:text-[clamp(5rem,16vw,11rem)]">
+                                Smiley
+                            </span>
+                            <span class="hero-word hero-word--vision hero-word--animated hero-word--animated-delayed mt-2 block self-end text-right text-[clamp(4rem,16vw,10rem)] font-extrabold uppercase tracking-[0.04em] sm:-mt-2 sm:text-[clamp(4.8rem,14vw,10.5rem)]">
+                                Vision
+                            </span>
+                        </div>
+
                         <div
-                            v-else
-                            class="absolute left-1/2 top-1/2 flex h-full w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                            v-reveal="{ origin: 'zoom', scale: 0.9, duration: 900 }"
+                            class="hero-model-wrap absolute left-1/2 top-1/2 h-[135px] w-[100%] -translate-x-1/2 -translate-y-1/2 sm:h-[190px] sm:w-[88%] lg:h-[230px] lg:w-[84%]"
                         >
+                            <model-viewer
+                                v-if="isModelAvailable"
+                                :src="glassesModel"
+                                auto-rotate
+                                alt="Modelo 3D de lentes Smiley Vision"
+                                rotation-per-second="18deg"
+                                interaction-prompt="none"
+                                disable-pan
+                                disable-zoom
+                                shadow-intensity="0"
+                                exposure="1.05"
+                                camera-target="0m 0m 0m"
+                                camera-orbit="0deg 90deg 4.8m"
+                                min-camera-orbit="0deg 90deg 14m"
+                                max-camera-orbit="0deg 90deg 14m"
+                                field-of-view="14deg"
+                                style="background-color: transparent;"
+                                class="hero-model hero-model--centered absolute left-1/2 top-1/2 h-full w-full -translate-y-1/2"
+                            />
                             <div
-                                v-if="!hasChecked3d"
-                                class="h-14 w-14 rounded-full border-4 border-sky-100 border-t-sky-600 animate-spin"
-                                aria-label="Cargando visor 3D"
-                            ></div>
-                            <div v-else class="flex flex-col items-center gap-4 text-center">
-                                <img :src="logoImage" alt="Smiley Vision" class="h-24 w-24 object-contain sm:h-28 sm:w-28">
-                                <p class="max-w-xs text-sm font-medium text-sky-700 sm:text-base">
-                                    Vista 3D disponible en navegadores compatibles con WebGL.
-                                </p>
+                                v-else
+                                class="absolute left-1/2 top-1/2 flex h-full w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                            >
+                                <div
+                                    v-if="!hasChecked3d"
+                                    class="h-14 w-14 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600"
+                                    aria-label="Cargando visor 3D"
+                                ></div>
+                                <div v-else class="flex flex-col items-center gap-4 text-center">
+                                    <img :src="logoImage" alt="Smiley Vision" class="h-24 w-24 object-contain sm:h-28 sm:w-28">
+                                    <p class="max-w-xs text-sm font-medium text-sky-700 sm:text-base">
+                                        Vista 3D disponible en navegadores compatibles con WebGL.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -159,12 +155,38 @@ onMounted(async () => {
 }
 
 .hero-model-wrap {
+    transform: translate(-50%, -50%);
     overflow: visible;
 }
 
 .hero-model {
     max-width: 100%;
     object-position: center;
+}
+
+.hero-model--centered {
+    transform: translate3d(-59%, -50%, 0);
+}
+
+.hero-showcase {
+    min-height: clamp(13rem, 36vw, 24rem);
+}
+
+.hero-wording {
+    padding-top: clamp(0.5rem, 1vw, 1rem);
+    padding-bottom: clamp(0.75rem, 1.5vw, 1.5rem);
+}
+
+@media (min-width: 640px) {
+    .hero-model--centered {
+        transform: translate3d(-57%, -50%, 0);
+    }
+}
+
+@media (min-width: 1024px) {
+    .hero-model--centered {
+        transform: translate3d(-55%, -50%, 0);
+    }
 }
 
 @keyframes heroWordFloat {
@@ -174,7 +196,7 @@ onMounted(async () => {
         opacity: 0.96;
     }
     50% {
-        transform: translate3d(0, -8px, 0);
+        transform: translate3d(0, -20px, 0);
         opacity: 1;
     }
 }

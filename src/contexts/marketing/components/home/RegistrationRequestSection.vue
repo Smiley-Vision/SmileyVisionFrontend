@@ -1,16 +1,9 @@
 <script setup>
 import { useRegistrationRequestForm } from '@/contexts/registration/composables/useRegistrationRequestForm';
+import { useToast } from 'primevue';
 import { computed } from 'vue';
 import SectionHeading from './SectionHeading.vue';
 import sendImage from '@/assets/images/landing/send.png';
-
-
-const steps = [
-    'Envía una solicitud por correo con los datos de tu negocio.',
-    'El equipo de Smiley Vision valida manualmente la información.',
-    'Si es aprobado, se habilita el registro final o activación de cuenta.',
-    'Luego podrás definir contraseña e ingresar para comprar.'
-]
 
 const {
     apiError,
@@ -22,10 +15,30 @@ const {
     successMessage
 } = useRegistrationRequestForm()
 
+const toast = useToast()
 const hasFeedback = computed(() => Boolean(apiError.value || successMessage.value))
 
 async function handleSubmit() {
-    await submit()
+    const wasSuccessful = await submit()
+
+    if (wasSuccessful) {
+        toast.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Solicitud enviada correctamente',
+            life: 4000
+        })
+        return
+    }
+
+    if (apiError.value) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: apiError.value,
+            life: 4000
+        })
+    }
 }
 </script>
 
@@ -39,9 +52,6 @@ async function handleSubmit() {
 
             <div class="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)]">
                 <div v-reveal="{ origin: 'left', distance: 40, duration: 780 }" class="space-y-6">
-                    <div class="p-0">
-                    </div>
-
                     <form class="p-0 sm:pr-8" @submit.prevent="handleSubmit">
                         <div class="grid gap-5">
                             <div>
@@ -92,7 +102,7 @@ async function handleSubmit() {
                                 :disabled="isSubmitting"
                                 class="rounded-full bg-sky-700 px-7 py-3 text-base font-bold text-white transition hover:-translate-y-0.5 hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-70"
                             >
-                                {{ isSubmitting ? 'Enviando solicitud...' : 'Solicitar registro' }}
+                                {{ isSubmitting ? 'Enviando...' : 'Solicitar registro' }}
                             </button>
                         </div>
                     </form>
@@ -102,10 +112,13 @@ async function handleSubmit() {
                     </p>
                 </div>
 
-                <div v-reveal="{ origin: 'right', distance: 52, duration: 860, delay: 120 }" class="flex items-center justify-center">
+                <div
+                    v-reveal="{ origin: 'right', distance: 52, duration: 860, delay: 120 }"
+                    class="flex items-center justify-center"
+                >
                     <div class="relative flex aspect-square w-full max-w-[360px] items-center justify-center overflow-hidden">
-                        <img 
-                            :src="sendImage" 
+                        <img
+                            :src="sendImage"
                             alt="Imagen de avion de papel"
                             class="relative z-10 w-[150px] md:w-[300px]"
                         >
