@@ -162,10 +162,14 @@ onMounted(async () => {
 .hero-model {
     max-width: 100%;
     object-position: center;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) !important;
 }
 
 .hero-model--centered {
-    transform: translate3d(-59%, -50%, 0);
+    transform: translate3d(-50%, -50%, 0);
 }
 
 .hero-showcase {
