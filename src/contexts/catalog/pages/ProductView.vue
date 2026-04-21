@@ -5,12 +5,14 @@ import { useAuthStore } from '@/contexts/identity/stores/auth';
 import { api } from '@/shared/infrastructure/http/api';
 import { buildProductItemsByProductId, enrichProduct } from '@/shared/utils/productApiAdapters';
 import Button from 'primevue/button';
+import Slider from 'primevue/slider';
 import { useToast } from 'primevue';
-import { ref } from 'vue';
-import { onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL
+const backendUrl = import.meta.env.VITE_BACKEND_BASE
+const STEP_CENTS = 25
+const MICA_CATEGORY_ID = 1
 
 const route = useRoute()
 const toast = useToast()
@@ -22,28 +24,196 @@ const productCode = route.params.code
 const isLoading = ref(true)
 const isAddingToCart = ref(false)
 const product = ref({})
+const lensProductItems = ref([])
+const selectedSphereRange = ref([0, 0])
+const selectedCylinderRange = ref([0, 0])
+
+const formatLensValue = (value) => {
+    const numericValue = Number(value ?? 0)
+
+    if (Object.is(numericValue, -0) || numericValue === 0) {
+        return '0.00'
+    }
+
+    return numericValue.toFixed(2)
+}
+
+const parseLensSku = (sku) => {
+    const normalizedSku = String(sku ?? '').trim().toUpperCase()
+    const match = normalizedSku.match(/-S([NP]?)(\d{3})-CN(\d{3})$/)
+
+    if (!match) return null
+
+    const spherePrefix = match[1]
+    const sphereMagnitude = Number(match[2]) / 100
+    const cylinderMagnitude = Number(match[3]) / 100
+
+    let sphere = 0
+
+    if (spherePrefix === 'N') {
+        sphere = -sphereMagnitude
+    } else if (spherePrefix === 'P') {
+        sphere = sphereMagnitude
+    }
+
+    return {
+        sphere: Number(sphere.toFixed(2)),
+        cylinder: Number((-cylinderMagnitude).toFixed(2))
+    }
+}
+
+const buildLensVariants = (items) => {
+    const sphereValues = new Set()
+    const cylinderValues = new Set()
+    const combinations = new Map()
+
+    for (const item of items) {
+        const parsedSku = parseLensSku(item?.SKU)
+
+        if (!parsedSku) continue
+
+        sphereValues.add(parsedSku.sphere)
+        cylinderValues.add(parsedSku.cylinder)
+        combinations.set(`${parsedSku.sphere}|${parsedSku.cylinder}`, {
+            ...item,
+            sphere: parsedSku.sphere,
+            cylinder: parsedSku.cylinder
+        })
+    }
+
+    const sortNumbers = (left, right) => left - right
+
+    return {
+        sphereValues: [...sphereValues].sort(sortNumbers),
+        cylinderValues: [...cylinderValues].sort(sortNumbers),
+        combinations
+    }
+}
+
+const isLensProduct = computed(() => Number(product.value?.category_id) === MICA_CATEGORY_ID)
+
+const lensVariants = computed(() => buildLensVariants(lensProductItems.value))
+
+const sphereSliderBounds = computed(() => {
+    const values = lensVariants.value.sphereValues
+
+    return {
+        min: values.length > 0 ? values[0] : -6,
+        max: values.length > 0 ? values[values.length - 1] : 6
+    }
+})
+
+const cylinderSliderBounds = computed(() => {
+    const values = lensVariants.value.cylinderValues
+
+    return {
+        min: values.length > 0 ? values[0] : -6,
+        max: values.length > 0 ? values[values.length - 1] : 0
+    }
+})
+
+const availableSphereRange = computed(() => {
+    if (!isLensProduct.value || lensVariants.value.sphereValues.length === 0) return null
+
+    return {
+        min: sphereSliderBounds.value.min,
+        max: sphereSliderBounds.value.max
+    }
+})
+
+const availableCylinderRange = computed(() => {
+    if (!isLensProduct.value || lensVariants.value.cylinderValues.length === 0) return null
+
+    return {
+        min: cylinderSliderBounds.value.max,
+        max: cylinderSliderBounds.value.min
+    }
+})
+
+const selectedLensItem = computed(() => {
+    if (!isLensProduct.value) return null
+
+    const sphereStart = Number(selectedSphereRange.value?.[0])
+    const cylinderStart = Number(selectedCylinderRange.value?.[0])
+
+    return lensVariants.value.combinations.get(`${sphereStart}|${cylinderStart}`) ?? null
+})
+
+const selectedCombinationLabel = computed(() => {
+    if (!selectedLensItem.value) return 'No hay una combinacion exacta disponible para los valores actuales.'
+
+    return `Esfera ${formatLensValue(selectedLensItem.value.sphere)} / Cilindro ${formatLensValue(selectedLensItem.value.cylinder)}`
+})
+
+const lensSelectionSummary = computed(() => {
+    if (!isLensProduct.value) return null
+
+    return {
+        sphereStart: formatLensValue(selectedSphereRange.value[0]),
+        sphereEnd: formatLensValue(selectedSphereRange.value[1]),
+        cylinderStart: formatLensValue(selectedCylinderRange.value[0]),
+        cylinderEnd: formatLensValue(selectedCylinderRange.value[1])
+    }
+})
+
+const isAddToCartDisabled = computed(() => !product.value?.product_item_id)
+
+function snapRangeToBounds(range, bounds) {
+    const min = Number(bounds?.min ?? 0)
+    const max = Number(bounds?.max ?? 0)
+    const rawStart = Number(range?.[0] ?? min)
+    const rawEnd = Number(range?.[1] ?? max)
+    const start = Math.min(Math.max(rawStart, min), max)
+    const end = Math.min(Math.max(rawEnd, min), max)
+
+    return start <= end ? [start, end] : [end, start]
+}
+
+function initializeLensSelectors() {
+    if (!isLensProduct.value) return
+
+    selectedSphereRange.value = [sphereSliderBounds.value.min, sphereSliderBounds.value.max]
+    selectedCylinderRange.value = [cylinderSliderBounds.value.max, cylinderSliderBounds.value.min]
+}
+
+watch(lensVariants, (variants) => {
+    if (!isLensProduct.value || variants.sphereValues.length === 0 || variants.cylinderValues.length === 0) {
+        return
+    }
+
+    if (selectedSphereRange.value.length !== 2 || selectedCylinderRange.value.length !== 2) {
+        initializeLensSelectors()
+        return
+    }
+
+    selectedSphereRange.value = snapRangeToBounds(selectedSphereRange.value, sphereSliderBounds.value)
+    selectedCylinderRange.value = snapRangeToBounds(selectedCylinderRange.value, cylinderSliderBounds.value)
+}, { immediate: true })
+
+watch(selectedLensItem, (item) => {
+    if (!isLensProduct.value) return
+
+    product.value = {
+        ...product.value,
+        product_item_id: item?.id ?? null,
+        code: item?.SKU ?? product.value.code,
+        price: item?.price ?? product.value.price,
+        image_url: item?.product_image ?? product.value.image_url
+    }
+}, { immediate: true })
 
 // Format the price of the product (commas)
 const formatPrice = (price) => {
-    const priceString = String(price ?? '')
-    const priceDigits = priceString.length
-    const commas = Math.floor(priceDigits / 3)
-    let commaPosition = priceDigits % 3;
+    const numericPrice = Number(price ?? 0)
 
-    let priceArray = []
-    let commasUsed = 0
-
-    for (let i = 0; i < priceDigits + commas; i++) {
-        if (i == commaPosition && i != 0) {
-            priceArray.push(',')
-            commaPosition += 4
-            commasUsed++
-        } else {
-            priceArray.push(price.toString().charAt(i - commasUsed))
-        }
+    if (!Number.isFinite(numericPrice)) {
+        return '0.00'
     }
 
-    return priceArray.join('')
+    return numericPrice.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })
 }
 
 // Get the product associated with the ID
@@ -57,6 +227,12 @@ onMounted(async () => {
         ])
         const productItemsByProductId = buildProductItemsByProductId(productItemsResponse.data)
         product.value = enrichProduct(productResponse.data, productItemsByProductId)
+        lensProductItems.value = (Array.isArray(productItemsResponse.data) ? productItemsResponse.data : [])
+            .filter((item) => Number(item?.product_id) === Number(product.value?.id))
+
+        if (Number(product.value?.category_id) === MICA_CATEGORY_ID) {
+            initializeLensSelectors()
+        }
 
         isLoading.value = false
     } catch (error) {
@@ -188,12 +364,66 @@ const addToCart = async () => {
                         Disponibilidad no visible en esta version.
                     </div>
 
+                    <div
+                        v-if="isLensProduct"
+                        class="mt-2 flex flex-col gap-5 rounded-2xl border border-sky-100 bg-sky-50/80 p-5"
+                    >
+                        <div class="flex flex-col gap-1">
+                            <div class="font-semibold text-lg text-sky-800">
+                                Configura tu mica
+                            </div>
+                            <div class="text-sm text-slate-600">
+                                Ajusta el rango de esferas y el rango de cilindros disponibles para esta mica.
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="font-semibold text-sky-800">Esferas</div>
+                                <div class="text-sm font-medium text-sky-700">
+                                    {{ lensSelectionSummary?.sphereStart }} a {{ lensSelectionSummary?.sphereEnd }}
+                                </div>
+                            </div>
+                            <Slider
+                                v-model="selectedSphereRange"
+                                range
+                                :min="sphereSliderBounds.min"
+                                :max="sphereSliderBounds.max"
+                                :step="STEP_CENTS / 100"
+                                class="w-full"
+                            />
+                            <div class="text-sm text-slate-600">
+                                Disponibles en inventario: {{ formatLensValue(availableSphereRange?.min) }} a {{ formatLensValue(availableSphereRange?.max) }}
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="font-semibold text-sky-800">Cilindros</div>
+                                <div class="text-sm font-medium text-sky-700">
+                                    {{ lensSelectionSummary?.cylinderStart }} a {{ lensSelectionSummary?.cylinderEnd }}
+                                </div>
+                            </div>
+                            <Slider
+                                v-model="selectedCylinderRange"
+                                range
+                                :min="cylinderSliderBounds.min"
+                                :max="cylinderSliderBounds.max"
+                                :step="STEP_CENTS / 100"
+                                class="w-full"
+                            />
+                            <div class="text-sm text-slate-600">
+                                Disponibles en inventario: {{ formatLensValue(availableCylinderRange?.min) }} a {{ formatLensValue(availableCylinderRange?.max) }}
+                            </div>
+                        </div>
+                    </div>
+
                     <Button
                         label="Agregar al carrito"
                         icon="pi pi-shopping-cart"
                         class="!bg-sky-700 !border-sky-700 hover:!bg-sky-800 hover:!border-sky-800 mt-3"
                         :loading="isAddingToCart"
-                        :disabled="!product?.product_item_id"
+                        :disabled="isAddToCartDisabled"
                         @click="addToCart"
                     />
                 </div>
