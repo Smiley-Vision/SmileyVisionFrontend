@@ -122,7 +122,9 @@ export const useCartStore = defineStore('cart', () => {
                     cart_id: normalizedCartId,
                     product_item_id: normalizedItemId,
                     product_id: productId,
+                    category_id: toNumber(product?.category_id, null),
                     code: String(product?.code ?? productItem?.SKU ?? normalizedItemId ?? ''),
+                    sku: String(productItem?.SKU ?? ''),
                     name: String(product?.name ?? `Producto #${normalizedItemId}`),
                     description: String(product?.description ?? ''),
                     image_url: String(product?.image_url ?? product?.product_image ?? productItem?.product_image ?? ''),
@@ -188,6 +190,13 @@ export const useCartStore = defineStore('cart', () => {
         return {
             product_item_id: productItemId,
             product_id: toNumber(product?.id, null),
+            category_id: toNumber(product?.category_id, null),
+            code: String(product?.code ?? product?.SKU ?? productItemId),
+            sku: String(product?.SKU ?? product?.code ?? productItemId),
+            name: String(product?.name ?? ''),
+            description: String(product?.description ?? ''),
+            image_url: String(product?.image_url ?? product?.product_image ?? ''),
+            price: toNumber(product?.price, 0),
             quantity: 1
         }
     }
@@ -288,6 +297,37 @@ export const useCartStore = defineStore('cart', () => {
         }
     }
 
+    async function addProducts(products, quantityDelta = 1) {
+        await initializeForSession()
+
+        if (!auth.isAuthenticated) {
+            throw new Error('Necesitas iniciar sesión para usar el carrito.')
+        }
+
+        const normalizedProducts = products
+            .map((product) => normalizeProductForCart(product))
+            .filter((product) => product.product_item_id)
+
+        if (normalizedProducts.length === 0) {
+            throw new Error('No hay productos válidos para agregarse al carrito.')
+        }
+
+        isSyncing.value = true
+        try {
+            for (const normalizedProduct of normalizedProducts) {
+                const existing = items.value.find((item) => item.product_item_id === normalizedProduct.product_item_id)
+                const nextQuantity = Math.max(1, toNumber(existing?.quantity, 0) + Math.max(1, toNumber(quantityDelta, 1)))
+
+                await syncAddOrUpdateItem(normalizedProduct.product_item_id, nextQuantity)
+                upsertLocalItem(normalizedProduct, nextQuantity)
+            }
+
+            persistCartState()
+        } finally {
+            isSyncing.value = false
+        }
+    }
+
     async function setItemQuantity(productItemId, quantity) {
         await initializeForSession()
 
@@ -362,6 +402,7 @@ export const useCartStore = defineStore('cart', () => {
         initializeForSession,
         fetchCartItems,
         addProduct,
+        addProducts,
         removeItem,
         setItemQuantity,
         clearLocalCart

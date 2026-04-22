@@ -1,24 +1,27 @@
 <script setup>
 import SectionHeading from './SectionHeading.vue';
+import ArmazonesImg from '@/assets/images/landing/armazones.jpg';
+import MicasImg from '@/assets/images/landing/micas.jpg';
+import EquiposImg from '@/assets/images/landing/equipos.jpg';
 
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
 const categories = [
     {
         title: 'Micas',
         routeName: 'shop-Micas',
-        image: `${backendUrl}/storage/shop/0.jpg`,
+        image: MicasImg,
         alt: 'Ilustración de micas'
     },
     {
         title: 'Armazones',
         routeName: 'shop-Armazones',
-        image: `${backendUrl}/storage/shop/1.jpg`,
+        image: ArmazonesImg,
         alt: 'Ilustración de armazones'
     },
     {
         title: 'Equipos',
         routeName: 'shop-Equipos',
-        image: `${backendUrl}/storage/shop/2.jpg`,
+        image: EquiposImg,
         alt: 'Ilustración de equipos ópticos'
     }
 ]

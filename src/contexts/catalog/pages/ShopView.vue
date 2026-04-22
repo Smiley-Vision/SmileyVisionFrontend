@@ -5,6 +5,10 @@ import { useToast } from 'primevue';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 
+import ArmazonesImg from '@/assets/images/landing/armazones.jpg';
+import MicasImg from '@/assets/images/landing/micas.jpg';
+import EquiposImg from '@/assets/images/landing/equipos.jpg';
+
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 const toast = useToast()
@@ -61,7 +65,7 @@ onMounted(async() => {
                 <div class="flex flex-col items-center gap-y-4 max-w-sm max-h-sm">
                     <RouterLink :to="{ name: getShopRouteNameByCategory(product.name) }">
                         <img
-                            :src="`${backendUrl}/storage/shop/${index}.jpg`"
+                            :src="`src/assets/images/landing/${product.name.toLowerCase()}.jpg`"
                             class="xl:size-64 size-40 border-solid border-4 border-sky-600 rounded-xl shadow-lg
                                     hover:shadow-2xl transform transition duration-200 hover:scale-105"
                         >

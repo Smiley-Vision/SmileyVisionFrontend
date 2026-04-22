@@ -13,6 +13,7 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL
 const toast = useToast()
 const auth = useAuthStore()
 const cart = useCartStore()
+const MICA_CATEGORY_ID = 1
 
 const isLoading = ref(true)
 const addresses = ref([])
@@ -81,6 +82,54 @@ function stockStatus(item) {
         label: 'Stock no visible',
         className: 'bg-slate-200 text-slate-600'
     }
+}
+
+function formatLensValue(value) {
+    const numericValue = Number(value ?? 0)
+
+    if (!Number.isFinite(numericValue) || Object.is(numericValue, -0) || numericValue === 0) {
+        return '0.00'
+    }
+
+    return numericValue.toFixed(2)
+}
+
+function parseLensSku(sku) {
+    const normalizedSku = String(sku ?? '').trim().toUpperCase()
+    const match = normalizedSku.match(/-S([NP]?)(\d{3})-CN(\d{3})$/)
+
+    if (!match) return null
+
+    const spherePrefix = match[1]
+    const sphereMagnitude = Number(match[2]) / 100
+    const cylinderMagnitude = Number(match[3]) / 100
+
+    let sphere = 0
+
+    if (spherePrefix === 'N') {
+        sphere = -sphereMagnitude
+    } else if (spherePrefix === 'P') {
+        sphere = sphereMagnitude
+    }
+
+    return {
+        sphere: Number(sphere.toFixed(2)),
+        cylinder: Number((-cylinderMagnitude).toFixed(2))
+    }
+}
+
+function isLensItem(item) {
+    return Number(item?.category_id) === MICA_CATEGORY_ID
+}
+
+function getLensDetails(item) {
+    if (!isLensItem(item)) return null
+
+    return parseLensSku(item?.sku ?? item?.code)
+}
+
+function getDisplayCode(item) {
+    return item?.sku || item?.code || item?.product_item_id
 }
 
 async function loadDeliveryAddresses() {
@@ -218,6 +267,20 @@ onMounted(async () => {
                                 {{ item.description || 'Sin descripción disponible.' }}
                             </div>
 
+                            <div
+                                v-if="getLensDetails(item)"
+                                class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600"
+                            >
+                                <span>
+                                    <span class="font-semibold text-sky-800">Esfera:</span>
+                                    {{ formatLensValue(getLensDetails(item).sphere) }}
+                                </span>
+                                <span>
+                                    <span class="font-semibold text-sky-800">Cilindro:</span>
+                                    {{ formatLensValue(getLensDetails(item).cylinder) }}
+                                </span>
+                            </div>
+
                             <div class="flex flex-wrap items-center gap-3 mt-1">
                                 <span
                                     :class="[
@@ -227,7 +290,7 @@ onMounted(async () => {
                                 >
                                     {{ stockStatus(item).label }}
                                 </span>
-                                <span class="text-sm text-slate-500">Código: {{ item.code || item.product_item_id }}</span>
+                                <span class="text-sm text-slate-500">Código: {{ getDisplayCode(item) }}</span>
                             </div>
 
                             <div class="flex items-center gap-2 mt-2">

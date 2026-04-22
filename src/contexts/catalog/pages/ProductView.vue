@@ -139,6 +139,30 @@ const selectedLensItem = computed(() => {
     return lensVariants.value.combinations.get(`${sphereStart}|${cylinderStart}`) ?? null
 })
 
+const selectedLensItems = computed(() => {
+    if (!isLensProduct.value) return []
+
+    const sphereStart = Number(selectedSphereRange.value?.[0])
+    const sphereEnd = Number(selectedSphereRange.value?.[1])
+    const cylinderStart = Number(selectedCylinderRange.value?.[0])
+    const cylinderEnd = Number(selectedCylinderRange.value?.[1])
+
+    return [...lensVariants.value.combinations.values()]
+        .filter((item) => (
+            Number(item.sphere) >= sphereStart &&
+            Number(item.sphere) <= sphereEnd &&
+            Number(item.cylinder) >= cylinderStart &&
+            Number(item.cylinder) <= cylinderEnd
+        ))
+        .sort((left, right) => {
+            if (left.sphere !== right.sphere) {
+                return left.sphere - right.sphere
+            }
+
+            return left.cylinder - right.cylinder
+        })
+})
+
 const selectedCombinationLabel = computed(() => {
     if (!selectedLensItem.value) return 'No hay una combinacion exacta disponible para los valores actuales.'
 
@@ -156,7 +180,13 @@ const lensSelectionSummary = computed(() => {
     }
 })
 
-const isAddToCartDisabled = computed(() => !product.value?.product_item_id)
+const isAddToCartDisabled = computed(() => {
+    if (isLensProduct.value) {
+        return selectedLensItems.value.length === 0
+    }
+
+    return !product.value?.product_item_id
+})
 
 function snapRangeToBounds(range, bounds) {
     const min = Number(bounds?.min ?? 0)
@@ -269,6 +299,26 @@ const addToCart = async () => {
 
     try {
         isAddingToCart.value = true
+
+        if (isLensProduct.value) {
+            await cart.addProducts(selectedLensItems.value.map((item) => ({
+                ...product.value,
+                product_item_id: item.id,
+                code: item.SKU ?? product.value.code,
+                SKU: item.SKU ?? product.value.code,
+                price: item.price ?? product.value.price,
+                image_url: item.product_image ?? product.value.image_url
+            })), 1)
+
+            toast.add({
+                severity: 'success',
+                summary: 'Agregado',
+                detail: `${selectedLensItems.value.length} variantes agregadas al carrito.`,
+                life: 3000
+            })
+
+            return
+        }
 
         await cart.addProduct(product.value, 1)
 
@@ -415,6 +465,10 @@ const addToCart = async () => {
                             <div class="text-sm text-slate-600">
                                 Disponibles en inventario: {{ formatLensValue(availableCylinderRange?.min) }} a {{ formatLensValue(availableCylinderRange?.max) }}
                             </div>
+                        </div>
+
+                        <div class="rounded-xl border border-sky-200 bg-white/80 px-4 py-3 text-sm text-slate-700">
+                            Se agregarán <span class="font-semibold text-sky-800">{{ selectedLensItems.length }}</span> variantes al carrito con la configuración seleccionada.
                         </div>
                     </div>
 
