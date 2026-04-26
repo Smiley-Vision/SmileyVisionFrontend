@@ -4,6 +4,10 @@ export async function getAdminProductTypesService() {
     return (await api.get('product-categories')).data
 }
 
+export async function getSuppliersService() {
+    return (await api.get('suppliers')).data
+}
+
 export async function searchAdminProductsService(query, typeId) {
     return (await api.get('products/search', {
         params: {

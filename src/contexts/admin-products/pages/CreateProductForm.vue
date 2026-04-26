@@ -1,6 +1,7 @@
 <script setup>
 import { api } from '@/shared/infrastructure/http/api';
 import { normalizeCategoriesPayload } from '@/shared/utils/productApiAdapters';
+import { getSuppliersService } from '@/contexts/admin-products/services/adminProductsService';
 import { useToast } from 'primevue';
 import { computed } from 'vue';
 import { reactive } from 'vue';
@@ -9,13 +10,14 @@ import { onMounted } from 'vue';
 
 const toast = useToast()
 const productTypes = ref([])
+const suppliers = ref([])
 const imagePreview = ref(null)
 
 const initialState = {
     'image': null,
     'file_name': '',
     'category_id': null,
-    'supplier_id': 1,
+    'supplier_id': null,
     'name': '',
     'description': ''
 }
@@ -58,6 +60,7 @@ const submitForm = async () => {
             // Reset the form
             Object.assign(form, initialState)
             form.category_id = productTypes.value[0]?.id ?? null
+            form.supplier_id = suppliers.value[0]?.id ?? null
             imagePreview.value = null
 
             toast.add({
@@ -85,13 +88,20 @@ const submitForm = async () => {
 // Retrieve the product types
 onMounted(async () => {
     try {
-        productTypes.value = normalizeCategoriesPayload((await api.get('product-categories')).data)
+        const [productTypesResponse, suppliersResponse] = await Promise.all([
+            api.get('product-categories'),
+            getSuppliersService()
+        ])
+
+        productTypes.value = normalizeCategoriesPayload(productTypesResponse.data)
+        suppliers.value = Array.isArray(suppliersResponse) ? suppliersResponse : []
         form.category_id = productTypes.value[0]?.id ?? null
+        form.supplier_id = suppliers.value[0]?.id ?? null
     } catch (error) {
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'No se pudieron obtener los tipos de producto',
+            detail: 'No se pudieron obtener los tipos de producto o proveedores',
             life: 4000
         })
     }
@@ -130,9 +140,13 @@ onMounted(async () => {
 
         <!-- Supplier -->
         <div class="w-full">
-            <label for="supplier_id" class="block text-sky-700 font-medium mb-1">ID de proveedor</label>
-            <input v-model="form.supplier_id" id="supplier_id" type="number"
-                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required />
+            <label for="supplier_id" class="block text-sky-700 font-medium mb-1">Proveedor</label>
+            <select v-model="form.supplier_id" id="supplier_id"
+                class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" required>
+                <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
+                    {{ supplier.name }}
+                </option>
+            </select>
         </div>
 
         <!-- Name -->
