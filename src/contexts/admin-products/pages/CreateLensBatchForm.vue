@@ -6,6 +6,21 @@ import { useBatchLensesCreation } from '@/contexts/admin-products/composables/us
 
 const toast = useToast()
 
+function buildLensOptions(startCents, endCents) {
+    const step = startCents <= endCents ? 25 : -25
+    const options = []
+
+    for (let cents = startCents; step > 0 ? cents <= endCents : cents >= endCents; cents += step) {
+        const value = (cents / 100).toFixed(2)
+        options.push(value)
+    }
+
+    return options
+}
+
+const sphereOptions = buildLensOptions(-600, 600)
+const cylinderOptions = buildLensOptions(0, -600)
+
 const {
     form,
     isLoading,
@@ -56,47 +71,55 @@ onMounted(async () => {
             <div class="grid md:grid-cols-2 grid-cols-1 gap-4">
                 <div>
                     <label for="sphere_min" class="block text-sky-700 font-medium mb-1">Esfera desde</label>
-                    <input
+                    <select
                         id="sphere_min"
                         v-model="form.sphereMin"
-                        type="text"
-                        placeholder="-6.00"
                         class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300"
                         required
-                    />
+                    >
+                        <option v-for="option in sphereOptions" :key="`sphere-min-${option}`" :value="option">
+                            {{ option }}
+                        </option>
+                    </select>
                 </div>
                 <div>
                     <label for="sphere_max" class="block text-sky-700 font-medium mb-1">Esfera hasta</label>
-                    <input
+                    <select
                         id="sphere_max"
                         v-model="form.sphereMax"
-                        type="text"
-                        placeholder="6.00"
                         class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300"
                         required
-                    />
+                    >
+                        <option v-for="option in sphereOptions" :key="`sphere-max-${option}`" :value="option">
+                            {{ option }}
+                        </option>
+                    </select>
                 </div>
                 <div>
                     <label for="cylinder_min" class="block text-sky-700 font-medium mb-1">Cilindro desde (cerca de 0)</label>
-                    <input
+                    <select
                         id="cylinder_min"
                         v-model="form.cylinderMin"
-                        type="text"
-                        placeholder="0.00"
                         class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300"
                         required
-                    />
+                    >
+                        <option v-for="option in cylinderOptions" :key="`cylinder-min-${option}`" :value="option">
+                            {{ option }}
+                        </option>
+                    </select>
                 </div>
                 <div>
                     <label for="cylinder_max" class="block text-sky-700 font-medium mb-1">Cilindro hasta (mas negativo)</label>
-                    <input
+                    <select
                         id="cylinder_max"
                         v-model="form.cylinderMax"
-                        type="text"
-                        placeholder="-6.00"
                         class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300"
                         required
-                    />
+                    >
+                        <option v-for="option in cylinderOptions" :key="`cylinder-max-${option}`" :value="option">
+                            {{ option }}
+                        </option>
+                    </select>
                 </div>
             </div>
 
