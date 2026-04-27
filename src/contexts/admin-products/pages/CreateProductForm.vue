@@ -3,15 +3,15 @@ import { api } from '@/shared/infrastructure/http/api';
 import { normalizeCategoriesPayload } from '@/shared/utils/productApiAdapters';
 import { getSuppliersService } from '@/contexts/admin-products/services/adminProductsService';
 import { useToast } from 'primevue';
-import { computed } from 'vue';
-import { reactive } from 'vue';
-import { ref } from 'vue';
-import { onMounted } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 const toast = useToast()
 const productTypes = ref([])
 const suppliers = ref([])
 const imagePreview = ref(null)
+const imageInput = ref(null)
+const isSubmitting = ref(false)
+const formErrors = ref([])
 
 const initialState = {
     'image': null,
@@ -43,8 +43,58 @@ function retrieveImage(event) {
     }
 }
 
+function resetImageInput() {
+    if (imageInput.value) {
+        imageInput.value.value = ''
+    }
+}
+
+function addError(message) {
+    if (message && !formErrors.value.includes(message)) {
+        formErrors.value.push(message)
+    }
+}
+
+function validateForm() {
+    formErrors.value = []
+
+    if (!form.image) addError('Selecciona una imagen del producto.')
+    if (!form.category_id) addError('Selecciona una categoria de producto.')
+    if (!form.supplier_id) addError('Selecciona un proveedor.')
+    if (!String(form.name).trim()) addError('Captura el nombre del producto.')
+    if (!String(form.description).trim()) addError('Captura la descripcion del producto.')
+
+    return formErrors.value.length === 0
+}
+
+function getApiErrorMessages(error) {
+    if (error?.errors && typeof error.errors === 'object') {
+        return Object.entries(error.errors).flatMap(([field, messages]) => {
+            const normalizedMessages = Array.isArray(messages) ? messages : [messages]
+
+            return normalizedMessages
+                .filter(Boolean)
+                .map((message) => `${field}: ${message}`)
+        })
+    }
+
+    if (error?.message) return [error.message]
+
+    return ['No se pudo crear el producto. Revisa los datos e intenta de nuevo.']
+}
+
 // Submit the form
 const submitForm = async () => {
+    if (isSubmitting.value || !validateForm()) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Datos incompletos',
+            detail: formErrors.value[0] ?? 'Revisa el formulario',
+            life: 5000
+        })
+        return
+    }
+
     const formData = new FormData()
     formData.append('image', form.image)
     formData.append('file_name', form.file_name)
@@ -53,35 +103,37 @@ const submitForm = async () => {
     formData.append('name', form.name)
     formData.append('description', form.description)
 
+    isSubmitting.value = true
+
     try {
-        const response = (await api.post('products', formData)).data
+        await api.post('products', formData)
 
-        if (response.message === 'Product created successfully') {
-            // Reset the form
-            Object.assign(form, initialState)
-            form.category_id = productTypes.value[0]?.id ?? null
-            form.supplier_id = suppliers.value[0]?.id ?? null
-            imagePreview.value = null
+        // Reset the form
+        Object.assign(form, initialState)
+        form.category_id = productTypes.value[0]?.id ?? null
+        form.supplier_id = suppliers.value[0]?.id ?? null
+        imagePreview.value = null
+        formErrors.value = []
+        resetImageInput()
 
-            toast.add({
-                severity: 'success',
-                summary: 'Éxito',
-                detail: 'Producto subido al sistema',
-                life: 4000
-            })
-        }
+        toast.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Producto subido al sistema',
+            life: 4000
+        })
 
     } catch (error) {
-        const message = error?.errors
-            ? error.errors[Object.keys(error.errors)[0]][0]
-            : 'No se pudo crear el producto'
+        formErrors.value = getApiErrorMessages(error)
 
         toast.add({
             severity: 'error',
-            summary: 'Error',
-            detail: message,
-            life: 4000
+            summary: 'No se pudo crear el producto',
+            detail: formErrors.value[0],
+            life: 7000
         })
+    } finally {
+        isSubmitting.value = false
     }
 }
 
@@ -117,7 +169,7 @@ onMounted(async () => {
 
         <!-- Image Upload with Preview -->
         <div class="w-48 h-48 relative cursor-pointer group" @click="$refs.imageInput.click()">
-            <input ref="imageInput" @change="retrieveImage" type="file" class="hidden" required />
+            <input id="image" ref="imageInput" @change="retrieveImage" type="file" accept="image/*" class="hidden" required />
             <div
                 class="w-full h-full flex items-center justify-center bg-slate-100 border-2 border-dashed border-sky-400 rounded-2xl transition hover:bg-sky-50">
                 <img v-if="imagePreview" :src="imagePreview" alt="Vista previa"
@@ -171,10 +223,23 @@ onMounted(async () => {
             Crear items de lentes en lote
         </RouterLink>
 
+        <div v-if="formErrors.length > 0" class="w-full rounded-xl border border-red-300 bg-red-50 p-4">
+            <div class="font-semibold text-red-700 mb-2">Corrige estos errores</div>
+            <ul class="list-disc pl-5 text-sm text-red-700">
+                <li v-for="error in formErrors" :key="error">{{ error }}</li>
+            </ul>
+        </div>
+
         <!-- Submit Button -->
-        <button type="submit"
-            class="bg-sky-500 text-white font-semibold px-8 py-3 rounded-xl hover:bg-sky-600 transition">
-            SUBIR
+        <button
+            type="submit"
+            :disabled="isSubmitting"
+            :class="[
+                isSubmitting ? 'bg-slate-400' : 'bg-sky-500 hover:bg-sky-600',
+                'text-white font-semibold px-8 py-3 rounded-xl transition'
+            ]"
+        >
+            {{ isSubmitting ? 'SUBIENDO...' : 'SUBIR' }}
         </button>
     </form>
 

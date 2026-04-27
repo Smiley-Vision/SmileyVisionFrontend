@@ -126,15 +126,6 @@ onMounted(async () => {
                     >
                 </RouterLink>
 
-                <!-- Product Code -->
-                <div class="flex flex-row gap-x-4">
-                    <div class="font-semibold text-sky-500 text-lg">
-                        Código:
-                    </div>
-                    <div class="font-semibold text-sky-700 text-lg">
-                        {{ product.code }}
-                    </div>
-                </div>
             </div>
         </div>
     </div>

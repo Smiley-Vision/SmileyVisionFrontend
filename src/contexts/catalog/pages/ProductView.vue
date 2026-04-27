@@ -3,7 +3,7 @@ import router from '@/app/router';
 import { useCartStore } from '@/contexts/catalog/stores/cart';
 import { useAuthStore } from '@/contexts/identity/stores/auth';
 import { api } from '@/shared/infrastructure/http/api';
-import { buildProductItemsByProductId, enrichProduct } from '@/shared/utils/productApiAdapters';
+import { buildProductItemsByProductId, enrichProduct, getCategorySlug } from '@/shared/utils/productApiAdapters';
 import Button from 'primevue/button';
 import Slider from 'primevue/slider';
 import { useToast } from 'primevue';
@@ -13,6 +13,7 @@ import { useRoute } from 'vue-router';
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
 const STEP_CENTS = 25
 const MICA_CATEGORY_ID = 1
+const ARMAZON_CATEGORY_ID = 2
 
 const route = useRoute()
 const toast = useToast()
@@ -91,6 +92,15 @@ const buildLensVariants = (items) => {
 }
 
 const isLensProduct = computed(() => Number(product.value?.category_id) === MICA_CATEGORY_ID)
+const productCategorySlug = computed(() => getCategorySlug(product.value?.category?.name ?? product.value?.category_name ?? product.value?.category ?? ''))
+const shouldShowProductCode = computed(() => {
+    return (
+        !isLensProduct.value &&
+        Number(product.value?.category_id) !== ARMAZON_CATEGORY_ID &&
+        productCategorySlug.value !== 'micas' &&
+        productCategorySlug.value !== 'armazones'
+    )
+})
 
 const lensVariants = computed(() => buildLensVariants(lensProductItems.value))
 
@@ -161,6 +171,25 @@ const selectedLensItems = computed(() => {
 
             return left.cylinder - right.cylinder
         })
+})
+
+const selectedLensUnitPrice = computed(() => {
+    if (!isLensProduct.value) return Number(product.value?.price ?? 0)
+
+    const firstSelectedItem = selectedLensItems.value[0] ?? selectedLensItem.value
+    const price = Number(firstSelectedItem?.price ?? product.value?.price ?? 0)
+
+    return Number.isFinite(price) ? price : 0
+})
+
+const selectedLensTotalPrice = computed(() => {
+    if (!isLensProduct.value) return Number(product.value?.price ?? 0)
+
+    return selectedLensItems.value.reduce((total, item) => {
+        const itemPrice = Number(item?.price ?? selectedLensUnitPrice.value)
+
+        return total + (Number.isFinite(itemPrice) ? itemPrice : 0)
+    }, 0)
 })
 
 const selectedCombinationLabel = computed(() => {
@@ -242,6 +271,19 @@ const formatPrice = (price) => {
 
     return numericPrice.toLocaleString('en-US', {
         minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })
+}
+
+const formatUnitPrice = (price) => {
+    const numericPrice = Number(price ?? 0)
+
+    if (!Number.isFinite(numericPrice)) {
+        return '0.0'
+    }
+
+    return numericPrice.toLocaleString('en-US', {
+        minimumFractionDigits: 1,
         maximumFractionDigits: 2
     })
 }
@@ -384,14 +426,19 @@ const addToCart = async () => {
     
                     <!-- Product price -->
                     <div v-if="product.price !== null" class="font-bold text-2xl text-sky-600">
-                        {{ '$' + formatPrice(product.price) }}
+                        <template v-if="isLensProduct">
+                            {{ '$' + formatUnitPrice(selectedLensUnitPrice) }} c/u
+                        </template>
+                        <template v-else>
+                            {{ '$' + formatPrice(product.price) }}
+                        </template>
                     </div>
                     <div v-else class="font-semibold text-lg text-slate-500">
                         Precio no disponible
                     </div>
 
                     <!-- Product code -->
-                    <div class="flex flex-row gap-x-2">
+                    <div v-if="shouldShowProductCode" class="flex flex-row gap-x-2">
                         <div class="font-semibold text-sky-800">
                             Codigo:
                         </div>
@@ -469,6 +516,17 @@ const addToCart = async () => {
 
                         <div class="rounded-xl border border-sky-200 bg-white/80 px-4 py-3 text-sm text-slate-700">
                             Se agregarán <span class="font-semibold text-sky-800">{{ selectedLensItems.length }}</span> variantes al carrito con la configuración seleccionada.
+                        </div>
+
+                        <div class="rounded-xl border border-sky-300 bg-white px-4 py-4">
+                            <div class="flex items-center justify-between gap-4 text-sm text-slate-700">
+                                <span>Variantes seleccionadas</span>
+                                <span class="font-semibold text-sky-800">{{ selectedLensItems.length }}</span>
+                            </div>
+                            <div class="mt-2 flex items-center justify-between gap-4 text-lg font-bold text-sky-800">
+                                <span>Total</span>
+                                <span>${{ formatPrice(selectedLensTotalPrice) }}</span>
+                            </div>
                         </div>
                     </div>
 
