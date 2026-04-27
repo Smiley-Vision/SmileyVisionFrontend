@@ -8,7 +8,7 @@ import Button from 'primevue/button'
 import { useToast } from 'primevue'
 import { computed, onMounted, ref } from 'vue'
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL
+const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 const toast = useToast()
 const auth = useAuthStore()
