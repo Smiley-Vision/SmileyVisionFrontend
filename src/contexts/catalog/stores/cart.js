@@ -39,6 +39,7 @@ export const useCartStore = defineStore('cart', () => {
     const itemCount = computed(() => items.value.reduce((acc, item) => acc + toNumber(item.quantity), 0))
     const subtotal = computed(() => items.value.reduce((acc, item) => acc + (toNumber(item.price) * toNumber(item.quantity)), 0))
     const hasItems = computed(() => items.value.length > 0)
+    const canUseCart = computed(() => auth.isAuthenticated && auth.isBuyer)
 
     function getStorageKey(userId) {
         return `${STORAGE_PREFIX}_${userId}`
@@ -50,7 +51,7 @@ export const useCartStore = defineStore('cart', () => {
     }
 
     function persistCartState() {
-        if (!auth.isAuthenticated || !auth.user?.id) return
+        if (!canUseCart.value || !auth.user?.id) return
 
         localStorage.setItem(getStorageKey(auth.user.id), JSON.stringify({
             cartId: cartId.value,
@@ -136,7 +137,7 @@ export const useCartStore = defineStore('cart', () => {
     }
 
     async function fetchCartItems() {
-        if (!auth.isAuthenticated || !auth.user?.id) {
+        if (!canUseCart.value || !auth.user?.id) {
             resetRuntimeState()
             return []
         }
@@ -155,7 +156,7 @@ export const useCartStore = defineStore('cart', () => {
     }
 
     async function initializeForSession({ forceRemote = false } = {}) {
-        if (!auth.isAuthenticated || !auth.user?.id) {
+        if (!canUseCart.value || !auth.user?.id) {
             initializedUserId.value = null
             hasLoadedRemoteForUser.value = false
             resetRuntimeState()
@@ -283,6 +284,10 @@ export const useCartStore = defineStore('cart', () => {
             throw new Error('Necesitas iniciar sesión para usar el carrito.')
         }
 
+        if (!canUseCart.value) {
+            throw new Error('El carrito solo esta disponible para usuarios compradores.')
+        }
+
         const normalizedProduct = normalizeProductForCart(product)
         const existing = items.value.find((item) => item.product_item_id === normalizedProduct.product_item_id)
         const nextQuantity = Math.max(1, toNumber(existing?.quantity, 0) + Math.max(1, toNumber(quantityDelta, 1)))
@@ -302,6 +307,10 @@ export const useCartStore = defineStore('cart', () => {
 
         if (!auth.isAuthenticated) {
             throw new Error('Necesitas iniciar sesión para usar el carrito.')
+        }
+
+        if (!canUseCart.value) {
+            throw new Error('El carrito solo esta disponible para usuarios compradores.')
         }
 
         const normalizedProducts = products
@@ -386,7 +395,7 @@ export const useCartStore = defineStore('cart', () => {
     }
 
     function clearLocalCart() {
-        if (!auth.isAuthenticated || !auth.user?.id) return
+        if (!canUseCart.value || !auth.user?.id) return
 
         localStorage.removeItem(getStorageKey(auth.user.id))
         resetRuntimeState()
@@ -399,6 +408,7 @@ export const useCartStore = defineStore('cart', () => {
         subtotal,
         hasItems,
         isSyncing,
+        canUseCart,
         initializeForSession,
         fetchCartItems,
         addProduct,

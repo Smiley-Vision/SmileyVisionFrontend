@@ -4,6 +4,7 @@ import { useCartStore } from '@/contexts/catalog/stores/cart';
 import { useAuthStore } from '@/contexts/identity/stores/auth';
 import { api } from '@/shared/infrastructure/http/api';
 import { buildProductItemsByProductId, enrichProduct, getCategorySlug } from '@/shared/utils/productApiAdapters';
+import { normalizeApiError } from '@/shared/utils/normalizeApiError';
 import Button from 'primevue/button';
 import Slider from 'primevue/slider';
 import { useToast } from 'primevue';
@@ -291,7 +292,9 @@ const formatUnitPrice = (price) => {
 // Get the product associated with the ID
 onMounted(async () => {
     try {
-        await cart.initializeForSession()
+        if (cart.canUseCart) {
+            await cart.initializeForSession()
+        }
 
         const [productResponse, productItemsResponse] = await Promise.all([
             api.get(`products/${productCode}`),
@@ -308,24 +311,33 @@ onMounted(async () => {
 
         isLoading.value = false
     } catch (error) {
+        const apiError = normalizeApiError(error)
+        const detail = apiError === 'Error inesperado'
+            ? 'No se pudo obtener el producto'
+            : `No se pudo obtener el producto: ${apiError}`
+
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'No se pudo obtener el producto',
+            detail,
             life: 4000
         })
     }
 })
 
 const addToCart = async () => {
-    if (!auth.isAuthenticated) {
+    if (!auth.isAuthenticated || !cart.canUseCart) {
         toast.add({
             severity: 'warn',
             summary: 'Inicia sesión',
-            detail: 'Debes iniciar sesión para agregar productos al carrito.',
+            detail: auth.isAdmin
+                ? 'El carrito solo esta disponible para usuarios compradores.'
+                : 'Debes iniciar sesión para agregar productos al carrito.',
             life: 4000
         })
-        router.push({ name: 'login' })
+        if (!auth.isAuthenticated) {
+            router.push({ name: 'login' })
+        }
         return
     }
 
@@ -380,6 +392,15 @@ const addToCart = async () => {
     } finally {
         isAddingToCart.value = false
     }
+}
+
+const editProduct = () => {
+    router.push({
+        name: 'admin-products-modify-form',
+        params: {
+            code: product.value?.id ?? productCode
+        }
+    })
 }
 </script>
 
@@ -531,12 +552,20 @@ const addToCart = async () => {
                     </div>
 
                     <Button
+                        v-if="cart.canUseCart || !auth.isAuthenticated"
                         label="Agregar al carrito"
                         icon="pi pi-shopping-cart"
                         class="!bg-sky-700 !border-sky-700 hover:!bg-sky-800 hover:!border-sky-800 mt-3"
                         :loading="isAddingToCart"
                         :disabled="isAddToCartDisabled"
                         @click="addToCart"
+                    />
+                    <Button
+                        v-if="auth.isAdmin"
+                        label="Editar producto"
+                        icon="pi pi-pencil"
+                        class="!bg-sky-700 !border-sky-700 hover:!bg-sky-800 hover:!border-sky-800 mt-3"
+                        @click="editProduct"
                     />
                 </div>
             </div>
