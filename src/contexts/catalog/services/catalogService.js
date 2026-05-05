@@ -36,3 +36,7 @@ export async function getProductsService() {
 export async function getProductItemsService() {
     return (await api.get('product-items')).data
 }
+
+export async function getProductConfigurationsService() {
+    return (await api.get('product-configurations')).data
+}
