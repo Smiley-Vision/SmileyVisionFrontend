@@ -23,11 +23,45 @@ const productItemsByProductId = ref({})
 const isLoading = ref(false)
 const isSearchQueryEmpty = ref(true)
 
+const getProductRecencyValue = (product) => {
+    const candidateDate = product?.created_at ?? product?.updated_at ?? null
+    const timestamp = candidateDate ? new Date(candidateDate).getTime() : Number.NaN
+
+    if (!Number.isNaN(timestamp)) return timestamp
+
+    return Number(product?.id ?? 0)
+}
+
+const sortProductsByRecency = (items) => {
+    return [...items].sort((left, right) => getProductRecencyValue(right) - getProductRecencyValue(left))
+}
+
+const loadRecentProducts = async () => {
+    isLoading.value = true
+    isSearchQueryEmpty.value = true
+
+    const response = Number(selectedType.value) === 0
+        ? (await api.get('products')).data
+        : (await api.get('products/search', {
+            params: {
+                searchQuery: '',
+                categoryID: selectedType.value
+            }
+        })).data
+    const normalizedProducts = normalizeProductListPayload(response)
+
+    products.value = sortProductsByRecency(
+        enrichProducts(normalizedProducts, productItemsByProductId.value)
+    ).slice(0, 10)
+
+    isLoading.value = false
+}
+
 // Fetch products with the search query
 const fetchFilteredProducts = async () => {
     try {
         if (searchQuery.value === '') {
-            isSearchQueryEmpty.value = true
+            await loadRecentProducts()
             return
         }
 
@@ -67,7 +101,9 @@ onMounted(async () => {
 
         productTypes.value = normalizeCategoriesPayload(categoriesResponse.data)
         productItemsByProductId.value = buildProductItemsByProductId(productItemsResponse.data)
+        await loadRecentProducts()
     } catch (error) {
+        isLoading.value = false
         toast.add({
             severity: 'error',
             summary: 'Error',

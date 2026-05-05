@@ -21,6 +21,18 @@ export async function createProductService(formData) {
     return (await api.post('products', formData)).data
 }
 
+export async function getVariationsService() {
+    return (await api.get('variations')).data
+}
+
+export async function createEquipmentItemService(formData) {
+    return (await api.post('product-items/equipment', formData)).data
+}
+
+export async function createFrameItemService(formData) {
+    return (await api.post('product-items/frame', formData)).data
+}
+
 export async function getMicasProductsService() {
     return (await api.get('products/micas')).data
 }

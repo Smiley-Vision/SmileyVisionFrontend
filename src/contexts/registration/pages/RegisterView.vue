@@ -7,12 +7,43 @@ const toast = useToast()
 
 const isLoading = ref(true)
 const registrationRequests = ref([])
+const processingRequestIds = ref(new Set())
 
 const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString()
 }
 
+const isRequestProcessing = (id) => {
+    return processingRequestIds.value.has(id)
+}
+
+const startProcessingRequest = (id) => {
+    if (isRequestProcessing(id)) {
+        return false
+    }
+
+    processingRequestIds.value = new Set(processingRequestIds.value).add(id)
+    return true
+}
+
+const stopProcessingRequest = (id) => {
+    const nextProcessingRequestIds = new Set(processingRequestIds.value)
+    nextProcessingRequestIds.delete(id)
+    processingRequestIds.value = nextProcessingRequestIds
+}
+
+const deleteRequest = async (id) => {
+    await api.delete(`register-requests/${id}`)
+
+    // Remove the rejected request from the list
+    registrationRequests.value = registrationRequests.value.filter(request => request.id !== id)
+}
+
 const acceptRequest = async (id) => {
+    if (!startProcessingRequest(id)) {
+        return
+    }
+
     try {
         toast.add({
             severity: 'info',
@@ -32,7 +63,7 @@ const acceptRequest = async (id) => {
         await api.post('send-register-mail', body)
 
         // Delete the request when accepted
-        await rejectRequest(id)
+        await deleteRequest(id)
 
         toast.add({
             severity: 'success',
@@ -51,17 +82,22 @@ const acceptRequest = async (id) => {
             detail: message,
             life: 4000
         })
+    } finally {
+        stopProcessingRequest(id)
     }
 }
 
 const rejectRequest = async (id) => {
-    try {
-        const response = (await api.delete(`register-requests/${id}`)).data
+    if (!startProcessingRequest(id)) {
+        return
+    }
 
-        // Remove the rejected request from the list
-        registrationRequests.value = registrationRequests.value.filter(request => request.id !== id)
+    try {
+        await deleteRequest(id)
     } catch (error) {
         throw error
+    } finally {
+        stopProcessingRequest(id)
     }
 }
 
@@ -105,12 +141,12 @@ onMounted(async () => {
                 </div>
 
                 <div class="mt-4 md:mt-0 flex gap-3">
-                    <button @click="acceptRequest(request.id)"
-                        class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm">
+                    <button @click="acceptRequest(request.id)" :disabled="isRequestProcessing(request.id)"
+                        class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-green-600">
                         Aceptar
                     </button>
-                    <button @click="rejectRequest(request.id)"
-                        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm">
+                    <button @click="rejectRequest(request.id)" :disabled="isRequestProcessing(request.id)"
+                        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-red-600">
                         Rechazar
                     </button>
                 </div>

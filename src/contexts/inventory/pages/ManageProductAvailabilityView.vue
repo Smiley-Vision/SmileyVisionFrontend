@@ -40,7 +40,14 @@ const loadRecentProducts = async () => {
     isLoading.value = true
     isSearchQueryEmpty.value = true
 
-    const response = (await api.get('products')).data
+    const response = Number(selectedType.value) === 0
+        ? (await api.get('products')).data
+        : (await api.get('products/search', {
+            params: {
+                searchQuery: '',
+                categoryID: selectedType.value
+            }
+        })).data
     const normalizedProducts = normalizeProductListPayload(response)
 
     products.value = sortProductsByRecency(
