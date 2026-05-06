@@ -50,13 +50,63 @@ export function normalizeProductListPayload(payload) {
 export function buildProductItemsByProductId(payload) {
     const items = Array.isArray(payload) ? payload : Array.isArray(payload?.product_items) ? payload.product_items : []
 
-    return items.reduce((map, item) => {
+    const itemsByProductId = items.reduce((map, item) => {
         if (item?.product_id != null) {
-            map[item.product_id] = item
+            if (!Array.isArray(map[item.product_id])) {
+                map[item.product_id] = []
+            }
+
+            map[item.product_id].push(item)
         }
 
         return map
     }, {})
+
+    return Object.entries(itemsByProductId).reduce((map, [productId, productItems]) => {
+        map[productId] = chooseRepresentativeProductItem(productItems)
+
+        return map
+    }, {})
+}
+
+export function getProductItemStock(item) {
+    const directStock = [
+        item?.stock,
+        item?.total_stock,
+        item?.available_stock,
+        item?.availability,
+        item?.existence
+    ]
+        .map((value) => {
+            const parsed = Number(value)
+
+            return Number.isFinite(parsed) ? parsed : null
+        })
+        .find((value) => value !== null)
+
+    if (directStock !== undefined) return Math.max(0, directStock)
+
+    const inventoryRows = Array.isArray(item?.inventory)
+        ? item.inventory
+        : Array.isArray(item?.inventories)
+            ? item.inventories
+            : Array.isArray(item?.inventory_items)
+                ? item.inventory_items
+                : []
+
+    return inventoryRows.reduce((total, inventoryRow) => {
+        const stock = Number(inventoryRow?.stock)
+
+        return total + Math.max(0, Number.isFinite(stock) ? stock : 0)
+    }, 0)
+}
+
+function chooseRepresentativeProductItem(items) {
+    if (!Array.isArray(items) || items.length === 0) return null
+
+    return items.find((item) => getProductItemStock(item) > 0 && item?.product_image)
+        ?? items.find((item) => item?.product_image)
+        ?? items[0]
 }
 
 export function enrichProduct(product, productItemsByProductId = {}) {
@@ -70,7 +120,8 @@ export function enrichProduct(product, productItemsByProductId = {}) {
         product_item_id: product.product_item_id ?? item?.id ?? null,
         code: product.code ?? product.SKU ?? item?.SKU ?? String(productId ?? ''),
         price: product.price ?? item?.price ?? null,
-        image_url: product.image_url ?? product.product_image ?? item?.product_image ?? ''
+        image_url: item?.product_image ?? product.image_url ?? product.product_image ?? '',
+        stock: getProductItemStock(item)
     }
 }
 

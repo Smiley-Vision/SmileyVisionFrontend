@@ -27,6 +27,30 @@ function normalizeCartItemsPayload(payload) {
     return []
 }
 
+function getProductItemStock(productItem) {
+    const directStock = [
+        productItem?.stock,
+        productItem?.total_stock,
+        productItem?.available_stock,
+        productItem?.availability,
+        productItem?.existence
+    ]
+        .map((value) => toNumber(value, null))
+        .find((value) => value !== null)
+
+    if (directStock !== undefined) return Math.max(0, directStock)
+
+    const inventoryRows = Array.isArray(productItem?.inventory)
+        ? productItem.inventory
+        : Array.isArray(productItem?.inventories)
+            ? productItem.inventories
+            : Array.isArray(productItem?.inventory_items)
+                ? productItem.inventory_items
+                : []
+
+    return inventoryRows.reduce((total, inventoryRow) => total + Math.max(0, toNumber(inventoryRow?.stock, 0)), 0)
+}
+
 export const useCartStore = defineStore('cart', () => {
     const auth = useAuthStore()
 
@@ -172,6 +196,7 @@ export const useCartStore = defineStore('cart', () => {
                     description: String(product?.description ?? ''),
                     image_url: productItemImage || productImage,
                     price: toNumber(productItem?.price ?? product?.price, 0),
+                    stock: getProductItemStock(productItem),
                     variation_options: variationOptionsByItemId[normalizedItemId] ?? [],
                     quantity
                 }
@@ -241,6 +266,7 @@ export const useCartStore = defineStore('cart', () => {
             description: String(product?.description ?? ''),
             image_url: String(product?.image_url ?? product?.product_image ?? ''),
             price: toNumber(product?.price, 0),
+            stock: toNumber(product?.stock, 0),
             variation_options: Array.isArray(product?.variation_options) ? product.variation_options : [],
             quantity: 1
         }

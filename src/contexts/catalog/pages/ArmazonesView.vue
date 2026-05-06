@@ -71,7 +71,7 @@ onMounted(async () => {
                         <RouterLink :to="{ name: 'product', params: { code: armazon.id } }" :productID="armazon.id">
                             <img
                                 :src="`${backendUrl}/storage/${armazon.image_url}`"
-                                class="lg:size-60 md:size-40 size-32 border-solid border-4 border-sky-600 rounded-xl shadow-lg
+                                class="lg:size-60 md:size-40 size-32 object-contain object-center bg-white border-solid border-4 border-sky-600 rounded-xl shadow-lg
                                         hover:shadow-2xl transform transition duration-200 hover:scale-105"
                             >
                         </RouterLink>

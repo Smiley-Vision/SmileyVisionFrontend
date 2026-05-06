@@ -8,6 +8,10 @@ export async function getSuppliersService() {
     return (await api.get('suppliers')).data
 }
 
+export async function getSuppliersByProductCategoryService(categoryId) {
+    return (await api.get(`product-categories/${categoryId}/suppliers`)).data
+}
+
 export async function searchAdminProductsService(query, typeId) {
     return (await api.get('products/search', {
         params: {
@@ -39,6 +43,18 @@ export async function getMicasProductsService() {
 
 export async function batchCreateLensItemsService(payload) {
     return (await api.post('product-items/batch-lenses', payload)).data
+}
+
+export async function getProductItemsService() {
+    return (await api.get('product-items')).data
+}
+
+export async function updateProductItemImageService(productItemId, formData) {
+    return (await api.post(`product-items/${productItemId}/image`, formData)).data
+}
+
+export async function updateProductItemService(productItemId, body) {
+    return (await api.patch(`product-items/${productItemId}`, body)).data
 }
 
 export async function getProductStateService(code) {
