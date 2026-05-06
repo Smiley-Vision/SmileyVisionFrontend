@@ -27,8 +27,11 @@ const isLoading = ref(true)
 const isAddingToCart = ref(false)
 const product = ref({})
 const lensProductItems = ref([])
+const frameProductItems = ref([])
+const productConfigurations = ref([])
 const selectedSphereRange = ref([0, 0])
 const selectedCylinderRange = ref([0, 0])
+const selectedFrameOptions = ref({})
 
 const formatLensValue = (value) => {
     const numericValue = Number(value ?? 0)
@@ -92,14 +95,14 @@ const buildLensVariants = (items) => {
     }
 }
 
-const isLensProduct = computed(() => Number(product.value?.category_id) === MICA_CATEGORY_ID)
 const productCategorySlug = computed(() => getCategorySlug(product.value?.category?.name ?? product.value?.category_name ?? product.value?.category ?? ''))
+const isLensProduct = computed(() => Number(product.value?.category_id) === MICA_CATEGORY_ID || productCategorySlug.value === 'micas')
+const isFrameProduct = computed(() => Number(product.value?.category_id) === ARMAZON_CATEGORY_ID || productCategorySlug.value === 'armazones')
 const shouldShowProductCode = computed(() => {
     return (
         !isLensProduct.value &&
-        Number(product.value?.category_id) !== ARMAZON_CATEGORY_ID &&
-        productCategorySlug.value !== 'micas' &&
-        productCategorySlug.value !== 'armazones'
+        !isFrameProduct.value &&
+        productCategorySlug.value !== 'micas'
     )
 })
 
@@ -193,10 +196,146 @@ const selectedLensTotalPrice = computed(() => {
     }, 0)
 })
 
-const selectedCombinationLabel = computed(() => {
-    if (!selectedLensItem.value) return 'No hay una combinacion exacta disponible para los valores actuales.'
+const normalizeVariationName = (value) => {
+    return String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+}
 
-    return `Esfera ${formatLensValue(selectedLensItem.value.sphere)} / Cilindro ${formatLensValue(selectedLensItem.value.cylinder)}`
+const sortFrameVariations = (left, right) => {
+    const order = {
+        color: 1,
+        material: 2
+    }
+
+    const leftOrder = order[normalizeVariationName(left.name)] ?? 99
+    const rightOrder = order[normalizeVariationName(right.name)] ?? 99
+
+    if (leftOrder !== rightOrder) return leftOrder - rightOrder
+
+    return String(left.name).localeCompare(String(right.name), 'es')
+}
+
+const frameVariantData = computed(() => {
+    if (!isFrameProduct.value) {
+        return {
+            variations: [],
+            items: []
+        }
+    }
+
+    const productId = Number(product.value?.id)
+    const itemsById = frameProductItems.value.reduce((map, item) => {
+        map[Number(item?.id)] = {
+            ...item,
+            optionIds: new Set(),
+            optionsByVariationId: {}
+        }
+
+        return map
+    }, {})
+    const variationsById = new Map()
+
+    for (const configuration of productConfigurations.value) {
+        const item = configuration?.product_item
+        const itemId = Number(configuration?.product_item_id ?? item?.id)
+        const itemProductId = Number(item?.product_id ?? itemsById[itemId]?.product_id)
+
+        if (itemProductId !== productId) continue
+
+        if (!itemsById[itemId]) {
+            itemsById[itemId] = {
+                ...item,
+                optionIds: new Set(),
+                optionsByVariationId: {}
+            }
+        }
+
+        const variationOption = configuration?.variation_option
+        const variation = variationOption?.variation
+        const variationId = Number(variation?.id ?? variationOption?.variation_id)
+        const optionId = Number(variationOption?.id ?? configuration?.variation_option_id)
+
+        if (!variationId || !optionId) continue
+
+        const option = {
+            id: optionId,
+            value: variationOption?.value ?? `Opcion ${optionId}`,
+            variationId
+        }
+
+        if (!variationsById.has(variationId)) {
+            variationsById.set(variationId, {
+                id: variationId,
+                name: variation?.name ?? `Variacion ${variationId}`,
+                options: []
+            })
+        }
+
+        const variationRecord = variationsById.get(variationId)
+        if (!variationRecord.options.some((existingOption) => existingOption.id === option.id)) {
+            variationRecord.options.push(option)
+        }
+
+        itemsById[itemId].optionIds.add(optionId)
+        itemsById[itemId].optionsByVariationId[variationId] = optionId
+    }
+
+    const variations = [...variationsById.values()]
+        .map((variation) => ({
+            ...variation,
+            options: variation.options.sort((left, right) => String(left.value).localeCompare(String(right.value), 'es'))
+        }))
+        .sort(sortFrameVariations)
+
+    return {
+        variations,
+        items: Object.values(itemsById)
+    }
+})
+
+const selectedFrameItem = computed(() => {
+    if (!isFrameProduct.value) return null
+
+    const selectedOptionIds = Object.values(selectedFrameOptions.value)
+        .map((optionId) => Number(optionId))
+        .filter(Boolean)
+
+    if (selectedOptionIds.length === 0) {
+        return frameVariantData.value.items[0] ?? null
+    }
+
+    return frameVariantData.value.items.find((item) => (
+        selectedOptionIds.every((optionId) => item.optionIds?.has(optionId))
+    )) ?? null
+})
+
+const selectedFramePrice = computed(() => {
+    const price = Number(selectedFrameItem.value?.price ?? product.value?.price ?? 0)
+
+    return Number.isFinite(price) ? price : 0
+})
+
+const selectedFrameVariationOptions = computed(() => {
+    if (!isFrameProduct.value) return []
+
+    return frameVariantData.value.variations
+        .map((variation) => {
+            const selectedOptionId = Number(selectedFrameOptions.value[variation.id])
+            const selectedOption = variation.options.find((option) => Number(option.id) === selectedOptionId)
+
+            if (!selectedOption) return null
+
+            return {
+                variation_id: variation.id,
+                variation_name: variation.name,
+                option_id: selectedOption.id,
+                option_value: selectedOption.value
+            }
+        })
+        .filter(Boolean)
 })
 
 const lensSelectionSummary = computed(() => {
@@ -213,6 +352,10 @@ const lensSelectionSummary = computed(() => {
 const isAddToCartDisabled = computed(() => {
     if (isLensProduct.value) {
         return selectedLensItems.value.length === 0
+    }
+
+    if (isFrameProduct.value) {
+        return !selectedFrameItem.value?.id
     }
 
     return !product.value?.product_item_id
@@ -234,6 +377,41 @@ function initializeLensSelectors() {
 
     selectedSphereRange.value = [sphereSliderBounds.value.min, sphereSliderBounds.value.max]
     selectedCylinderRange.value = [cylinderSliderBounds.value.max, cylinderSliderBounds.value.min]
+}
+
+function initializeFrameSelectors() {
+    if (!isFrameProduct.value || frameVariantData.value.variations.length === 0) return
+
+    selectedFrameOptions.value = frameVariantData.value.variations.reduce((selection, variation) => {
+        selection[variation.id] = variation.options[0]?.id ?? null
+
+        return selection
+    }, {})
+}
+
+function selectFrameOption(variationId, optionId) {
+    const variation = frameVariantData.value.variations.find((currentVariation) => Number(currentVariation.id) === Number(variationId))
+
+    if (variation?.options.length === 1) return
+
+    selectedFrameOptions.value = {
+        ...selectedFrameOptions.value,
+        [variationId]: optionId
+    }
+}
+
+function isFrameOptionAvailable(variationId, optionId) {
+    const selectedEntries = Object.entries(selectedFrameOptions.value)
+        .filter(([currentVariationId, currentOptionId]) => (
+            Number(currentVariationId) !== Number(variationId) &&
+            Number(currentOptionId)
+        ))
+        .map(([, currentOptionId]) => Number(currentOptionId))
+
+    return frameVariantData.value.items.some((item) => (
+        item.optionIds?.has(Number(optionId)) &&
+        selectedEntries.every((selectedOptionId) => item.optionIds?.has(selectedOptionId))
+    ))
 }
 
 watch(lensVariants, (variants) => {
@@ -262,6 +440,46 @@ watch(selectedLensItem, (item) => {
     }
 }, { immediate: true })
 
+watch(frameVariantData, (variantData) => {
+    if (!isFrameProduct.value || variantData.variations.length === 0) return
+
+    const hasSelection = variantData.variations.every((variation) => selectedFrameOptions.value[variation.id])
+
+    if (!hasSelection) {
+        initializeFrameSelectors()
+    }
+}, { immediate: true })
+
+watch(selectedFrameItem, (item) => {
+    if (!isFrameProduct.value) return
+
+    const nextProductItemId = item?.id ?? null
+    const nextCode = item?.SKU ?? product.value.code
+    const nextPrice = item?.price ?? product.value.price
+    const nextImageUrl = item?.product_image ?? product.value.image_url
+    const nextVariationOptions = selectedFrameVariationOptions.value
+
+    if (
+        product.value?.product_item_id === nextProductItemId &&
+        product.value?.code === nextCode &&
+        product.value?.price === nextPrice &&
+        product.value?.image_url === nextImageUrl &&
+        JSON.stringify(product.value?.variation_options ?? []) === JSON.stringify(nextVariationOptions)
+    ) {
+        return
+    }
+
+    product.value = {
+        ...product.value,
+        product_item_id: nextProductItemId,
+        code: nextCode,
+        SKU: nextCode,
+        price: nextPrice,
+        image_url: nextImageUrl,
+        variation_options: nextVariationOptions
+    }
+}, { immediate: true })
+
 // Format the price of the product (commas)
 const formatPrice = (price) => {
     const numericPrice = Number(price ?? 0)
@@ -276,19 +494,6 @@ const formatPrice = (price) => {
     })
 }
 
-const formatUnitPrice = (price) => {
-    const numericPrice = Number(price ?? 0)
-
-    if (!Number.isFinite(numericPrice)) {
-        return '0.0'
-    }
-
-    return numericPrice.toLocaleString('en-US', {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 2
-    })
-}
-
 // Get the product associated with the ID
 onMounted(async () => {
     try {
@@ -296,17 +501,26 @@ onMounted(async () => {
             await cart.initializeForSession()
         }
 
-        const [productResponse, productItemsResponse] = await Promise.all([
+        const [productResponse, productItemsResponse, productConfigurationsResponse] = await Promise.all([
             api.get(`products/${productCode}`),
-            api.get('product-items')
+            api.get('product-items'),
+            api.get('product-configurations').catch(() => ({ data: [] }))
         ])
+        const productItems = Array.isArray(productItemsResponse.data) ? productItemsResponse.data : []
         const productItemsByProductId = buildProductItemsByProductId(productItemsResponse.data)
         product.value = enrichProduct(productResponse.data, productItemsByProductId)
-        lensProductItems.value = (Array.isArray(productItemsResponse.data) ? productItemsResponse.data : [])
+        productConfigurations.value = Array.isArray(productConfigurationsResponse.data) ? productConfigurationsResponse.data : []
+        lensProductItems.value = productItems
+            .filter((item) => Number(item?.product_id) === Number(product.value?.id))
+        frameProductItems.value = productItems
             .filter((item) => Number(item?.product_id) === Number(product.value?.id))
 
-        if (Number(product.value?.category_id) === MICA_CATEGORY_ID) {
+        if (isLensProduct.value) {
             initializeLensSelectors()
+        }
+
+        if (isFrameProduct.value) {
+            initializeFrameSelectors()
         }
 
         isLoading.value = false
@@ -408,53 +622,48 @@ const editProduct = () => {
     <!-- Loading screen -->
     <div v-if="isLoading" class="flex flex-col mx-auto my-auto items-center gap-y-8 mt-24">
         <div
-            class="text-sky-600 pi pi-spinner-dotted animate-spin slow-spin"
+            class="text-sky-800 pi pi-spinner-dotted animate-spin slow-spin"
             style="font-size: 8rem">
         </div>
-        <div class="lg:text-5xl text-4xl text-sky-700 font-bold">
+        <div class="lg:text-5xl text-4xl text-sky-800 font-bold">
             Cargando...
         </div>
     </div>
 
     <!-- Content -->
-    <div v-else class="flex flex-col items-center lg:px-20 px-14 mt-14 lg:gap-y-8 gap-y-6 2xl:mb-8 mb-12">
+    <div v-else class="flex flex-col items-center lg:px-20 px-8 mt-14 lg:gap-y-8 gap-y-6 2xl:mb-8 mb-12">
 
         <!-- Grouped left-aligned section -->
         <div class="flex flex-col items-start gap-y-6">
 
             <!-- Product details text -->
-            <div class="font-semibold text-2xl text-sky-700">
+            <div class="font-semibold text-2xl text-sky-800">
                 Detalles del producto
             </div>
     
             <!-- Product image and details -->
-            <div class="flex lg:flex-row flex-col justify-center lg:gap-x-10 gap-y-4">
+            <div class="flex lg:flex-row flex-col justify-center lg:gap-x-20 gap-y-8">
                 
                 <!-- Product image -->
                 <img
                     :src="`${backendUrl}/storage/${product.image_url}`"
                     alt="Imagen del producto"
-                    class="lg:size-[28rem] border-solid border-2 border-sky-600 rounded-lg shadow-xl"
+                    class="lg:size-[28rem] md:size-96 size-72 object-contain border-solid border-2 border-sky-600 rounded-lg shadow-xl"
                 >
     
                 <!-- Product details -->
-                <div class="flex flex-col justify-center gap-y-4">
+                <div class="flex flex-col justify-center gap-y-5 lg:min-w-[24rem] max-w-lg">
     
                     <!-- Product name -->
-                    <div class="font-semibold text-xl text-sky-800">
+                    <div class="font-semibold text-3xl text-sky-800">
                         {{ product.name }}
                     </div>
     
                     <!-- Product price -->
-                    <div v-if="product.price !== null" class="font-bold text-2xl text-sky-600">
-                        <template v-if="isLensProduct">
-                            {{ '$' + formatUnitPrice(selectedLensUnitPrice) }} c/u
-                        </template>
-                        <template v-else>
-                            {{ '$' + formatPrice(product.price) }}
-                        </template>
+                    <div v-if="!isLensProduct && !isFrameProduct && product.price !== null" class="font-bold text-3xl text-sky-800">
+                        {{ '$' + formatPrice(product.price) }}
                     </div>
-                    <div v-else class="font-semibold text-lg text-slate-500">
+                    <div v-else-if="!isLensProduct && !isFrameProduct" class="font-semibold text-lg text-slate-600">
                         Precio no disponible
                     </div>
 
@@ -463,23 +672,58 @@ const editProduct = () => {
                         <div class="font-semibold text-sky-800">
                             Codigo:
                         </div>
-                        <div class="font-semibold text-sky-600">
+                        <div class="font-semibold text-sky-800">
                             {{ product.code }}
                         </div>
                     </div>
     
                     <!-- Description -->
-                    <div class="flex flex-col gap-y-2">
+                    <div v-if="!isFrameProduct" class="flex flex-col gap-y-2">
                         <div class="font-semibold text-lg text-sky-800">
                             Descripción
                         </div>
-                        <div class="text-justify font-medium text-sky-800 max-w-md">
+                        <div class="text-justify font-medium text-slate-600 max-w-md">
                             {{ product.description }}
                         </div>
                     </div>
     
-                    <div class="font-semibold text-slate-500">
-                        Disponibilidad no visible en esta version.
+                    <div v-if="isFrameProduct" class="flex flex-col gap-7">
+                        <div
+                            v-for="variation in frameVariantData.variations"
+                            :key="variation.id"
+                            class="flex flex-col gap-4"
+                        >
+                            <div class="font-semibold text-sky-800">
+                                {{ variation.name }}:
+                            </div>
+                            <div class="flex flex-wrap gap-x-8 gap-y-3">
+                                <label
+                                    v-for="option in variation.options"
+                                    :key="option.id"
+                                    :class="[
+                                        isFrameOptionAvailable(variation.id, option.id) ? 'cursor-pointer text-slate-600' : 'cursor-not-allowed text-slate-400',
+                                        'inline-flex items-center gap-3 font-semibold'
+                                    ]"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        class="h-5 w-5 rounded border-slate-300 text-sky-800 focus:ring-sky-500"
+                                        :checked="Number(selectedFrameOptions[variation.id]) === Number(option.id)"
+                                        :disabled="variation.options.length === 1 || !isFrameOptionAvailable(variation.id, option.id)"
+                                        @change="selectFrameOption(variation.id, option.id)"
+                                    >
+                                    <span>{{ option.value }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-baseline gap-x-2 font-semibold text-xl text-slate-600">
+                            Precio: <span class="font-bold text-3xl text-sky-800">${{ formatPrice(selectedFramePrice) }} MXN</span>
+                        </div>
+
+                        <div class="font-semibold text-slate-600">
+                            Stock: disponible
+                        </div>
                     </div>
 
                     <div
@@ -498,7 +742,7 @@ const editProduct = () => {
                         <div class="flex flex-col gap-3">
                             <div class="flex items-center justify-between gap-4">
                                 <div class="font-semibold text-sky-800">Esferas</div>
-                                <div class="text-sm font-medium text-sky-700">
+                                <div class="text-sm font-medium text-sky-800">
                                     {{ lensSelectionSummary?.sphereStart }} a {{ lensSelectionSummary?.sphereEnd }}
                                 </div>
                             </div>
@@ -518,7 +762,7 @@ const editProduct = () => {
                         <div class="flex flex-col gap-3">
                             <div class="flex items-center justify-between gap-4">
                                 <div class="font-semibold text-sky-800">Cilindros</div>
-                                <div class="text-sm font-medium text-sky-700">
+                                <div class="text-sm font-medium text-sky-800">
                                     {{ lensSelectionSummary?.cylinderStart }} a {{ lensSelectionSummary?.cylinderEnd }}
                                 </div>
                             </div>
@@ -535,18 +779,14 @@ const editProduct = () => {
                             </div>
                         </div>
 
-                        <div class="rounded-xl border border-sky-200 bg-white/80 px-4 py-3 text-sm text-slate-700">
-                            Se agregarán <span class="font-semibold text-sky-800">{{ selectedLensItems.length }}</span> variantes al carrito con la configuración seleccionada.
-                        </div>
-
-                        <div class="rounded-xl border border-sky-300 bg-white px-4 py-4">
-                            <div class="flex items-center justify-between gap-4 text-sm text-slate-700">
-                                <span>Variantes seleccionadas</span>
-                                <span class="font-semibold text-sky-800">{{ selectedLensItems.length }}</span>
+                        <div class="rounded-xl border-2 border-slate-500 bg-white px-5 py-4">
+                            <div class="flex items-center justify-between gap-4 text-lg text-slate-600">
+                                <span>Total de combinaciones:</span>
+                                <span class="font-semibold text-slate-600">{{ selectedLensItems.length }}</span>
                             </div>
-                            <div class="mt-2 flex items-center justify-between gap-4 text-lg font-bold text-sky-800">
-                                <span>Total</span>
-                                <span>${{ formatPrice(selectedLensTotalPrice) }}</span>
+                            <div class="mt-2 flex items-center justify-between gap-4 text-xl text-slate-600">
+                                <span>Precio total estimado:</span>
+                                <span class="font-bold text-3xl text-sky-800">${{ formatPrice(selectedLensTotalPrice) }}</span>
                             </div>
                         </div>
                     </div>

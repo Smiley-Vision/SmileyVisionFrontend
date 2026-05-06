@@ -1,4 +1,4 @@
-import { getProductItemsService, getProductsService } from '@/contexts/catalog/services/catalogService'
+import { getProductConfigurationsService, getProductItemsService, getProductsService } from '@/contexts/catalog/services/catalogService'
 import { addProductToCartService, getCartItemsService, removeProductFromCartService } from '@/contexts/catalog/services/cartService'
 import { useAuthStore } from '@/contexts/identity/stores/auth'
 import { normalizeProductListPayload } from '@/shared/utils/productApiAdapters'
@@ -65,14 +65,15 @@ export const useCartStore = defineStore('cart', () => {
             const savedItems = Array.isArray(savedState?.items) ? savedState.items : []
             const savedCartId = toNumber(savedState?.cartId, null)
 
-            items.value = savedItems
+        items.value = savedItems
                 .map((item) => ({
                     ...item,
                     price: toNumber(item.price),
                     quantity: Math.max(1, toNumber(item.quantity, 1)),
                     product_item_id: toNumber(item.product_item_id, null),
                     product_id: toNumber(item.product_id, null),
-                    cart_id: toNumber(item.cart_id, null)
+                    cart_id: toNumber(item.cart_id, null),
+                    variation_options: Array.isArray(item?.variation_options) ? item.variation_options : []
                 }))
                 .filter((item) => item.product_item_id)
 
@@ -85,13 +86,15 @@ export const useCartStore = defineStore('cart', () => {
     async function enrichCartItems(rawCartItems) {
         if (!rawCartItems.length) return []
 
-        const [productItemsPayload, productsPayload] = await Promise.all([
+        const [productItemsPayload, productsPayload, productConfigurationsPayload] = await Promise.all([
             getProductItemsService(),
-            getProductsService()
+            getProductsService(),
+            getProductConfigurationsService().catch(() => [])
         ])
 
         const productItems = normalizeProductItemsPayload(productItemsPayload)
         const products = normalizeProductListPayload(productsPayload)
+        const productConfigurations = Array.isArray(productConfigurationsPayload) ? productConfigurationsPayload : []
 
         const productItemsById = productItems.reduce((map, productItem) => {
             if (productItem?.id != null) {
@@ -109,6 +112,43 @@ export const useCartStore = defineStore('cart', () => {
             return map
         }, {})
 
+        const variationOptionsByItemId = productConfigurations.reduce((map, configuration) => {
+            const itemId = toNumber(configuration?.product_item_id, null)
+            const variationOption = configuration?.variation_option
+            const variation = variationOption?.variation
+
+            if (!itemId || !variationOption) return map
+
+            if (!Array.isArray(map[itemId])) {
+                map[itemId] = []
+            }
+
+            map[itemId].push({
+                variation_id: toNumber(variation?.id ?? variationOption?.variation_id, null),
+                variation_name: String(variation?.name ?? ''),
+                option_id: toNumber(variationOption?.id ?? configuration?.variation_option_id, null),
+                option_value: String(variationOption?.value ?? '')
+            })
+
+            return map
+        }, {})
+
+        Object.values(variationOptionsByItemId).forEach((variationOptions) => {
+            variationOptions.sort((left, right) => {
+                const order = {
+                    color: 1,
+                    material: 2
+                }
+                const normalize = (value) => String(value ?? '')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase()
+                    .trim()
+
+                return (order[normalize(left.variation_name)] ?? 99) - (order[normalize(right.variation_name)] ?? 99)
+            })
+        })
+
         return rawCartItems
             .map((row) => {
                 const normalizedItemId = toNumber(row?.product_item_id, null)
@@ -118,6 +158,8 @@ export const useCartStore = defineStore('cart', () => {
                 const productItem = productItemsById[normalizedItemId]
                 const productId = toNumber(productItem?.product_id, null)
                 const product = productsById[productId]
+                const productItemImage = String(productItem?.product_image ?? '').trim()
+                const productImage = String(product?.image_url ?? product?.product_image ?? '').trim()
 
                 return {
                     cart_id: normalizedCartId,
@@ -128,8 +170,9 @@ export const useCartStore = defineStore('cart', () => {
                     sku: String(productItem?.SKU ?? ''),
                     name: String(product?.name ?? `Producto #${normalizedItemId}`),
                     description: String(product?.description ?? ''),
-                    image_url: String(product?.image_url ?? product?.product_image ?? productItem?.product_image ?? ''),
+                    image_url: productItemImage || productImage,
                     price: toNumber(productItem?.price ?? product?.price, 0),
+                    variation_options: variationOptionsByItemId[normalizedItemId] ?? [],
                     quantity
                 }
             })
@@ -198,6 +241,7 @@ export const useCartStore = defineStore('cart', () => {
             description: String(product?.description ?? ''),
             image_url: String(product?.image_url ?? product?.product_image ?? ''),
             price: toNumber(product?.price, 0),
+            variation_options: Array.isArray(product?.variation_options) ? product.variation_options : [],
             quantity: 1
         }
     }

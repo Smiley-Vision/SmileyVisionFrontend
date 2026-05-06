@@ -14,6 +14,7 @@ const toast = useToast()
 const auth = useAuthStore()
 const cart = useCartStore()
 const MICA_CATEGORY_ID = 1
+const ARMAZON_CATEGORY_ID = 2
 
 const isLoading = ref(true)
 const addresses = ref([])
@@ -126,6 +127,16 @@ function getLensDetails(item) {
     if (!isLensItem(item)) return null
 
     return parseLensSku(item?.sku ?? item?.code)
+}
+
+function getVariationDetails(item) {
+    if (Number(item?.category_id) !== ARMAZON_CATEGORY_ID) return []
+    if (!Array.isArray(item?.variation_options)) return []
+
+    return item.variation_options.filter((variationOption) => (
+        variationOption?.variation_name &&
+        variationOption?.option_value
+    ))
 }
 
 function getDisplayCode(item) {
@@ -250,7 +261,7 @@ onMounted(async () => {
             <section class="bg-white border border-slate-200 rounded-2xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-5">
                     <h2 class="text-2xl font-semibold text-sky-800">Productos</h2>
-                    <span class="text-slate-500 font-medium">Total: {{ cart.itemCount }} unidades</span>
+                    <span class="text-slate-600 font-medium">Total: {{ cart.itemCount }} unidades</span>
                 </div>
 
                 <div class="flex flex-col divide-y divide-slate-200">
@@ -263,7 +274,7 @@ onMounted(async () => {
 
                         <div class="flex flex-col gap-2">
                             <div class="text-xl font-semibold text-sky-800">{{ item.name }}</div>
-                            <div class="text-slate-500 text-sm leading-relaxed line-clamp-2">
+                            <div class="text-slate-600 text-sm leading-relaxed line-clamp-2">
                                 {{ item.description || 'Sin descripción disponible.' }}
                             </div>
 
@@ -281,6 +292,19 @@ onMounted(async () => {
                                 </span>
                             </div>
 
+                            <div
+                                v-if="getVariationDetails(item).length > 0"
+                                class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600"
+                            >
+                                <span
+                                    v-for="variationOption in getVariationDetails(item)"
+                                    :key="`${item.product_item_id}-${variationOption.variation_id}-${variationOption.option_id}`"
+                                >
+                                    <span class="font-semibold text-sky-800">{{ variationOption.variation_name }}:</span>
+                                    {{ variationOption.option_value }}
+                                </span>
+                            </div>
+
                             <div class="flex flex-wrap items-center gap-3 mt-1">
                                 <span
                                     :class="[
@@ -290,7 +314,7 @@ onMounted(async () => {
                                 >
                                     {{ stockStatus(item).label }}
                                 </span>
-                                <span class="text-sm text-slate-500">Código: {{ getDisplayCode(item) }}</span>
+                                <span class="text-sm text-slate-600">Código: {{ getDisplayCode(item) }}</span>
                             </div>
 
                             <div class="flex items-center gap-2 mt-2">
@@ -298,16 +322,16 @@ onMounted(async () => {
                                     icon="pi pi-minus"
                                     text
                                     rounded
-                                    class="!w-8 !h-8 !border !border-sky-700 !text-sky-700"
+                                    class="!w-8 !h-8 !border !border-sky-800 !text-sky-800"
                                     :disabled="cart.isSyncing"
                                     @click="decreaseQuantity(item)"
                                 />
-                                <span class="font-semibold text-slate-700 min-w-8 text-center">{{ item.quantity }}</span>
+                                <span class="font-semibold text-slate-600 min-w-8 text-center">{{ item.quantity }}</span>
                                 <Button
                                     icon="pi pi-plus"
                                     text
                                     rounded
-                                    class="!w-8 !h-8 !border !border-sky-700 !text-sky-700"
+                                    class="!w-8 !h-8 !border !border-sky-800 !text-sky-800"
                                     :disabled="cart.isSyncing"
                                     @click="increaseQuantity(item)"
                                 />
@@ -315,7 +339,7 @@ onMounted(async () => {
                         </div>
 
                         <div class="flex flex-col items-end justify-between gap-4">
-                            <div class="font-bold text-2xl text-sky-700 whitespace-nowrap">
+                            <div class="font-bold text-3xl text-sky-800 whitespace-nowrap">
                                 ${{ formatPrice(Number(item.price) * Number(item.quantity)) }} MXN
                             </div>
                             <Button
@@ -340,12 +364,12 @@ onMounted(async () => {
                             label="Editar"
                             icon="pi pi-pen-to-square"
                             text
-                            class="!text-sky-700"
+                            class="!text-sky-800"
                             @click="goToProfile"
                         />
                     </div>
-                    <div class="text-slate-700 font-semibold">{{ addressLine }}</div>
-                    <div class="text-slate-500 mb-4">{{ addressLocation }}</div>
+                    <div class="text-slate-600 font-semibold">{{ addressLine }}</div>
+                    <div class="text-slate-600 mb-4">{{ addressLocation }}</div>
 
                     <iframe
                         :src="addressMapUrl"
@@ -359,20 +383,20 @@ onMounted(async () => {
                 <section class="bg-white border border-slate-200 rounded-2xl shadow-lg p-6">
                     <h3 class="text-2xl font-semibold text-sky-800 mb-4">Orden</h3>
 
-                    <div class="flex justify-between text-slate-700 py-2">
+                    <div class="flex justify-between text-slate-600 py-2">
                         <span>Productos</span>
-                        <span class="font-semibold">${{ formatPrice(subtotal) }} MXN</span>
+                        <span class="font-bold text-xl text-sky-800">${{ formatPrice(subtotal) }} MXN</span>
                     </div>
-                    <div class="flex justify-between text-slate-700 py-2">
+                    <div class="flex justify-between text-slate-600 py-2">
                         <span>Envío</span>
                         <span class="font-semibold">Gratis</span>
                     </div>
 
                     <div class="border-t border-slate-300 my-3"></div>
 
-                    <div class="flex justify-between items-center text-slate-800 py-2">
+                    <div class="flex justify-between items-center text-slate-600 py-2">
                         <span class="text-2xl font-bold">TOTAL</span>
-                        <span class="text-3xl font-bold">${{ formatPrice(total) }} MXN</span>
+                        <span class="text-4xl font-bold text-sky-800">${{ formatPrice(total) }} MXN</span>
                     </div>
 
                     <Button
