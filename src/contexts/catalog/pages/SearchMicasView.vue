@@ -121,7 +121,7 @@ onMounted(async () => {
                 <RouterLink :to="{ name: 'product', params: { code: product.id } }">
                     <img
                         :src="`${backendUrl}/storage/${product.image_url}`"
-                        class="lg:size-60 size-40 border-solid border-2 border-sky-600 rounded-xl shadow-lg
+                        class="lg:size-60 size-40 object-contain object-center bg-white border-solid border-2 border-sky-600 rounded-xl shadow-lg
                                 hover:shadow-2xl transform transition duration-200 hover:scale-105"
                     >
                 </RouterLink>

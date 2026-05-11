@@ -160,7 +160,7 @@ onMounted(async () => {
             <div
                 class="w-full h-full flex items-center justify-center bg-slate-100 border-2 border-solid border-sky-400 rounded-2xl transition hover:bg-sky-50">
                 <img v-if="imagePreview" :src="imagePreview" alt="Vista previa"
-                    class="object-cover w-full h-full rounded-2xl" />
+                    class="object-contain object-center w-full h-full rounded-2xl bg-white" />
             </div>
         </div>
 

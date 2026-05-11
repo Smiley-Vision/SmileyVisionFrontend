@@ -26,6 +26,7 @@ const productCode = route.params.code
 const isLoading = ref(true)
 const isAddingToCart = ref(false)
 const product = ref({})
+const productItemsForProduct = ref([])
 const lensProductItems = ref([])
 const frameProductItems = ref([])
 const productConfigurations = ref([])
@@ -108,6 +109,40 @@ const shouldShowProductCode = computed(() => {
 
 const lensVariants = computed(() => buildLensVariants(lensProductItems.value))
 
+const parseStockValue = (value) => {
+    const parsed = Number(value)
+
+    return Number.isFinite(parsed) ? parsed : null
+}
+
+const getProductItemStock = (item) => {
+    if (!item) return 0
+
+    const directStock = [
+        item.stock,
+        item.total_stock,
+        item.available_stock,
+        item.availability,
+        item.existence
+    ].map(parseStockValue).find((value) => value !== null)
+
+    if (directStock !== undefined) return Math.max(0, directStock)
+
+    const inventoryRows = Array.isArray(item.inventory)
+        ? item.inventory
+        : Array.isArray(item.inventories)
+            ? item.inventories
+            : Array.isArray(item.inventory_items)
+                ? item.inventory_items
+                : []
+
+    return inventoryRows.reduce((total, inventoryRow) => {
+        const stock = parseStockValue(inventoryRow?.stock)
+
+        return total + Math.max(0, stock ?? 0)
+    }, 0)
+}
+
 const sphereSliderBounds = computed(() => {
     const values = lensVariants.value.sphereValues
 
@@ -175,6 +210,14 @@ const selectedLensItems = computed(() => {
 
             return left.cylinder - right.cylinder
         })
+})
+
+const selectedStandardItem = computed(() => {
+    if (isLensProduct.value || isFrameProduct.value) return null
+
+    return productItemsForProduct.value.find((item) => Number(item?.id) === Number(product.value?.product_item_id))
+        ?? productItemsForProduct.value[0]
+        ?? null
 })
 
 const selectedLensUnitPrice = computed(() => {
@@ -338,6 +381,49 @@ const selectedFrameVariationOptions = computed(() => {
         .filter(Boolean)
 })
 
+const purchaseAvailability = computed(() => {
+    if (isLensProduct.value) {
+        const selectedItems = selectedLensItems.value
+        const availableItems = selectedItems.filter((item) => getProductItemStock(item) > 0)
+        const stock = availableItems.reduce((total, item) => total + getProductItemStock(item), 0)
+
+        if (selectedItems.length === 0) {
+            return {
+                isAvailable: false,
+                stock: 0,
+                label: 'No disponible',
+                detail: 'No hay combinaciones seleccionadas con inventario.'
+            }
+        }
+
+        if (availableItems.length !== selectedItems.length) {
+            return {
+                isAvailable: false,
+                stock,
+                label: 'No disponible',
+                detail: `${availableItems.length} de ${selectedItems.length} combinaciones tienen inventario.`
+            }
+        }
+
+        return {
+            isAvailable: true,
+            stock,
+            label: 'Disponible',
+            detail: `${selectedItems.length} combinaciones disponibles.`
+        }
+    }
+
+    const selectedItem = isFrameProduct.value ? selectedFrameItem.value : selectedStandardItem.value
+    const stock = getProductItemStock(selectedItem)
+
+    return {
+        isAvailable: stock > 0,
+        stock,
+        label: stock > 0 ? 'Disponible' : 'No disponible',
+        detail: stock > 0 ? `${stock} unidades en inventario.` : 'Sin unidades disponibles en inventario.'
+    }
+})
+
 const lensSelectionSummary = computed(() => {
     if (!isLensProduct.value) return null
 
@@ -351,14 +437,14 @@ const lensSelectionSummary = computed(() => {
 
 const isAddToCartDisabled = computed(() => {
     if (isLensProduct.value) {
-        return selectedLensItems.value.length === 0
+        return selectedLensItems.value.length === 0 || !purchaseAvailability.value.isAvailable
     }
 
     if (isFrameProduct.value) {
-        return !selectedFrameItem.value?.id
+        return !selectedFrameItem.value?.id || !purchaseAvailability.value.isAvailable
     }
 
-    return !product.value?.product_item_id
+    return !product.value?.product_item_id || !purchaseAvailability.value.isAvailable
 })
 
 function snapRangeToBounds(range, bounds) {
@@ -436,7 +522,8 @@ watch(selectedLensItem, (item) => {
         product_item_id: item?.id ?? null,
         code: item?.SKU ?? product.value.code,
         price: item?.price ?? product.value.price,
-        image_url: item?.product_image ?? product.value.image_url
+        image_url: item?.product_image ?? product.value.image_url,
+        stock: getProductItemStock(item)
     }
 }, { immediate: true })
 
@@ -457,6 +544,7 @@ watch(selectedFrameItem, (item) => {
     const nextCode = item?.SKU ?? product.value.code
     const nextPrice = item?.price ?? product.value.price
     const nextImageUrl = item?.product_image ?? product.value.image_url
+    const nextStock = getProductItemStock(item)
     const nextVariationOptions = selectedFrameVariationOptions.value
 
     if (
@@ -464,6 +552,7 @@ watch(selectedFrameItem, (item) => {
         product.value?.code === nextCode &&
         product.value?.price === nextPrice &&
         product.value?.image_url === nextImageUrl &&
+        product.value?.stock === nextStock &&
         JSON.stringify(product.value?.variation_options ?? []) === JSON.stringify(nextVariationOptions)
     ) {
         return
@@ -476,6 +565,7 @@ watch(selectedFrameItem, (item) => {
         SKU: nextCode,
         price: nextPrice,
         image_url: nextImageUrl,
+        stock: nextStock,
         variation_options: nextVariationOptions
     }
 }, { immediate: true })
@@ -508,12 +598,23 @@ onMounted(async () => {
         ])
         const productItems = Array.isArray(productItemsResponse.data) ? productItemsResponse.data : []
         const productItemsByProductId = buildProductItemsByProductId(productItemsResponse.data)
-        product.value = enrichProduct(productResponse.data, productItemsByProductId)
+        const enrichedProduct = enrichProduct(productResponse.data, productItemsByProductId)
         productConfigurations.value = Array.isArray(productConfigurationsResponse.data) ? productConfigurationsResponse.data : []
-        lensProductItems.value = productItems
-            .filter((item) => Number(item?.product_id) === Number(product.value?.id))
-        frameProductItems.value = productItems
-            .filter((item) => Number(item?.product_id) === Number(product.value?.id))
+        productItemsForProduct.value = productItems
+            .filter((item) => Number(item?.product_id) === Number(enrichedProduct?.id))
+        const primaryProductItem = productItemsForProduct.value[0] ?? null
+
+        product.value = {
+            ...enrichedProduct,
+            product_item_id: primaryProductItem?.id ?? enrichedProduct.product_item_id,
+            code: primaryProductItem?.SKU ?? enrichedProduct.code,
+            SKU: primaryProductItem?.SKU ?? enrichedProduct.SKU,
+            price: primaryProductItem?.price ?? enrichedProduct.price,
+            image_url: primaryProductItem?.product_image ?? enrichedProduct.image_url,
+            stock: getProductItemStock(primaryProductItem)
+        }
+        lensProductItems.value = productItemsForProduct.value
+        frameProductItems.value = productItemsForProduct.value
 
         if (isLensProduct.value) {
             initializeLensSelectors()
@@ -565,6 +666,16 @@ const addToCart = async () => {
         return
     }
 
+    if (!purchaseAvailability.value.isAvailable) {
+        toast.add({
+            severity: 'warn',
+            summary: 'No disponible',
+            detail: 'Este producto no tiene disponibilidad suficiente para comprar.',
+            life: 4500
+        })
+        return
+    }
+
     try {
         isAddingToCart.value = true
 
@@ -575,7 +686,8 @@ const addToCart = async () => {
                 code: item.SKU ?? product.value.code,
                 SKU: item.SKU ?? product.value.code,
                 price: item.price ?? product.value.price,
-                image_url: item.product_image ?? product.value.image_url
+                image_url: item.product_image ?? product.value.image_url,
+                stock: getProductItemStock(item)
             })), 1)
 
             toast.add({
@@ -648,7 +760,7 @@ const editProduct = () => {
                 <img
                     :src="`${backendUrl}/storage/${product.image_url}`"
                     alt="Imagen del producto"
-                    class="lg:size-[28rem] md:size-96 size-72 object-contain border-solid border-2 border-sky-600 rounded-lg shadow-xl"
+                    class="size-72 max-w-full object-contain object-center bg-white md:size-96 lg:size-[28rem] border-solid border-2 border-sky-600 rounded-lg shadow-xl"
                 >
     
                 <!-- Product details -->
@@ -721,9 +833,6 @@ const editProduct = () => {
                             Precio: <span class="font-bold text-3xl text-sky-800">${{ formatPrice(selectedFramePrice) }} MXN</span>
                         </div>
 
-                        <div class="font-semibold text-slate-600">
-                            Stock: disponible
-                        </div>
                     </div>
 
                     <div
@@ -788,6 +897,23 @@ const editProduct = () => {
                                 <span>Precio total estimado:</span>
                                 <span class="font-bold text-3xl text-sky-800">${{ formatPrice(selectedLensTotalPrice) }}</span>
                             </div>
+                        </div>
+                    </div>
+
+                    <div
+                        :class="[
+                            purchaseAvailability.isAvailable
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                : 'border-red-200 bg-red-50 text-red-700',
+                            'mt-2 rounded-xl border px-5 py-4 font-semibold'
+                        ]"
+                    >
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span>Disponibilidad</span>
+                            <span>{{ purchaseAvailability.label }}</span>
+                        </div>
+                        <div class="mt-1 text-sm font-medium">
+                            {{ purchaseAvailability.detail }}
                         </div>
                     </div>
 

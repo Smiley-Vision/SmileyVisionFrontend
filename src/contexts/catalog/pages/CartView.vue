@@ -72,16 +72,18 @@ function getImageSrc(item) {
 }
 
 function stockStatus(item) {
-    if (Number(item?.price) <= 0) {
+    const stock = Number(item?.stock ?? 0)
+
+    if (stock <= 0) {
         return {
-            label: 'Fuera de stock',
+            label: 'No disponible',
             className: 'bg-red-600 text-white'
         }
     }
 
     return {
-        label: 'Stock no visible',
-        className: 'bg-slate-200 text-slate-600'
+        label: `Disponible: ${stock}`,
+        className: 'bg-emerald-100 text-emerald-700'
     }
 }
 
@@ -269,7 +271,7 @@ onMounted(async () => {
                         <img
                             :src="getImageSrc(item)"
                             alt="Producto del carrito"
-                            class="w-[7.5rem] h-[7.5rem] object-cover rounded-xl border border-slate-200 bg-slate-50"
+                            class="w-[7.5rem] h-[7.5rem] object-contain object-center rounded-xl border border-slate-200 bg-white"
                         />
 
                         <div class="flex flex-col gap-2">
@@ -323,7 +325,7 @@ onMounted(async () => {
                                     text
                                     rounded
                                     class="!w-8 !h-8 !border !border-sky-800 !text-sky-800"
-                                    :disabled="cart.isSyncing"
+                                    :disabled="cart.isSyncing || Number(item.stock ?? 0) <= 0"
                                     @click="decreaseQuantity(item)"
                                 />
                                 <span class="font-semibold text-slate-600 min-w-8 text-center">{{ item.quantity }}</span>
@@ -332,7 +334,7 @@ onMounted(async () => {
                                     text
                                     rounded
                                     class="!w-8 !h-8 !border !border-sky-800 !text-sky-800"
-                                    :disabled="cart.isSyncing"
+                                    :disabled="cart.isSyncing || Number(item.stock ?? 0) <= Number(item.quantity)"
                                     @click="increaseQuantity(item)"
                                 />
                             </div>

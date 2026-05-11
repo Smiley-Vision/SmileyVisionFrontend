@@ -5,8 +5,11 @@ import {
     createFrameItemService,
     createProductService,
     getAdminProductTypesService,
-    getSuppliersService,
-    getVariationsService
+    getProductItemsService,
+    getSuppliersByProductCategoryService,
+    getVariationsService,
+    updateProductItemService,
+    updateProductItemImageService
 } from '@/contexts/admin-products/services/adminProductsService'
 import { normalizeApiError } from '@/shared/utils/normalizeApiError'
 import { getCategorySlug, normalizeCategoriesPayload } from '@/shared/utils/productApiAdapters'
@@ -23,10 +26,17 @@ const variations = ref([])
 const imagePreview = ref(null)
 const imageInput = ref(null)
 const isLoading = ref(true)
+const isSuppliersLoading = ref(false)
 const isSubmitting = ref(false)
 const selectedTypeSlug = ref('')
 const formErrors = ref([])
 const successResult = ref(null)
+const isFrameSelectionLocked = ref(false)
+const createdLensItems = ref([])
+const lensImageAssignments = reactive({})
+const lensPriceAssignments = reactive({})
+const frameVariantImages = reactive({})
+let suppliersRequestId = 0
 
 const productInitialState = {
     image: null,
@@ -93,6 +103,10 @@ const selectedTypeLabel = computed(() => {
     return categoryCards.value.find((category) => category.slug === selectedTypeSlug.value)?.label ?? ''
 })
 
+const selectedCategorySuppliers = computed(() => {
+    return suppliers.value
+})
+
 const frameVariations = computed(() => {
     const frameCategoryId = productTypes.value.find((type) => getCategorySlug(type?.name) === 'armazones')?.id
 
@@ -131,6 +145,36 @@ const frameCombinations = computed(() => {
         combinations.flatMap((combination) => group.map((option) => [...combination, option]))
     ), [[]])
 })
+
+const frameVariantPreview = computed(() => {
+    return frameCombinations.value.map((combination, index) => ({
+        index,
+        sku: buildGeneratedSku(itemForm.skuPrefix || 'SKU', index),
+        options: combination.map((option) => option.value).join(' / '),
+        image: frameVariantImages[index] ?? null
+    }))
+})
+
+const lensVariantPreview = computed(() => {
+    const sphereMinCents = parseToCents(lensForm.sphereMin)
+    const sphereMaxCents = parseToCents(lensForm.sphereMax)
+    const cylinderMinCents = parseToCents(lensForm.cylinderMin)
+    const cylinderMaxCents = parseToCents(lensForm.cylinderMax)
+
+    if ([sphereMinCents, sphereMaxCents, cylinderMinCents, cylinderMaxCents].some((value) => value === null)) {
+        return []
+    }
+
+    const spheres = buildLensOptions(sphereMinCents, sphereMaxCents)
+    const cylinders = buildLensOptions(cylinderMinCents, cylinderMaxCents)
+
+    return spheres.flatMap((sphere) => cylinders.map((cylinder) => ({
+        sphere,
+        cylinder
+    })))
+})
+
+const visibleLensVariantPreview = computed(() => lensVariantPreview.value.slice(0, 16))
 
 const lensValidation = computed(() => {
     const errors = []
@@ -191,11 +235,52 @@ function retrieveImage(event) {
     imagePreview.value = URL.createObjectURL(file)
 }
 
+function normalizeSuppliersPayload(payload) {
+    if (Array.isArray(payload)) return payload
+    if (Array.isArray(payload?.suppliers)) return payload.suppliers
+    if (Array.isArray(payload?.data)) return payload.data
+
+    return []
+}
+
+async function loadSuppliersByCategory(categoryId) {
+    const requestId = ++suppliersRequestId
+
+    suppliers.value = []
+    productForm.supplier_id = null
+
+    if (!categoryId) return
+
+    isSuppliersLoading.value = true
+
+    try {
+        const response = await getSuppliersByProductCategoryService(categoryId)
+
+        if (requestId !== suppliersRequestId) return
+
+        suppliers.value = normalizeSuppliersPayload(response)
+        productForm.supplier_id = suppliers.value[0]?.id ?? null
+    } catch (error) {
+        if (requestId !== suppliersRequestId) return
+
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron obtener los proveedores de la categoria seleccionada',
+            life: 5000
+        })
+    } finally {
+        if (requestId === suppliersRequestId) isSuppliersLoading.value = false
+    }
+}
+
 function selectProductType(slug) {
     selectedTypeSlug.value = slug
     productForm.category_id = selectedCategory.value?.id ?? null
     formErrors.value = []
     successResult.value = null
+    isFrameSelectionLocked.value = false
+    loadSuppliersByCategory(productForm.category_id)
 }
 
 function resetImageInput() {
@@ -204,7 +289,7 @@ function resetImageInput() {
 
 function resetForm() {
     Object.assign(productForm, productInitialState)
-    productForm.supplier_id = suppliers.value[0]?.id ?? null
+    suppliers.value = []
     itemForm.sku = ''
     itemForm.skuPrefix = ''
     itemForm.price = '0.00'
@@ -215,8 +300,19 @@ function resetForm() {
     Object.keys(selectedFrameOptionIds).forEach((key) => {
         selectedFrameOptionIds[key] = []
     })
+    Object.keys(frameVariantImages).forEach((key) => {
+        delete frameVariantImages[key]
+    })
+    Object.keys(lensImageAssignments).forEach((key) => {
+        delete lensImageAssignments[key]
+    })
+    Object.keys(lensPriceAssignments).forEach((key) => {
+        delete lensPriceAssignments[key]
+    })
     imagePreview.value = null
     selectedTypeSlug.value = ''
+    isFrameSelectionLocked.value = false
+    createdLensItems.value = []
     resetImageInput()
 }
 
@@ -231,6 +327,9 @@ function validateBaseProduct() {
     if (!productForm.image) addError('Selecciona una imagen del producto.')
     if (!productForm.category_id) addError('Selecciona una categoria de producto.')
     if (!productForm.supplier_id) addError('Selecciona un proveedor.')
+    if (selectedTypeSlug.value && !isSuppliersLoading.value && selectedCategorySuppliers.value.length === 0) {
+        addError('La categoria seleccionada no tiene proveedores asignados.')
+    }
     if (!String(productForm.name).trim()) addError('Captura el nombre del producto.')
     if (!String(productForm.description).trim()) addError('Captura la descripcion del producto.')
 
@@ -251,12 +350,19 @@ function validateBaseProduct() {
             }
         })
         if (frameCombinations.value.length === 0) addError('Selecciona al menos una opción de variación.')
+        if (!isFrameSelectionLocked.value) addError('Prepara las variantes antes de crear el armazón.')
+        frameVariantPreview.value.forEach((variant) => {
+            if (!variant.image?.file) {
+                addError(`Sube una imagen para la variante ${variant.sku}.`)
+            }
+        })
         if (buildGeneratedSku(itemForm.skuPrefix, Math.max(frameCombinations.value.length - 1, 0)).length > 20) {
             addError('El prefijo SKU es muy largo para la cantidad de combinaciones.')
         }
     }
 
     if (selectedTypeSlug.value === 'micas') {
+        if (!isValidPrice(itemForm.price)) addError('Captura un precio valido.')
         lensValidation.value.errors.forEach(addError)
     }
 
@@ -282,11 +388,11 @@ function buildProductFormData() {
     return formData
 }
 
-function buildItemFormData(productId, sku, variationOptionIds = []) {
+function buildItemFormData(productId, sku, variationOptionIds = [], imageFile = productForm.image) {
     const formData = new FormData()
 
-    formData.append('image', productForm.image)
-    formData.append('file_name', productForm.file_name)
+    formData.append('image', imageFile)
+    formData.append('file_name', imageFile?.name ?? productForm.file_name)
     formData.append('product_id', productId)
     formData.append('SKU', sku)
     formData.append('price', Number(itemForm.price).toFixed(2))
@@ -304,6 +410,165 @@ function getCreatedProduct(response) {
 
 function buildGeneratedSku(prefix, index) {
     return `${String(prefix).trim().toUpperCase()}-${index + 1}`
+}
+
+function prepareFrameVariants() {
+    formErrors.value = []
+
+    if (!String(itemForm.skuPrefix).trim()) addError('Captura el prefijo SKU del armazón.')
+    if (!isValidPrice(itemForm.price)) addError('Captura un precio valido.')
+    frameVariations.value.forEach((variation) => {
+        const selectedIds = selectedFrameOptionIds[variation.id] ?? []
+
+        if (selectedIds.length === 0) {
+            addError(`Selecciona al menos una opción de ${variation.name}.`)
+        }
+    })
+    if (frameCombinations.value.length === 0) addError('Selecciona al menos una opción de variación.')
+
+    if (formErrors.value.length > 0) return
+
+    isFrameSelectionLocked.value = true
+}
+
+function unlockFrameVariants() {
+    isFrameSelectionLocked.value = false
+    Object.keys(frameVariantImages).forEach((key) => {
+        delete frameVariantImages[key]
+    })
+}
+
+function assignFrameVariantImage(event, index) {
+    const file = event.target.files?.[0]
+
+    if (!file) return
+
+    if (frameVariantImages[index]?.previewUrl) {
+        URL.revokeObjectURL(frameVariantImages[index].previewUrl)
+    }
+
+    frameVariantImages[index] = {
+        file,
+        previewUrl: URL.createObjectURL(file)
+    }
+}
+
+async function loadCreatedLensItems(productId) {
+    const response = await getProductItemsService()
+    const items = Array.isArray(response) ? response : Array.isArray(response?.product_items) ? response.product_items : []
+
+    createdLensItems.value = items.filter((item) => Number(item?.product_id) === Number(productId))
+    createdLensItems.value.forEach((item) => {
+        lensPriceAssignments[item.id] = {
+            price: Number(item.price ?? itemForm.price ?? 0).toFixed(2),
+            isSaving: false,
+            isSaved: false
+        }
+    })
+}
+
+function assignLensImage(event, productItemId) {
+    const file = event.target.files?.[0]
+
+    if (!file) return
+
+    if (lensImageAssignments[productItemId]?.previewUrl) {
+        URL.revokeObjectURL(lensImageAssignments[productItemId].previewUrl)
+    }
+
+    lensImageAssignments[productItemId] = {
+        file,
+        previewUrl: URL.createObjectURL(file),
+        isUploading: false,
+        isUploaded: false
+    }
+}
+
+async function uploadLensImage(productItemId) {
+    const assignment = lensImageAssignments[productItemId]
+
+    if (!assignment?.file) return
+
+    assignment.isUploading = true
+
+    try {
+        const formData = new FormData()
+        formData.append('image', assignment.file)
+        formData.append('file_name', assignment.file.name)
+
+        const response = await updateProductItemImageService(productItemId, formData)
+        const updatedItem = response?.product_item
+        const itemIndex = createdLensItems.value.findIndex((item) => Number(item.id) === Number(productItemId))
+
+        if (itemIndex >= 0 && updatedItem) {
+            createdLensItems.value[itemIndex] = updatedItem
+        }
+
+        assignment.isUploaded = true
+        toast.add({
+            severity: 'success',
+            summary: 'Imagen actualizada',
+            detail: 'La imagen de la mica se actualizó correctamente.',
+            life: 3000
+        })
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo actualizar la imagen de la mica.',
+            life: 4000
+        })
+    } finally {
+        assignment.isUploading = false
+    }
+}
+
+async function updateLensPrice(productItemId) {
+    const assignment = lensPriceAssignments[productItemId]
+    const price = Number(assignment?.price)
+
+    if (!Number.isFinite(price) || price < 0) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Precio inválido',
+            detail: 'Captura un precio válido para la mica.',
+            life: 3500
+        })
+        return
+    }
+
+    assignment.isSaving = true
+
+    try {
+        await updateProductItemService(productItemId, {
+            price: price.toFixed(2)
+        })
+
+        const itemIndex = createdLensItems.value.findIndex((item) => Number(item.id) === Number(productItemId))
+        if (itemIndex >= 0) {
+            createdLensItems.value[itemIndex] = {
+                ...createdLensItems.value[itemIndex],
+                price: price.toFixed(2)
+            }
+        }
+
+        assignment.isSaved = true
+        toast.add({
+            severity: 'success',
+            summary: 'Precio actualizado',
+            detail: 'El precio de la mica se actualizó correctamente.',
+            life: 3000
+        })
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo actualizar el precio de la mica.',
+            life: 4000
+        })
+    } finally {
+        assignment.isSaving = false
+    }
 }
 
 async function submitForm() {
@@ -334,7 +599,8 @@ async function submitForm() {
                 await createFrameItemService(buildItemFormData(
                     product.id,
                     buildGeneratedSku(itemForm.skuPrefix, index),
-                    combination.map((option) => option.id)
+                    combination.map((option) => option.id),
+                    frameVariantImages[index]?.file
                 ))
             }
 
@@ -344,10 +610,12 @@ async function submitForm() {
         if (selectedTypeSlug.value === 'micas') {
             const response = await batchCreateLensItemsService({
                 product_id: Number(product.id),
+                price: Number(itemForm.price).toFixed(2),
                 ...lensValidation.value.payload
             })
 
             successResult.value = `Mica creada. Items generados: ${response.created}. Existentes: ${response.skipped}.`
+            await loadCreatedLensItems(product.id)
         }
 
         toast.add({
@@ -357,7 +625,9 @@ async function submitForm() {
             life: 7000
         })
 
-        resetForm()
+        if (selectedTypeSlug.value !== 'micas') {
+            resetForm()
+        }
     } catch (error) {
         const detail = error?.errors
             ? normalizeApiError(error)
@@ -378,16 +648,13 @@ async function submitForm() {
 
 onMounted(async () => {
     try {
-        const [productTypesResponse, suppliersResponse, variationsResponse] = await Promise.all([
+        const [productTypesResponse, variationsResponse] = await Promise.all([
             getAdminProductTypesService(),
-            getSuppliersService(),
             getVariationsService()
         ])
 
         productTypes.value = normalizeCategoriesPayload(productTypesResponse)
-        suppliers.value = Array.isArray(suppliersResponse) ? suppliersResponse : []
         variations.value = Array.isArray(variationsResponse) ? variationsResponse : []
-        productForm.supplier_id = suppliers.value[0]?.id ?? null
 
         variations.value.forEach((variation) => {
             selectedFrameOptionIds[variation.id] = []
@@ -445,7 +712,7 @@ onMounted(async () => {
                     <button type="button" class="w-48 h-48 relative cursor-pointer group" @click="$refs.imageInput.click()">
                         <input id="image" ref="imageInput" @change="retrieveImage" type="file" accept="image/*" class="hidden" />
                         <span class="w-full h-full flex items-center justify-center bg-slate-100 border-2 border-dashed border-sky-400 rounded-2xl transition hover:bg-sky-50">
-                            <img v-if="imagePreview" :src="imagePreview" alt="Vista previa" class="object-cover w-full h-full rounded-2xl" />
+                            <img v-if="imagePreview" :src="imagePreview" alt="Vista previa" class="object-contain object-center w-full h-full rounded-2xl bg-white" />
                             <span v-else class="text-sky-400 text-5xl font-bold select-none">+</span>
                         </span>
                     </button>
@@ -459,8 +726,15 @@ onMounted(async () => {
                     </div>
                     <div>
                         <label for="supplier_id" class="block text-sky-700 font-medium mb-1">Proveedor</label>
-                        <select v-model="productForm.supplier_id" id="supplier_id" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300">
-                            <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
+                        <select
+                            v-model="productForm.supplier_id"
+                            id="supplier_id"
+                            :disabled="isSuppliersLoading || selectedCategorySuppliers.length === 0"
+                            class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300 disabled:bg-slate-100 disabled:text-slate-500"
+                        >
+                            <option v-if="isSuppliersLoading" disabled :value="null">Cargando proveedores...</option>
+                            <option v-else-if="selectedCategorySuppliers.length === 0" disabled :value="null">Sin proveedores asignados</option>
+                            <option v-for="supplier in selectedCategorySuppliers" :key="supplier.id" :value="supplier.id">
                                 {{ supplier.name }}
                             </option>
                         </select>
@@ -491,11 +765,11 @@ onMounted(async () => {
                 <div class="grid md:grid-cols-2 grid-cols-1 gap-4">
                     <div>
                         <label for="frame_sku_prefix" class="block text-sky-700 font-medium mb-1">Prefijo SKU</label>
-                        <input v-model.trim="itemForm.skuPrefix" id="frame_sku_prefix" maxlength="12" type="text" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" />
+                        <input v-model.trim="itemForm.skuPrefix" id="frame_sku_prefix" maxlength="12" type="text" :disabled="isFrameSelectionLocked" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300 disabled:bg-slate-100 disabled:text-slate-500" />
                     </div>
                     <div>
                         <label for="frame_price" class="block text-sky-700 font-medium mb-1">Precio por combinación</label>
-                        <input v-model="itemForm.price" id="frame_price" type="number" min="0" step="0.01" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" />
+                        <input v-model="itemForm.price" id="frame_price" type="number" min="0" step="0.01" :disabled="isFrameSelectionLocked" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300 disabled:bg-slate-100 disabled:text-slate-500" />
                     </div>
                 </div>
 
@@ -504,20 +778,76 @@ onMounted(async () => {
                         <div class="font-bold text-sky-800 mb-3">{{ variation.name }}</div>
                         <div class="flex flex-wrap gap-3">
                             <label v-for="option in variation.variation_options" :key="option.id" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                <input v-model="selectedFrameOptionIds[variation.id]" :value="option.id" type="checkbox" class="h-4 w-4 accent-sky-600" />
+                                <input v-model="selectedFrameOptionIds[variation.id]" :value="option.id" type="checkbox" :disabled="isFrameSelectionLocked" class="h-4 w-4 accent-sky-600 disabled:opacity-50" />
                                 {{ option.value }}
                             </label>
                         </div>
                     </div>
                 </div>
 
-                <div class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm font-semibold text-sky-800">
-                    Combinaciones a generar: {{ frameCombinations.length }}
+                <div class="rounded-xl border border-sky-200 bg-sky-50 p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <div class="font-bold text-sky-800">Variantes preparadas: {{ frameCombinations.length }}</div>
+                            <div class="text-sm font-medium text-slate-600">
+                                Prepara las variantes para bloquear la selección y revisar los SKU antes de crear.
+                            </div>
+                        </div>
+                        <button
+                            v-if="!isFrameSelectionLocked"
+                            type="button"
+                            class="rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white transition hover:bg-sky-700"
+                            @click="prepareFrameVariants"
+                        >
+                            Preparar variantes
+                        </button>
+                        <button
+                            v-else
+                            type="button"
+                            class="rounded-xl bg-slate-600 px-5 py-3 font-semibold text-white transition hover:bg-slate-700"
+                            @click="unlockFrameVariants"
+                        >
+                            Editar selección
+                        </button>
+                    </div>
+
+                    <div
+                        v-if="isFrameSelectionLocked"
+                        class="mt-4 max-h-[28rem] overflow-y-auto rounded-xl border border-sky-100 bg-white"
+                    >
+                        <div
+                            v-for="variant in frameVariantPreview"
+                            :key="variant.sku"
+                            class="grid gap-3 border-b border-slate-100 px-4 py-3 text-sm last:border-b-0 md:grid-cols-[8rem_1fr_12rem]"
+                        >
+                            <div class="font-bold text-sky-800">{{ variant.sku }}</div>
+                            <div class="font-medium text-slate-600">{{ variant.options }}</div>
+                            <label class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-sky-300 bg-sky-50 px-3 py-2 text-center text-xs font-bold text-sky-700 transition hover:bg-sky-100">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    class="hidden"
+                                    @change="assignFrameVariantImage($event, variant.index)"
+                                >
+                                <img
+                                    v-if="variant.image?.previewUrl"
+                                    :src="variant.image.previewUrl"
+                                    alt="Imagen de variante"
+                                    class="h-20 w-full rounded-md bg-white object-contain object-center"
+                                >
+                                <span v-else>Subir imagen</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </section>
 
             <section v-if="selectedTypeSlug === 'micas'" class="flex flex-col gap-5">
                 <div class="grid md:grid-cols-2 grid-cols-1 gap-4">
+                    <div class="md:col-span-2">
+                        <label for="lens_price" class="block text-sky-700 font-medium mb-1">Precio por mica</label>
+                        <input v-model="itemForm.price" id="lens_price" type="number" min="0" step="0.01" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" />
+                    </div>
                     <div>
                         <label for="sphere_min" class="block text-sky-700 font-medium mb-1">Esfera desde</label>
                         <select id="sphere_min" v-model="lensForm.sphereMin" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300">
@@ -545,7 +875,89 @@ onMounted(async () => {
                 </div>
 
                 <div class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm font-semibold text-sky-800">
-                    Total de items de mica: {{ lensValidation.total }}
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <span>Total de items de mica: {{ lensValidation.total }}</span>
+                        <span>Precio por item: ${{ Number(itemForm.price || 0).toFixed(2) }}</span>
+                    </div>
+                    <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                        <div
+                            v-for="option in visibleLensVariantPreview"
+                            :key="`${option.sphere}-${option.cylinder}`"
+                            class="rounded-lg border border-sky-100 bg-white px-3 py-2 text-xs font-semibold text-slate-600"
+                        >
+                            Esfera {{ option.sphere }} | Cilindro {{ option.cylinder }}
+                        </div>
+                    </div>
+                    <div v-if="lensVariantPreview.length > visibleLensVariantPreview.length" class="mt-3 text-xs font-medium text-slate-600">
+                        Se muestran {{ visibleLensVariantPreview.length }} de {{ lensVariantPreview.length }} opciones.
+                    </div>
+                </div>
+            </section>
+
+            <section v-if="createdLensItems.length > 0" class="flex flex-col gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                <div>
+                    <h3 class="text-xl font-bold text-emerald-800">Imágenes para micas creadas</h3>
+                    <p class="text-sm font-medium text-emerald-700">
+                        La descripción se mantiene igual. Puedes subir una imagen específica por SKU ahora, o dejar la imagen base del producto.
+                    </p>
+                </div>
+                <div class="grid gap-3 md:grid-cols-2">
+                    <div
+                        v-for="item in createdLensItems"
+                        :key="item.id"
+                        class="grid gap-3 rounded-xl border border-emerald-100 bg-white p-3 sm:grid-cols-[1fr_10rem]"
+                    >
+                        <div class="min-w-0">
+                            <div class="font-bold text-sky-800">{{ item.SKU }}</div>
+                            <label :for="`lens-price-${item.id}`" class="mt-2 block text-xs font-bold text-sky-700">Precio</label>
+                            <div class="mt-1 grid grid-cols-[1fr_auto] gap-2">
+                                <input
+                                    :id="`lens-price-${item.id}`"
+                                    v-model="lensPriceAssignments[item.id].price"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    class="min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-sky-800 focus:ring-2 focus:ring-sky-300"
+                                >
+                                <button
+                                    type="button"
+                                    :disabled="lensPriceAssignments[item.id]?.isSaving"
+                                    class="rounded-lg bg-sky-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-sky-700 disabled:bg-slate-400"
+                                    @click="updateLensPrice(item.id)"
+                                >
+                                    {{ lensPriceAssignments[item.id]?.isSaving ? 'Guardando...' : lensPriceAssignments[item.id]?.isSaved ? 'Guardado' : 'Guardar' }}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="flex min-h-24 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-sky-300 bg-sky-50 px-3 py-2 text-center text-xs font-bold text-sky-700 transition hover:bg-sky-100">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    class="hidden"
+                                    @change="assignLensImage($event, item.id)"
+                                >
+                                <img
+                                    v-if="lensImageAssignments[item.id]?.previewUrl"
+                                    :src="lensImageAssignments[item.id].previewUrl"
+                                    alt="Imagen de mica"
+                                    class="h-20 w-full rounded-md bg-white object-contain object-center"
+                                >
+                                <span v-else>Subir imagen</span>
+                            </label>
+                            <button
+                                type="button"
+                                :disabled="!lensImageAssignments[item.id]?.file || lensImageAssignments[item.id]?.isUploading"
+                                :class="[
+                                    !lensImageAssignments[item.id]?.file || lensImageAssignments[item.id]?.isUploading ? 'bg-slate-400' : 'bg-sky-600 hover:bg-sky-700',
+                                    'rounded-lg px-3 py-2 text-xs font-bold text-white transition'
+                                ]"
+                                @click="uploadLensImage(item.id)"
+                            >
+                                {{ lensImageAssignments[item.id]?.isUploading ? 'Subiendo...' : lensImageAssignments[item.id]?.isUploaded ? 'Actualizar otra vez' : 'Guardar imagen' }}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
