@@ -8,7 +8,6 @@ import {
     getProductItemsService,
     getSuppliersByProductCategoryService,
     getVariationsService,
-    updateProductItemService,
     updateProductItemImageService
 } from '@/contexts/admin-products/services/adminProductsService'
 import { normalizeApiError } from '@/shared/utils/normalizeApiError'
@@ -32,11 +31,12 @@ const selectedTypeSlug = ref('')
 const formErrors = ref([])
 const successResult = ref(null)
 const isFrameSelectionLocked = ref(false)
-const createdLensItems = ref([])
-const lensImageAssignments = reactive({})
-const lensPriceAssignments = reactive({})
+const isLensPreviewOpen = ref(false)
+const createdLensSeriesResults = ref([])
 const frameVariantImages = reactive({})
+const frameVariantPrices = reactive({})
 let suppliersRequestId = 0
+let lensSeriesId = 0
 
 const productInitialState = {
     image: null,
@@ -55,12 +55,7 @@ const itemForm = reactive({
     price: '0.00'
 })
 
-const lensForm = reactive({
-    sphereMin: '-6.00',
-    sphereMax: '6.00',
-    cylinderMin: '0.00',
-    cylinderMax: '-6.00'
-})
+const lensSeriesForms = reactive([createLensSeries()])
 
 const selectedFrameOptionIds = reactive({})
 
@@ -77,6 +72,22 @@ function buildLensOptions(startCents, endCents) {
 
 const sphereOptions = buildLensOptions(-600, 600)
 const cylinderOptions = buildLensOptions(0, -600)
+
+function createLensSeries(overrides = {}) {
+    lensSeriesId += 1
+
+    return {
+        id: lensSeriesId,
+        price: '0.00',
+        sphereMin: '-6.00',
+        sphereMax: '6.00',
+        cylinderMin: '0.00',
+        cylinderMax: '-6.00',
+        image: null,
+        previewUrl: null,
+        ...overrides
+    }
+}
 
 const categoryCards = computed(() => {
     const labelBySlug = {
@@ -151,58 +162,131 @@ const frameVariantPreview = computed(() => {
         index,
         sku: buildGeneratedSku(itemForm.skuPrefix || 'SKU', index),
         options: combination.map((option) => option.value).join(' / '),
-        image: frameVariantImages[index] ?? null
+        image: frameVariantImages[index] ?? null,
+        price: frameVariantPrices[index] ?? '0.00'
     }))
 })
 
-const lensVariantPreview = computed(() => {
-    const sphereMinCents = parseToCents(lensForm.sphereMin)
-    const sphereMaxCents = parseToCents(lensForm.sphereMax)
-    const cylinderMinCents = parseToCents(lensForm.cylinderMin)
-    const cylinderMaxCents = parseToCents(lensForm.cylinderMax)
-
-    if ([sphereMinCents, sphereMaxCents, cylinderMinCents, cylinderMaxCents].some((value) => value === null)) {
-        return []
-    }
-
-    const spheres = buildLensOptions(sphereMinCents, sphereMaxCents)
-    const cylinders = buildLensOptions(cylinderMinCents, cylinderMaxCents)
-
-    return spheres.flatMap((sphere) => cylinders.map((cylinder) => ({
-        sphere,
-        cylinder
-    })))
+const lensSeriesValidations = computed(() => {
+    return lensSeriesForms.map((series, index) => validateLensSeries(series, index))
 })
 
-const visibleLensVariantPreview = computed(() => lensVariantPreview.value.slice(0, 16))
+const lensOverlapErrors = computed(() => {
+    const errors = []
+    const validRanges = lensSeriesValidations.value
+        .map((validation, index) => ({ validation, index }))
+        .filter((entry) => entry.validation.errors.length === 0)
+
+    for (let leftIndex = 0; leftIndex < validRanges.length; leftIndex += 1) {
+        for (let rightIndex = leftIndex + 1; rightIndex < validRanges.length; rightIndex += 1) {
+            const left = validRanges[leftIndex]
+            const right = validRanges[rightIndex]
+
+            if (lensRangesOverlap(left.validation.range, right.validation.range)) {
+                errors.push(`La Serie ${left.index + 1} se cruza con la Serie ${right.index + 1}.`)
+            }
+        }
+    }
+
+    return errors
+})
 
 const lensValidation = computed(() => {
-    const errors = []
-    const sphereMinCents = parseToCents(lensForm.sphereMin)
-    const sphereMaxCents = parseToCents(lensForm.sphereMax)
-    const cylinderMinCents = parseToCents(lensForm.cylinderMin)
-    const cylinderMaxCents = parseToCents(lensForm.cylinderMax)
+    const seriesErrors = lensSeriesValidations.value.flatMap((validation) => validation.errors)
+    const errors = [...seriesErrors, ...lensOverlapErrors.value]
+    const total = errors.length === 0 ? buildLensPreviewOptions(lensSeriesValidations.value).length : 0
 
-    if (sphereMinCents === null || sphereMaxCents === null) errors.push('Esfera: selecciona valores validos.')
-    if (cylinderMinCents === null || cylinderMaxCents === null) errors.push('Cilindro: selecciona valores validos.')
+    return {
+        errors,
+        total,
+        series: errors.length > 0 ? [] : lensSeriesValidations.value
+    }
+})
+
+const lensVariantPreview = computed(() => {
+    if (lensOverlapErrors.value.length > 0) return []
+
+    return buildLensPreviewOptions(lensSeriesValidations.value)
+})
+
+const lensSeriesPreviewCounts = computed(() => {
+    return lensVariantPreview.value.reduce((counts, option) => {
+        counts[option.seriesIndex] = (counts[option.seriesIndex] ?? 0) + 1
+
+        return counts
+    }, {})
+})
+
+function buildLensPreviewOptions(validations) {
+    const seenCombinations = new Set()
+
+    return validations.flatMap((validation, index) => {
+        if (validation.errors.length > 0) return []
+
+        const spheres = buildLensOptions(validation.sphereMinCents, validation.sphereMaxCents)
+        const cylinders = buildLensOptions(validation.cylinderMinCents, validation.cylinderMaxCents)
+
+        return spheres.flatMap((sphere) => cylinders
+            .map((cylinder) => {
+                const key = `${sphere}|${cylinder}`
+
+                if (seenCombinations.has(key)) return null
+
+                seenCombinations.add(key)
+
+                return {
+                    sphere,
+                    cylinder,
+                    seriesIndex: index,
+                    seriesLabel: `Serie ${index + 1}`,
+                    price: Number(lensSeriesForms[index]?.price || 0).toFixed(2)
+                }
+            })
+            .filter(Boolean))
+    })
+}
+
+function validateLensSeries(series, index) {
+    const errors = []
+    const label = `Serie ${index + 1}`
+    const sphereMinCents = parseToCents(series.sphereMin)
+    const sphereMaxCents = parseToCents(series.sphereMax)
+    const cylinderMinCents = parseToCents(series.cylinderMin)
+    const cylinderMaxCents = parseToCents(series.cylinderMax)
+
+    if (!isValidPrice(series.price)) errors.push(`${label}: captura un precio valido.`)
+    if (sphereMinCents === null || sphereMaxCents === null) errors.push(`${label}: selecciona valores validos de esfera.`)
+    if (cylinderMinCents === null || cylinderMaxCents === null) errors.push(`${label}: selecciona valores validos de cilindro.`)
 
     if (sphereMinCents !== null && sphereMaxCents !== null && sphereMinCents > sphereMaxCents) {
-        errors.push('Esfera: el valor inicial debe ser menor o igual al valor final.')
+        errors.push(`${label}: la esfera inicial debe ser menor o igual a la final.`)
     }
 
     if (cylinderMinCents !== null && cylinderMaxCents !== null && cylinderMaxCents > cylinderMinCents) {
-        errors.push('Cilindro: el valor final debe ser menor o igual al valor inicial.')
+        errors.push(`${label}: el cilindro final debe ser menor o igual al inicial.`)
     }
 
-    const sphereCount = errors.length === 0 ? (sphereMaxCents - sphereMinCents) / STEP_CENTS + 1 : 0
-    const cylinderCount = errors.length === 0 ? (cylinderMinCents - cylinderMaxCents) / STEP_CENTS + 1 : 0
+    const hasErrors = errors.length > 0
+    const sphereCount = hasErrors ? 0 : (sphereMaxCents - sphereMinCents) / STEP_CENTS + 1
+    const cylinderCount = hasErrors ? 0 : (cylinderMinCents - cylinderMaxCents) / STEP_CENTS + 1
+    const range = hasErrors ? null : {
+        sphereMin: Math.min(sphereMinCents, sphereMaxCents),
+        sphereMax: Math.max(sphereMinCents, sphereMaxCents),
+        cylinderMin: Math.min(cylinderMinCents, cylinderMaxCents),
+        cylinderMax: Math.max(cylinderMinCents, cylinderMaxCents)
+    }
 
     return {
         errors,
         sphereCount,
         cylinderCount,
         total: sphereCount * cylinderCount,
-        payload: errors.length > 0 ? null : {
+        range,
+        sphereMinCents,
+        sphereMaxCents,
+        cylinderMinCents,
+        cylinderMaxCents,
+        payload: hasErrors ? null : {
             sphere: {
                 min: centsToDecimal(sphereMinCents),
                 max: centsToDecimal(sphereMaxCents)
@@ -213,7 +297,16 @@ const lensValidation = computed(() => {
             }
         }
     }
-})
+}
+
+function lensRangesOverlap(leftRange, rightRange) {
+    if (!leftRange || !rightRange) return false
+
+    const sphereOverlaps = leftRange.sphereMin < rightRange.sphereMax && rightRange.sphereMin < leftRange.sphereMax
+    const cylinderOverlaps = leftRange.cylinderMin < rightRange.cylinderMax && rightRange.cylinderMin < leftRange.cylinderMax
+
+    return sphereOverlaps && cylinderOverlaps
+}
 
 function parseToCents(value) {
     const number = Number(String(value ?? '').replace(',', '.'))
@@ -280,6 +373,7 @@ function selectProductType(slug) {
     formErrors.value = []
     successResult.value = null
     isFrameSelectionLocked.value = false
+    isLensPreviewOpen.value = false
     loadSuppliersByCategory(productForm.category_id)
 }
 
@@ -293,31 +387,79 @@ function resetForm() {
     itemForm.sku = ''
     itemForm.skuPrefix = ''
     itemForm.price = '0.00'
-    lensForm.sphereMin = '-6.00'
-    lensForm.sphereMax = '6.00'
-    lensForm.cylinderMin = '0.00'
-    lensForm.cylinderMax = '-6.00'
+    resetLensSeriesForms()
     Object.keys(selectedFrameOptionIds).forEach((key) => {
         selectedFrameOptionIds[key] = []
     })
     Object.keys(frameVariantImages).forEach((key) => {
+        if (frameVariantImages[key]?.previewUrl) {
+            URL.revokeObjectURL(frameVariantImages[key].previewUrl)
+        }
         delete frameVariantImages[key]
     })
-    Object.keys(lensImageAssignments).forEach((key) => {
-        delete lensImageAssignments[key]
-    })
-    Object.keys(lensPriceAssignments).forEach((key) => {
-        delete lensPriceAssignments[key]
+    Object.keys(frameVariantPrices).forEach((key) => {
+        delete frameVariantPrices[key]
     })
     imagePreview.value = null
     selectedTypeSlug.value = ''
     isFrameSelectionLocked.value = false
-    createdLensItems.value = []
+    isLensPreviewOpen.value = false
+    createdLensSeriesResults.value = []
     resetImageInput()
 }
 
 function addError(message) {
     if (message && !formErrors.value.includes(message)) formErrors.value.push(message)
+}
+
+function clearTransientFeedback() {
+    formErrors.value = []
+    successResult.value = null
+    createdLensSeriesResults.value = []
+}
+
+function resetLensSeriesForms() {
+    lensSeriesForms.forEach(revokeLensSeriesPreview)
+    lensSeriesForms.splice(0, lensSeriesForms.length, createLensSeries())
+}
+
+function revokeLensSeriesPreview(series) {
+    if (series?.previewUrl) {
+        URL.revokeObjectURL(series.previewUrl)
+    }
+}
+
+function addLensSeries() {
+    clearTransientFeedback()
+    lensSeriesForms.push(createLensSeries())
+    isLensPreviewOpen.value = false
+}
+
+function removeLensSeries(index) {
+    if (lensSeriesForms.length <= 1) return
+
+    clearTransientFeedback()
+    revokeLensSeriesPreview(lensSeriesForms[index])
+    lensSeriesForms.splice(index, 1)
+    isLensPreviewOpen.value = false
+}
+
+function assignLensSeriesImage(event, series) {
+    const file = event.target.files?.[0]
+
+    if (!file) return
+
+    revokeLensSeriesPreview(series)
+    clearTransientFeedback()
+    series.image = file
+    series.previewUrl = URL.createObjectURL(file)
+}
+
+function clearLensSeriesImage(series) {
+    revokeLensSeriesPreview(series)
+    clearTransientFeedback()
+    series.image = null
+    series.previewUrl = null
 }
 
 function validateBaseProduct() {
@@ -341,7 +483,6 @@ function validateBaseProduct() {
 
     if (selectedTypeSlug.value === 'armazones') {
         if (!String(itemForm.skuPrefix).trim()) addError('Captura el prefijo SKU del armazón.')
-        if (!isValidPrice(itemForm.price)) addError('Captura un precio valido.')
         frameVariations.value.forEach((variation) => {
             const selectedIds = selectedFrameOptionIds[variation.id] ?? []
 
@@ -352,8 +493,8 @@ function validateBaseProduct() {
         if (frameCombinations.value.length === 0) addError('Selecciona al menos una opción de variación.')
         if (!isFrameSelectionLocked.value) addError('Prepara las variantes antes de crear el armazón.')
         frameVariantPreview.value.forEach((variant) => {
-            if (!variant.image?.file) {
-                addError(`Sube una imagen para la variante ${variant.sku}.`)
+            if (!isValidPrice(frameVariantPrices[variant.index])) {
+                addError(`Captura un precio valido para la variante ${variant.sku}.`)
             }
         })
         if (buildGeneratedSku(itemForm.skuPrefix, Math.max(frameCombinations.value.length - 1, 0)).length > 20) {
@@ -362,7 +503,7 @@ function validateBaseProduct() {
     }
 
     if (selectedTypeSlug.value === 'micas') {
-        if (!isValidPrice(itemForm.price)) addError('Captura un precio valido.')
+        if (lensSeriesForms.length === 0) addError('Agrega al menos una serie de micas.')
         lensValidation.value.errors.forEach(addError)
     }
 
@@ -388,14 +529,14 @@ function buildProductFormData() {
     return formData
 }
 
-function buildItemFormData(productId, sku, variationOptionIds = [], imageFile = productForm.image) {
+function buildItemFormData(productId, sku, variationOptionIds = [], imageFile = productForm.image, price = itemForm.price) {
     const formData = new FormData()
 
     formData.append('image', imageFile)
     formData.append('file_name', imageFile?.name ?? productForm.file_name)
     formData.append('product_id', productId)
     formData.append('SKU', sku)
-    formData.append('price', Number(itemForm.price).toFixed(2))
+    formData.append('price', Number(price).toFixed(2))
 
     if (variationOptionIds.length > 0) {
         formData.append('variation_option_ids', variationOptionIds.join(','))
@@ -416,7 +557,6 @@ function prepareFrameVariants() {
     formErrors.value = []
 
     if (!String(itemForm.skuPrefix).trim()) addError('Captura el prefijo SKU del armazón.')
-    if (!isValidPrice(itemForm.price)) addError('Captura un precio valido.')
     frameVariations.value.forEach((variation) => {
         const selectedIds = selectedFrameOptionIds[variation.id] ?? []
 
@@ -428,13 +568,25 @@ function prepareFrameVariants() {
 
     if (formErrors.value.length > 0) return
 
+    frameCombinations.value.forEach((combination, index) => {
+        if (frameVariantPrices[index] === undefined) {
+            frameVariantPrices[index] = '0.00'
+        }
+    })
+
     isFrameSelectionLocked.value = true
 }
 
 function unlockFrameVariants() {
     isFrameSelectionLocked.value = false
     Object.keys(frameVariantImages).forEach((key) => {
+        if (frameVariantImages[key]?.previewUrl) {
+            URL.revokeObjectURL(frameVariantImages[key].previewUrl)
+        }
         delete frameVariantImages[key]
+    })
+    Object.keys(frameVariantPrices).forEach((key) => {
+        delete frameVariantPrices[key]
     })
 }
 
@@ -453,122 +605,83 @@ function assignFrameVariantImage(event, index) {
     }
 }
 
-async function loadCreatedLensItems(productId) {
+function clearFrameVariantImage(index) {
+    if (frameVariantImages[index]?.previewUrl) {
+        URL.revokeObjectURL(frameVariantImages[index].previewUrl)
+    }
+
+    delete frameVariantImages[index]
+}
+
+function parseLensSku(sku) {
+    const normalizedSku = String(sku ?? '').trim().toUpperCase()
+    const match = normalizedSku.match(/-S([NP]?)(\d{3})-CN(\d{3})$/)
+
+    if (!match) return null
+
+    const spherePrefix = match[1]
+    const sphereMagnitude = Number(match[2])
+    const cylinderMagnitude = Number(match[3])
+
+    return {
+        sphereCents: spherePrefix === 'N' ? -sphereMagnitude : spherePrefix === 'P' ? sphereMagnitude : 0,
+        cylinderCents: -cylinderMagnitude
+    }
+}
+
+function lensItemBelongsToSeries(item, validation) {
+    const parsedLens = parseLensSku(item?.SKU)
+
+    if (!parsedLens || !validation?.range) return false
+
+    return (
+        parsedLens.sphereCents >= validation.range.sphereMin &&
+        parsedLens.sphereCents <= validation.range.sphereMax &&
+        parsedLens.cylinderCents >= validation.range.cylinderMin &&
+        parsedLens.cylinderCents <= validation.range.cylinderMax
+    )
+}
+
+async function loadProductLensItems(productId) {
     const response = await getProductItemsService()
     const items = Array.isArray(response) ? response : Array.isArray(response?.product_items) ? response.product_items : []
 
-    createdLensItems.value = items.filter((item) => Number(item?.product_id) === Number(productId))
-    createdLensItems.value.forEach((item) => {
-        lensPriceAssignments[item.id] = {
-            price: Number(item.price ?? itemForm.price ?? 0).toFixed(2),
-            isSaving: false,
-            isSaved: false
-        }
-    })
+    return items.filter((item) => Number(item?.product_id) === Number(productId))
 }
 
-function assignLensImage(event, productItemId) {
-    const file = event.target.files?.[0]
+async function applyLensSeriesImageToItem(item, series) {
+    const formData = new FormData()
 
-    if (!file) return
+    formData.append('image', series.image)
+    formData.append('file_name', series.image.name)
 
-    if (lensImageAssignments[productItemId]?.previewUrl) {
-        URL.revokeObjectURL(lensImageAssignments[productItemId].previewUrl)
-    }
-
-    lensImageAssignments[productItemId] = {
-        file,
-        previewUrl: URL.createObjectURL(file),
-        isUploading: false,
-        isUploaded: false
-    }
+    await updateProductItemImageService(item.id, formData)
 }
 
-async function uploadLensImage(productItemId) {
-    const assignment = lensImageAssignments[productItemId]
+async function applyLensSeriesImages(productId, seriesResults) {
+    const seriesWithImages = seriesResults.filter((result) => result.series.image)
 
-    if (!assignment?.file) return
+    if (seriesWithImages.length === 0) return seriesResults
 
-    assignment.isUploading = true
+    const productItems = await loadProductLensItems(productId)
+    const assignedItemIds = new Set()
 
-    try {
-        const formData = new FormData()
-        formData.append('image', assignment.file)
-        formData.append('file_name', assignment.file.name)
+    for (const result of seriesResults) {
+        if (!result.series.image) continue
 
-        const response = await updateProductItemImageService(productItemId, formData)
-        const updatedItem = response?.product_item
-        const itemIndex = createdLensItems.value.findIndex((item) => Number(item.id) === Number(productItemId))
+        const matchingItems = productItems.filter((item) => (
+            !assignedItemIds.has(item.id) &&
+            lensItemBelongsToSeries(item, result.validation)
+        ))
 
-        if (itemIndex >= 0 && updatedItem) {
-            createdLensItems.value[itemIndex] = updatedItem
+        for (const item of matchingItems) {
+            await applyLensSeriesImageToItem(item, result.series)
+            assignedItemIds.add(item.id)
+            result.imageApplied += 1
         }
-
-        assignment.isUploaded = true
-        toast.add({
-            severity: 'success',
-            summary: 'Imagen actualizada',
-            detail: 'La imagen de la mica se actualizó correctamente.',
-            life: 3000
-        })
-    } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudo actualizar la imagen de la mica.',
-            life: 4000
-        })
-    } finally {
-        assignment.isUploading = false
-    }
-}
-
-async function updateLensPrice(productItemId) {
-    const assignment = lensPriceAssignments[productItemId]
-    const price = Number(assignment?.price)
-
-    if (!Number.isFinite(price) || price < 0) {
-        toast.add({
-            severity: 'warn',
-            summary: 'Precio inválido',
-            detail: 'Captura un precio válido para la mica.',
-            life: 3500
-        })
-        return
     }
 
-    assignment.isSaving = true
-
-    try {
-        await updateProductItemService(productItemId, {
-            price: price.toFixed(2)
-        })
-
-        const itemIndex = createdLensItems.value.findIndex((item) => Number(item.id) === Number(productItemId))
-        if (itemIndex >= 0) {
-            createdLensItems.value[itemIndex] = {
-                ...createdLensItems.value[itemIndex],
-                price: price.toFixed(2)
-            }
-        }
-
-        assignment.isSaved = true
-        toast.add({
-            severity: 'success',
-            summary: 'Precio actualizado',
-            detail: 'El precio de la mica se actualizó correctamente.',
-            life: 3000
-        })
-    } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudo actualizar el precio de la mica.',
-            life: 4000
-        })
-    } finally {
-        assignment.isSaving = false
-    }
+    return seriesResults
 }
 
 async function submitForm() {
@@ -600,7 +713,8 @@ async function submitForm() {
                     product.id,
                     buildGeneratedSku(itemForm.skuPrefix, index),
                     combination.map((option) => option.id),
-                    frameVariantImages[index]?.file
+                    frameVariantImages[index]?.file,
+                    frameVariantPrices[index]
                 ))
             }
 
@@ -608,14 +722,42 @@ async function submitForm() {
         }
 
         if (selectedTypeSlug.value === 'micas') {
-            const response = await batchCreateLensItemsService({
-                product_id: Number(product.id),
-                price: Number(itemForm.price).toFixed(2),
-                ...lensValidation.value.payload
-            })
+            const seriesResults = []
 
-            successResult.value = `Mica creada. Items generados: ${response.created}. Existentes: ${response.skipped}.`
-            await loadCreatedLensItems(product.id)
+            for (const [index, series] of lensSeriesForms.entries()) {
+                const validation = lensSeriesValidations.value[index]
+                const response = await batchCreateLensItemsService({
+                    product_id: Number(product.id),
+                    price: Number(series.price).toFixed(2),
+                    ...validation.payload
+                })
+
+                seriesResults.push({
+                    id: series.id,
+                    label: `Serie ${index + 1}`,
+                    price: Number(series.price).toFixed(2),
+                    sphereMin: series.sphereMin,
+                    sphereMax: series.sphereMax,
+                    cylinderMin: series.cylinderMin,
+                    cylinderMax: series.cylinderMax,
+                    total: lensSeriesPreviewCounts.value[index] ?? validation.total,
+                    created: Number(response.created ?? 0),
+                    skipped: Number(response.skipped ?? 0),
+                    imageApplied: 0,
+                    hasImage: Boolean(series.image),
+                    series,
+                    validation
+                })
+            }
+
+            await applyLensSeriesImages(product.id, seriesResults)
+
+            const createdTotal = seriesResults.reduce((total, result) => total + result.created, 0)
+            const skippedTotal = seriesResults.reduce((total, result) => total + result.skipped, 0)
+            const imagesAppliedTotal = seriesResults.reduce((total, result) => total + result.imageApplied, 0)
+
+            createdLensSeriesResults.value = seriesResults
+            successResult.value = `Mica creada en ${seriesResults.length} series. Items generados: ${createdTotal}. Existentes: ${skippedTotal}. Imágenes aplicadas: ${imagesAppliedTotal}.`
         }
 
         toast.add({
@@ -762,14 +904,10 @@ onMounted(async () => {
             </section>
 
             <section v-if="selectedTypeSlug === 'armazones'" class="flex flex-col gap-5">
-                <div class="grid md:grid-cols-2 grid-cols-1 gap-4">
+                <div class="grid grid-cols-1 gap-4">
                     <div>
                         <label for="frame_sku_prefix" class="block text-sky-700 font-medium mb-1">Prefijo SKU</label>
                         <input v-model.trim="itemForm.skuPrefix" id="frame_sku_prefix" maxlength="12" type="text" :disabled="isFrameSelectionLocked" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300 disabled:bg-slate-100 disabled:text-slate-500" />
-                    </div>
-                    <div>
-                        <label for="frame_price" class="block text-sky-700 font-medium mb-1">Precio por combinación</label>
-                        <input v-model="itemForm.price" id="frame_price" type="number" min="0" step="0.01" :disabled="isFrameSelectionLocked" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300 disabled:bg-slate-100 disabled:text-slate-500" />
                     </div>
                 </div>
 
@@ -790,7 +928,7 @@ onMounted(async () => {
                         <div>
                             <div class="font-bold text-sky-800">Variantes preparadas: {{ frameCombinations.length }}</div>
                             <div class="text-sm font-medium text-slate-600">
-                                Prepara las variantes para bloquear la selección y revisar los SKU antes de crear.
+                                Si no subes imagen propia, se usará la imagen principal del producto en esa variante.
                             </div>
                         </div>
                         <button
@@ -818,144 +956,214 @@ onMounted(async () => {
                         <div
                             v-for="variant in frameVariantPreview"
                             :key="variant.sku"
-                            class="grid gap-3 border-b border-slate-100 px-4 py-3 text-sm last:border-b-0 md:grid-cols-[8rem_1fr_12rem]"
+                            class="grid gap-3 border-b border-slate-100 px-4 py-3 text-sm last:border-b-0 md:grid-cols-[8rem_1fr_10rem_12rem]"
                         >
                             <div class="font-bold text-sky-800">{{ variant.sku }}</div>
                             <div class="font-medium text-slate-600">{{ variant.options }}</div>
-                            <label class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-sky-300 bg-sky-50 px-3 py-2 text-center text-xs font-bold text-sky-700 transition hover:bg-sky-100">
+                            <div>
+                                <label :for="`frame-price-${variant.index}`" class="mb-1 block text-xs font-bold text-sky-700">Precio</label>
                                 <input
-                                    type="file"
-                                    accept="image/*"
-                                    class="hidden"
-                                    @change="assignFrameVariantImage($event, variant.index)"
+                                    :id="`frame-price-${variant.index}`"
+                                    v-model="frameVariantPrices[variant.index]"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-sky-800 focus:ring-2 focus:ring-sky-300"
                                 >
-                                <img
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="flex min-h-24 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-sky-300 bg-sky-50 px-3 py-2 text-center text-xs font-bold text-sky-700 transition hover:bg-sky-100">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        class="hidden"
+                                        @change="assignFrameVariantImage($event, variant.index)"
+                                    >
+                                    <span v-if="variant.image?.previewUrl || imagePreview" class="flex w-full flex-col items-center gap-1">
+                                        <img
+                                            :src="variant.image?.previewUrl || imagePreview"
+                                            alt="Imagen de variante"
+                                            class="h-16 w-full rounded-md bg-white object-contain object-center"
+                                        >
+                                        <span>{{ variant.image?.previewUrl ? 'Imagen propia' : 'Imagen del producto' }}</span>
+                                    </span>
+                                    <span v-else>Subir imagen</span>
+                                </label>
+                                <button
                                     v-if="variant.image?.previewUrl"
-                                    :src="variant.image.previewUrl"
-                                    alt="Imagen de variante"
-                                    class="h-20 w-full rounded-md bg-white object-contain object-center"
+                                    type="button"
+                                    class="rounded-lg border border-sky-200 px-3 py-2 text-xs font-bold text-sky-700 transition hover:bg-sky-50"
+                                    @click="clearFrameVariantImage(variant.index)"
                                 >
-                                <span v-else>Subir imagen</span>
-                            </label>
+                                    Usar imagen del producto
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
             <section v-if="selectedTypeSlug === 'micas'" class="flex flex-col gap-5">
-                <div class="grid md:grid-cols-2 grid-cols-1 gap-4">
-                    <div class="md:col-span-2">
-                        <label for="lens_price" class="block text-sky-700 font-medium mb-1">Precio por mica</label>
-                        <input v-model="itemForm.price" id="lens_price" type="number" min="0" step="0.01" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" />
+                <div class="flex flex-col gap-4">
+                    <div
+                        v-for="(series, index) in lensSeriesForms"
+                        :key="series.id"
+                        class="rounded-xl border border-slate-200 p-4"
+                    >
+                        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h3 class="text-lg font-bold text-sky-800">Serie {{ index + 1 }}</h3>
+                                <p class="text-sm font-medium text-slate-500">
+                                    {{ lensSeriesPreviewCounts[index] ?? 0 }} combinaciones con precio ${{ Number(series.price || 0).toFixed(2) }}
+                                </p>
+                            </div>
+                            <button
+                                v-if="lensSeriesForms.length > 1"
+                                type="button"
+                                class="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-50"
+                                @click="removeLensSeries(index)"
+                            >
+                                Quitar serie
+                            </button>
+                        </div>
+
+                        <div class="grid gap-4 lg:grid-cols-[1fr_12rem]">
+                            <div class="grid md:grid-cols-2 grid-cols-1 gap-4">
+                                <div class="md:col-span-2">
+                                    <label :for="`lens-price-${series.id}`" class="block text-sky-700 font-medium mb-1">Precio por mica</label>
+                                    <input v-model="series.price" :id="`lens-price-${series.id}`" type="number" min="0" step="0.01" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" @input="clearTransientFeedback" />
+                                </div>
+                                <div>
+                                    <label :for="`sphere-min-${series.id}`" class="block text-sky-700 font-medium mb-1">Esfera desde</label>
+                                    <select :id="`sphere-min-${series.id}`" v-model="series.sphereMin" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" @change="clearTransientFeedback">
+                                        <option v-for="option in sphereOptions" :key="`sphere-min-${series.id}-${option}`" :value="option">{{ option }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label :for="`sphere-max-${series.id}`" class="block text-sky-700 font-medium mb-1">Esfera hasta</label>
+                                    <select :id="`sphere-max-${series.id}`" v-model="series.sphereMax" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" @change="clearTransientFeedback">
+                                        <option v-for="option in sphereOptions" :key="`sphere-max-${series.id}-${option}`" :value="option">{{ option }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label :for="`cylinder-min-${series.id}`" class="block text-sky-700 font-medium mb-1">Cilindro desde</label>
+                                    <select :id="`cylinder-min-${series.id}`" v-model="series.cylinderMin" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" @change="clearTransientFeedback">
+                                        <option v-for="option in cylinderOptions" :key="`cylinder-min-${series.id}-${option}`" :value="option">{{ option }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label :for="`cylinder-max-${series.id}`" class="block text-sky-700 font-medium mb-1">Cilindro hasta</label>
+                                    <select :id="`cylinder-max-${series.id}`" v-model="series.cylinderMax" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300" @change="clearTransientFeedback">
+                                        <option v-for="option in cylinderOptions" :key="`cylinder-max-${series.id}-${option}`" :value="option">{{ option }}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-2">
+                                <div class="text-sm font-bold text-sky-700">Imagen de serie</div>
+                                <label class="flex min-h-36 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-sky-300 bg-sky-50 px-3 py-2 text-center text-xs font-bold text-sky-700 transition hover:bg-sky-100">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        class="hidden"
+                                        @change="assignLensSeriesImage($event, series)"
+                                    >
+                                    <span v-if="series.previewUrl" class="flex w-full flex-col items-center gap-2">
+                                        <img
+                                            :src="series.previewUrl"
+                                            alt="Imagen de serie"
+                                            class="h-24 w-full rounded-md bg-white object-contain object-center"
+                                        >
+                                        <span>Imagen propia</span>
+                                    </span>
+                                    <span v-else>Usar imagen del producto</span>
+                                </label>
+                                <button
+                                    v-if="series.previewUrl"
+                                    type="button"
+                                    class="rounded-lg border border-sky-200 px-3 py-2 text-xs font-bold text-sky-700 transition hover:bg-sky-50"
+                                    @click="clearLensSeriesImage(series)"
+                                >
+                                    Usar imagen del producto
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label for="sphere_min" class="block text-sky-700 font-medium mb-1">Esfera desde</label>
-                        <select id="sphere_min" v-model="lensForm.sphereMin" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300">
-                            <option v-for="option in sphereOptions" :key="`sphere-min-${option}`" :value="option">{{ option }}</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="sphere_max" class="block text-sky-700 font-medium mb-1">Esfera hasta</label>
-                        <select id="sphere_max" v-model="lensForm.sphereMax" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300">
-                            <option v-for="option in sphereOptions" :key="`sphere-max-${option}`" :value="option">{{ option }}</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="cylinder_min" class="block text-sky-700 font-medium mb-1">Cilindro desde</label>
-                        <select id="cylinder_min" v-model="lensForm.cylinderMin" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300">
-                            <option v-for="option in cylinderOptions" :key="`cylinder-min-${option}`" :value="option">{{ option }}</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="cylinder_max" class="block text-sky-700 font-medium mb-1">Cilindro hasta</label>
-                        <select id="cylinder_max" v-model="lensForm.cylinderMax" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300">
-                            <option v-for="option in cylinderOptions" :key="`cylinder-max-${option}`" :value="option">{{ option }}</option>
-                        </select>
-                    </div>
+
+                    <button
+                        type="button"
+                        class="rounded-xl border border-dashed border-sky-300 bg-sky-50 px-5 py-3 text-sm font-bold text-sky-700 transition hover:bg-sky-100"
+                        @click="addLensSeries"
+                    >
+                        Añadir serie
+                    </button>
                 </div>
 
                 <div class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm font-semibold text-sky-800">
                     <div class="flex flex-wrap items-center justify-between gap-3">
-                        <span>Total de items de mica: {{ lensValidation.total }}</span>
-                        <span>Precio por item: ${{ Number(itemForm.price || 0).toFixed(2) }}</span>
-                    </div>
-                    <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                        <div
-                            v-for="option in visibleLensVariantPreview"
-                            :key="`${option.sphere}-${option.cylinder}`"
-                            class="rounded-lg border border-sky-100 bg-white px-3 py-2 text-xs font-semibold text-slate-600"
-                        >
-                            Esfera {{ option.sphere }} | Cilindro {{ option.cylinder }}
+                        <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+                            <span>Total de items de mica: {{ lensValidation.total }}</span>
+                            <span>Series configuradas: {{ lensSeriesForms.length }}</span>
                         </div>
+                        <button
+                            type="button"
+                            class="rounded-lg border border-sky-300 bg-white px-4 py-2 text-xs font-bold text-sky-700 transition hover:bg-sky-100"
+                            :aria-expanded="isLensPreviewOpen"
+                            @click="isLensPreviewOpen = !isLensPreviewOpen"
+                        >
+                            {{ isLensPreviewOpen ? 'Ocultar combinaciones' : 'Mostrar combinaciones' }}
+                        </button>
                     </div>
-                    <div v-if="lensVariantPreview.length > visibleLensVariantPreview.length" class="mt-3 text-xs font-medium text-slate-600">
-                        Se muestran {{ visibleLensVariantPreview.length }} de {{ lensVariantPreview.length }} opciones.
+
+                    <div v-if="isLensPreviewOpen" class="mt-4 rounded-xl border border-sky-100 bg-white p-3">
+                        <div class="max-h-72 overflow-y-auto pr-1">
+                            <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                                <div
+                                    v-for="option in lensVariantPreview"
+                                    :key="`${option.seriesIndex}-${option.sphere}-${option.cylinder}`"
+                                    class="rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-xs font-semibold text-slate-600"
+                                >
+                                    <div class="font-bold text-sky-800">{{ option.seriesLabel }} · ${{ option.price }}</div>
+                                    <div>Esfera {{ option.sphere }} | Cilindro {{ option.cylinder }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-xs font-medium text-slate-600">
+                            Se muestran {{ lensVariantPreview.length }} de {{ lensVariantPreview.length }} opciones.
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <section v-if="createdLensItems.length > 0" class="flex flex-col gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <section v-if="createdLensSeriesResults.length > 0" class="flex flex-col gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                 <div>
-                    <h3 class="text-xl font-bold text-emerald-800">Imágenes para micas creadas</h3>
+                    <h3 class="text-xl font-bold text-emerald-800">Series de micas creadas</h3>
                     <p class="text-sm font-medium text-emerald-700">
-                        La descripción se mantiene igual. Puedes subir una imagen específica por SKU ahora, o dejar la imagen base del producto.
+                        Cada serie se creó con su precio. Si agregaste imagen de serie, se aplicó a las combinaciones de ese rango.
                     </p>
                 </div>
                 <div class="grid gap-3 md:grid-cols-2">
                     <div
-                        v-for="item in createdLensItems"
-                        :key="item.id"
-                        class="grid gap-3 rounded-xl border border-emerald-100 bg-white p-3 sm:grid-cols-[1fr_10rem]"
+                        v-for="seriesResult in createdLensSeriesResults"
+                        :key="seriesResult.id"
+                        class="rounded-xl border border-emerald-100 bg-white p-4"
                     >
-                        <div class="min-w-0">
-                            <div class="font-bold text-sky-800">{{ item.SKU }}</div>
-                            <label :for="`lens-price-${item.id}`" class="mt-2 block text-xs font-bold text-sky-700">Precio</label>
-                            <div class="mt-1 grid grid-cols-[1fr_auto] gap-2">
-                                <input
-                                    :id="`lens-price-${item.id}`"
-                                    v-model="lensPriceAssignments[item.id].price"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    class="min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-sky-800 focus:ring-2 focus:ring-sky-300"
-                                >
-                                <button
-                                    type="button"
-                                    :disabled="lensPriceAssignments[item.id]?.isSaving"
-                                    class="rounded-lg bg-sky-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-sky-700 disabled:bg-slate-400"
-                                    @click="updateLensPrice(item.id)"
-                                >
-                                    {{ lensPriceAssignments[item.id]?.isSaving ? 'Guardando...' : lensPriceAssignments[item.id]?.isSaved ? 'Guardado' : 'Guardar' }}
-                                </button>
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <div class="font-bold text-sky-800">{{ seriesResult.label }}</div>
+                                <div class="text-sm font-semibold text-slate-600">
+                                    Esfera {{ seriesResult.sphereMin }} a {{ seriesResult.sphereMax }} | Cilindro {{ seriesResult.cylinderMin }} a {{ seriesResult.cylinderMax }}
+                                </div>
+                            </div>
+                            <div class="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-700">
+                                ${{ seriesResult.price }}
                             </div>
                         </div>
-                        <div class="flex flex-col gap-2">
-                            <label class="flex min-h-24 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-sky-300 bg-sky-50 px-3 py-2 text-center text-xs font-bold text-sky-700 transition hover:bg-sky-100">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    class="hidden"
-                                    @change="assignLensImage($event, item.id)"
-                                >
-                                <img
-                                    v-if="lensImageAssignments[item.id]?.previewUrl"
-                                    :src="lensImageAssignments[item.id].previewUrl"
-                                    alt="Imagen de mica"
-                                    class="h-20 w-full rounded-md bg-white object-contain object-center"
-                                >
-                                <span v-else>Subir imagen</span>
-                            </label>
-                            <button
-                                type="button"
-                                :disabled="!lensImageAssignments[item.id]?.file || lensImageAssignments[item.id]?.isUploading"
-                                :class="[
-                                    !lensImageAssignments[item.id]?.file || lensImageAssignments[item.id]?.isUploading ? 'bg-slate-400' : 'bg-sky-600 hover:bg-sky-700',
-                                    'rounded-lg px-3 py-2 text-xs font-bold text-white transition'
-                                ]"
-                                @click="uploadLensImage(item.id)"
-                            >
-                                {{ lensImageAssignments[item.id]?.isUploading ? 'Subiendo...' : lensImageAssignments[item.id]?.isUploaded ? 'Actualizar otra vez' : 'Guardar imagen' }}
-                            </button>
+                        <div class="mt-4 grid gap-2 text-sm font-semibold text-slate-600 sm:grid-cols-2">
+                            <div>Esperadas: {{ seriesResult.total }}</div>
+                            <div>Generadas: {{ seriesResult.created }}</div>
+                            <div>Existentes: {{ seriesResult.skipped }}</div>
+                            <div>Imágenes aplicadas: {{ seriesResult.imageApplied }}</div>
                         </div>
                     </div>
                 </div>
