@@ -182,7 +182,6 @@ export const useCartStore = defineStore('cart', () => {
                 const productItem = productItemsById[normalizedItemId]
                 const productId = toNumber(productItem?.product_id, null)
                 const product = productsById[productId]
-                const productItemImage = String(productItem?.product_image ?? '').trim()
                 const productImage = String(product?.image_url ?? product?.product_image ?? '').trim()
 
                 return {
@@ -194,7 +193,7 @@ export const useCartStore = defineStore('cart', () => {
                     sku: String(productItem?.SKU ?? ''),
                     name: String(product?.name ?? `Producto #${normalizedItemId}`),
                     description: String(product?.description ?? ''),
-                    image_url: productItemImage || productImage,
+                    image_url: productImage,
                     price: toNumber(productItem?.price ?? product?.price, 0),
                     stock: getProductItemStock(productItem),
                     variation_options: variationOptionsByItemId[normalizedItemId] ?? [],

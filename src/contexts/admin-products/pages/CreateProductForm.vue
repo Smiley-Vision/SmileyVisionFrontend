@@ -1,14 +1,12 @@
 <script setup>
 import {
-    batchCreateLensItemsService,
     createEquipmentItemService,
     createFrameItemService,
+    createProductItemService,
     createProductService,
     getAdminProductTypesService,
-    getProductItemsService,
     getSuppliersByProductCategoryService,
-    getVariationsService,
-    updateProductItemImageService
+    getVariationsService
 } from '@/contexts/admin-products/services/adminProductsService'
 import { normalizeApiError } from '@/shared/utils/normalizeApiError'
 import { getCategorySlug, normalizeCategoriesPayload } from '@/shared/utils/productApiAdapters'
@@ -408,6 +406,16 @@ function resetForm() {
     resetImageInput()
 }
 
+function resetFormAfterSubmit() {
+    const successMessage = successResult.value
+    const lensResults = createdLensSeriesResults.value
+
+    resetForm()
+
+    successResult.value = successMessage
+    createdLensSeriesResults.value = lensResults
+}
+
 function addError(message) {
     if (message && !formErrors.value.includes(message)) formErrors.value.push(message)
 }
@@ -545,12 +553,68 @@ function buildItemFormData(productId, sku, variationOptionIds = [], imageFile = 
     return formData
 }
 
+function buildLensItemFormData(productId, sku, series, fileName) {
+    const imageFile = series.image ?? productForm.image
+    const formData = new FormData()
+
+    formData.append('image', imageFile)
+    formData.append('file_name', fileName)
+    formData.append('product_id', productId)
+    formData.append('SKU', sku)
+    formData.append('price', Number(series.price).toFixed(2))
+
+    return formData
+}
+
 function getCreatedProduct(response) {
     return response?.product ?? response
 }
 
 function buildGeneratedSku(prefix, index) {
     return `${String(prefix).trim().toUpperCase()}-${index + 1}`
+}
+
+function buildSupplierSkuPrefix() {
+    const supplier = suppliers.value.find((entry) => Number(entry?.id) === Number(productForm.supplier_id))
+    const prefix = String(supplier?.name ?? '')
+        .replace(/\s+/g, '')
+        .slice(0, 4)
+        .toUpperCase()
+
+    return prefix || 'MICA'
+}
+
+function encodeLensSkuValue(value) {
+    const number = Number(value)
+    const fixed = Number.isFinite(number) ? number.toFixed(2) : '0.00'
+    const digits = fixed.replace(/[.+-]/g, '')
+
+    if (fixed.startsWith('-')) return `N${digits}`
+    if (number > 0) return `P${digits}`
+
+    return digits
+}
+
+function buildLensSku(supplierPrefix, sphere, cylinder) {
+    return `${supplierPrefix}-S${encodeLensSkuValue(sphere)}-C${encodeLensSkuValue(cylinder)}`
+}
+
+function buildUploadFileName(file, context) {
+    const originalName = String(file?.name ?? 'image').trim()
+    const extensionMatch = originalName.match(/\.[^.]+$/)
+    const extension = extensionMatch ? extensionMatch[0].toLowerCase() : ''
+    const baseName = originalName
+        .replace(/\.[^.]+$/, '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9_-]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 28) || 'image'
+    const safeContext = String(context)
+        .replace(/[^a-zA-Z0-9_-]+/g, '-')
+        .slice(0, 24)
+
+    return `${baseName}-${safeContext}-${Date.now()}${extension}`
 }
 
 function prepareFrameVariants() {
@@ -613,72 +677,54 @@ function clearFrameVariantImage(index) {
     delete frameVariantImages[index]
 }
 
-function parseLensSku(sku) {
-    const normalizedSku = String(sku ?? '').trim().toUpperCase()
-    const match = normalizedSku.match(/-S([NP]?)(\d{3})-CN(\d{3})$/)
+async function createLensProductItems(productId) {
+    const supplierPrefix = buildSupplierSkuPrefix()
+    const optionsBySeries = lensVariantPreview.value.reduce((groups, option) => {
+        groups[option.seriesIndex] = groups[option.seriesIndex] ?? []
+        groups[option.seriesIndex].push(option)
 
-    if (!match) return null
+        return groups
+    }, {})
+    const seriesResults = []
 
-    const spherePrefix = match[1]
-    const sphereMagnitude = Number(match[2])
-    const cylinderMagnitude = Number(match[3])
-
-    return {
-        sphereCents: spherePrefix === 'N' ? -sphereMagnitude : spherePrefix === 'P' ? sphereMagnitude : 0,
-        cylinderCents: -cylinderMagnitude
-    }
-}
-
-function lensItemBelongsToSeries(item, validation) {
-    const parsedLens = parseLensSku(item?.SKU)
-
-    if (!parsedLens || !validation?.range) return false
-
-    return (
-        parsedLens.sphereCents >= validation.range.sphereMin &&
-        parsedLens.sphereCents <= validation.range.sphereMax &&
-        parsedLens.cylinderCents >= validation.range.cylinderMin &&
-        parsedLens.cylinderCents <= validation.range.cylinderMax
-    )
-}
-
-async function loadProductLensItems(productId) {
-    const response = await getProductItemsService()
-    const items = Array.isArray(response) ? response : Array.isArray(response?.product_items) ? response.product_items : []
-
-    return items.filter((item) => Number(item?.product_id) === Number(productId))
-}
-
-async function applyLensSeriesImageToItem(item, series) {
-    const formData = new FormData()
-
-    formData.append('image', series.image)
-    formData.append('file_name', series.image.name)
-
-    await updateProductItemImageService(item.id, formData)
-}
-
-async function applyLensSeriesImages(productId, seriesResults) {
-    const seriesWithImages = seriesResults.filter((result) => result.series.image)
-
-    if (seriesWithImages.length === 0) return seriesResults
-
-    const productItems = await loadProductLensItems(productId)
-    const assignedItemIds = new Set()
-
-    for (const result of seriesResults) {
-        if (!result.series.image) continue
-
-        const matchingItems = productItems.filter((item) => (
-            !assignedItemIds.has(item.id) &&
-            lensItemBelongsToSeries(item, result.validation)
-        ))
-
-        for (const item of matchingItems) {
-            await applyLensSeriesImageToItem(item, result.series)
-            assignedItemIds.add(item.id)
-            result.imageApplied += 1
+    for (const [index, series] of lensSeriesForms.entries()) {
+        const validation = lensSeriesValidations.value[index]
+        const options = optionsBySeries[index] ?? []
+        const imageFile = series.image ?? productForm.image
+        const fileName = buildUploadFileName(imageFile, `mica-${productId}-serie-${index + 1}`)
+        const result = {
+            id: series.id,
+            label: `Serie ${index + 1}`,
+            price: Number(series.price).toFixed(2),
+            sphereMin: series.sphereMin,
+            sphereMax: series.sphereMax,
+            cylinderMin: series.cylinderMin,
+            cylinderMax: series.cylinderMax,
+            total: options.length || validation.total,
+            created: 0,
+            skipped: 0,
+            hasImage: Boolean(series.image)
         }
+
+        for (const option of options) {
+            const sku = buildLensSku(supplierPrefix, option.sphere, option.cylinder)
+
+            try {
+                await createProductItemService(buildLensItemFormData(productId, sku, series, fileName))
+                result.created += 1
+            } catch (error) {
+                const message = normalizeApiError(error)
+
+                if (String(message).toLowerCase().includes('sku') || String(message).toLowerCase().includes('identificador')) {
+                    result.skipped += 1
+                    continue
+                }
+
+                throw error
+            }
+        }
+
+        seriesResults.push(result)
     }
 
     return seriesResults
@@ -722,42 +768,12 @@ async function submitForm() {
         }
 
         if (selectedTypeSlug.value === 'micas') {
-            const seriesResults = []
-
-            for (const [index, series] of lensSeriesForms.entries()) {
-                const validation = lensSeriesValidations.value[index]
-                const response = await batchCreateLensItemsService({
-                    product_id: Number(product.id),
-                    price: Number(series.price).toFixed(2),
-                    ...validation.payload
-                })
-
-                seriesResults.push({
-                    id: series.id,
-                    label: `Serie ${index + 1}`,
-                    price: Number(series.price).toFixed(2),
-                    sphereMin: series.sphereMin,
-                    sphereMax: series.sphereMax,
-                    cylinderMin: series.cylinderMin,
-                    cylinderMax: series.cylinderMax,
-                    total: lensSeriesPreviewCounts.value[index] ?? validation.total,
-                    created: Number(response.created ?? 0),
-                    skipped: Number(response.skipped ?? 0),
-                    imageApplied: 0,
-                    hasImage: Boolean(series.image),
-                    series,
-                    validation
-                })
-            }
-
-            await applyLensSeriesImages(product.id, seriesResults)
-
+            const seriesResults = await createLensProductItems(product.id)
             const createdTotal = seriesResults.reduce((total, result) => total + result.created, 0)
             const skippedTotal = seriesResults.reduce((total, result) => total + result.skipped, 0)
-            const imagesAppliedTotal = seriesResults.reduce((total, result) => total + result.imageApplied, 0)
 
             createdLensSeriesResults.value = seriesResults
-            successResult.value = `Mica creada en ${seriesResults.length} series. Items generados: ${createdTotal}. Existentes: ${skippedTotal}. Imágenes aplicadas: ${imagesAppliedTotal}.`
+            successResult.value = `Mica creada en ${seriesResults.length} series. Items generados: ${createdTotal}. Existentes: ${skippedTotal}. Cada serie conserva su propia imagen.`
         }
 
         toast.add({
@@ -767,9 +783,7 @@ async function submitForm() {
             life: 7000
         })
 
-        if (selectedTypeSlug.value !== 'micas') {
-            resetForm()
-        }
+        resetFormAfterSubmit()
     } catch (error) {
         const detail = error?.errors
             ? normalizeApiError(error)
@@ -858,7 +872,9 @@ onMounted(async () => {
                             <span v-else class="text-sky-400 text-5xl font-bold select-none">+</span>
                         </span>
                     </button>
-                    <p class="text-sm text-center text-gray-600">Imagen para producto e items</p>
+                    <p class="text-sm text-center text-gray-600">
+                        {{ selectedTypeSlug === 'micas' ? 'Imagen principal de tienda' : 'Imagen para producto e items' }}
+                    </p>
                 </div>
 
                 <div class="grid md:grid-cols-2 grid-cols-1 gap-4">
@@ -1068,15 +1084,15 @@ onMounted(async () => {
                                         class="hidden"
                                         @change="assignLensSeriesImage($event, series)"
                                     >
-                                    <span v-if="series.previewUrl" class="flex w-full flex-col items-center gap-2">
+                                    <span v-if="series.previewUrl || imagePreview" class="flex w-full flex-col items-center gap-2">
                                         <img
-                                            :src="series.previewUrl"
+                                            :src="series.previewUrl || imagePreview"
                                             alt="Imagen de serie"
                                             class="h-24 w-full rounded-md bg-white object-contain object-center"
                                         >
-                                        <span>Imagen propia</span>
+                                        <span>{{ series.previewUrl ? 'Imagen propia' : 'Imagen principal' }}</span>
                                     </span>
-                                    <span v-else>Usar imagen del producto</span>
+                                    <span v-else>Usar imagen principal</span>
                                 </label>
                                 <button
                                     v-if="series.previewUrl"
@@ -1139,7 +1155,7 @@ onMounted(async () => {
                 <div>
                     <h3 class="text-xl font-bold text-emerald-800">Series de micas creadas</h3>
                     <p class="text-sm font-medium text-emerald-700">
-                        Cada serie se creó con su precio. Si agregaste imagen de serie, se aplicó a las combinaciones de ese rango.
+                        Cada serie se creó con su precio e imagen propia desde el guardado inicial.
                     </p>
                 </div>
                 <div class="grid gap-3 md:grid-cols-2">
@@ -1163,7 +1179,7 @@ onMounted(async () => {
                             <div>Esperadas: {{ seriesResult.total }}</div>
                             <div>Generadas: {{ seriesResult.created }}</div>
                             <div>Existentes: {{ seriesResult.skipped }}</div>
-                            <div>Imágenes aplicadas: {{ seriesResult.imageApplied }}</div>
+                            <div>{{ seriesResult.hasImage ? 'Imagen de serie' : 'Imagen principal' }}</div>
                         </div>
                     </div>
                 </div>

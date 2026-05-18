@@ -3,16 +3,14 @@ import router from '@/app/router';
 import { useCartStore } from '@/contexts/catalog/stores/cart';
 import { useAuthStore } from '@/contexts/identity/stores/auth';
 import { api } from '@/shared/infrastructure/http/api';
-import { buildProductItemsByProductId, enrichProduct, getCategorySlug } from '@/shared/utils/productApiAdapters';
+import { buildLensSeries, buildProductItemsByProductId, chooseRepresentativeProductItem, enrichProduct, getCategorySlug } from '@/shared/utils/productApiAdapters';
 import { normalizeApiError } from '@/shared/utils/normalizeApiError';
 import Button from 'primevue/button';
-import Slider from 'primevue/slider';
 import { useToast } from 'primevue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
-const STEP_CENTS = 25
 const MICA_CATEGORY_ID = 1
 const ARMAZON_CATEGORY_ID = 2
 
@@ -30,9 +28,8 @@ const productItemsForProduct = ref([])
 const lensProductItems = ref([])
 const frameProductItems = ref([])
 const productConfigurations = ref([])
-const selectedSphereRange = ref([0, 0])
-const selectedCylinderRange = ref([0, 0])
 const selectedFrameOptions = ref({})
+const selectedLensSeriesQuantities = ref({})
 
 const formatLensValue = (value) => {
     const numericValue = Number(value ?? 0)
@@ -42,58 +39,6 @@ const formatLensValue = (value) => {
     }
 
     return numericValue.toFixed(2)
-}
-
-const parseLensSku = (sku) => {
-    const normalizedSku = String(sku ?? '').trim().toUpperCase()
-    const match = normalizedSku.match(/-S([NP]?)(\d{3})-CN(\d{3})$/)
-
-    if (!match) return null
-
-    const spherePrefix = match[1]
-    const sphereMagnitude = Number(match[2]) / 100
-    const cylinderMagnitude = Number(match[3]) / 100
-
-    let sphere = 0
-
-    if (spherePrefix === 'N') {
-        sphere = -sphereMagnitude
-    } else if (spherePrefix === 'P') {
-        sphere = sphereMagnitude
-    }
-
-    return {
-        sphere: Number(sphere.toFixed(2)),
-        cylinder: Number((-cylinderMagnitude).toFixed(2))
-    }
-}
-
-const buildLensVariants = (items) => {
-    const sphereValues = new Set()
-    const cylinderValues = new Set()
-    const combinations = new Map()
-
-    for (const item of items) {
-        const parsedSku = parseLensSku(item?.SKU)
-
-        if (!parsedSku) continue
-
-        sphereValues.add(parsedSku.sphere)
-        cylinderValues.add(parsedSku.cylinder)
-        combinations.set(`${parsedSku.sphere}|${parsedSku.cylinder}`, {
-            ...item,
-            sphere: parsedSku.sphere,
-            cylinder: parsedSku.cylinder
-        })
-    }
-
-    const sortNumbers = (left, right) => left - right
-
-    return {
-        sphereValues: [...sphereValues].sort(sortNumbers),
-        cylinderValues: [...cylinderValues].sort(sortNumbers),
-        combinations
-    }
 }
 
 const productCategorySlug = computed(() => getCategorySlug(product.value?.category?.name ?? product.value?.category_name ?? product.value?.category ?? ''))
@@ -107,7 +52,8 @@ const shouldShowProductCode = computed(() => {
     )
 })
 
-const lensVariants = computed(() => buildLensVariants(lensProductItems.value))
+const lensSeries = computed(() => buildLensSeries(lensProductItems.value, product.value?.image_url))
+const hasLensSeries = computed(() => lensSeries.value.length > 0)
 
 const parseStockValue = (value) => {
     const parsed = Number(value)
@@ -143,75 +89,6 @@ const getProductItemStock = (item) => {
     }, 0)
 }
 
-const sphereSliderBounds = computed(() => {
-    const values = lensVariants.value.sphereValues
-
-    return {
-        min: values.length > 0 ? values[0] : -6,
-        max: values.length > 0 ? values[values.length - 1] : 6
-    }
-})
-
-const cylinderSliderBounds = computed(() => {
-    const values = lensVariants.value.cylinderValues
-
-    return {
-        min: values.length > 0 ? values[0] : -6,
-        max: values.length > 0 ? values[values.length - 1] : 0
-    }
-})
-
-const availableSphereRange = computed(() => {
-    if (!isLensProduct.value || lensVariants.value.sphereValues.length === 0) return null
-
-    return {
-        min: sphereSliderBounds.value.min,
-        max: sphereSliderBounds.value.max
-    }
-})
-
-const availableCylinderRange = computed(() => {
-    if (!isLensProduct.value || lensVariants.value.cylinderValues.length === 0) return null
-
-    return {
-        min: cylinderSliderBounds.value.max,
-        max: cylinderSliderBounds.value.min
-    }
-})
-
-const selectedLensItem = computed(() => {
-    if (!isLensProduct.value) return null
-
-    const sphereStart = Number(selectedSphereRange.value?.[0])
-    const cylinderStart = Number(selectedCylinderRange.value?.[0])
-
-    return lensVariants.value.combinations.get(`${sphereStart}|${cylinderStart}`) ?? null
-})
-
-const selectedLensItems = computed(() => {
-    if (!isLensProduct.value) return []
-
-    const sphereStart = Number(selectedSphereRange.value?.[0])
-    const sphereEnd = Number(selectedSphereRange.value?.[1])
-    const cylinderStart = Number(selectedCylinderRange.value?.[0])
-    const cylinderEnd = Number(selectedCylinderRange.value?.[1])
-
-    return [...lensVariants.value.combinations.values()]
-        .filter((item) => (
-            Number(item.sphere) >= sphereStart &&
-            Number(item.sphere) <= sphereEnd &&
-            Number(item.cylinder) >= cylinderStart &&
-            Number(item.cylinder) <= cylinderEnd
-        ))
-        .sort((left, right) => {
-            if (left.sphere !== right.sphere) {
-                return left.sphere - right.sphere
-            }
-
-            return left.cylinder - right.cylinder
-        })
-})
-
 const selectedStandardItem = computed(() => {
     if (isLensProduct.value || isFrameProduct.value) return null
 
@@ -220,23 +97,29 @@ const selectedStandardItem = computed(() => {
         ?? null
 })
 
-const selectedLensUnitPrice = computed(() => {
-    if (!isLensProduct.value) return Number(product.value?.price ?? 0)
+const selectedLensSeriesCartItems = computed(() => {
+    if (!isLensProduct.value) return []
 
-    const firstSelectedItem = selectedLensItems.value[0] ?? selectedLensItem.value
-    const price = Number(firstSelectedItem?.price ?? product.value?.price ?? 0)
+    return lensSeries.value
+        .map((series) => {
+            const quantity = Math.max(0, Number(selectedLensSeriesQuantities.value[series.key] ?? 0))
 
-    return Number.isFinite(price) ? price : 0
+            if (quantity <= 0 || !series.representativeItem?.id) return null
+
+            return {
+                series,
+                quantity
+            }
+        })
+        .filter(Boolean)
 })
 
-const selectedLensTotalPrice = computed(() => {
-    if (!isLensProduct.value) return Number(product.value?.price ?? 0)
+const selectedLensSeriesTotalQuantity = computed(() => {
+    return selectedLensSeriesCartItems.value.reduce((total, entry) => total + entry.quantity, 0)
+})
 
-    return selectedLensItems.value.reduce((total, item) => {
-        const itemPrice = Number(item?.price ?? selectedLensUnitPrice.value)
-
-        return total + (Number.isFinite(itemPrice) ? itemPrice : 0)
-    }, 0)
+const selectedLensSeriesTotalPrice = computed(() => {
+    return selectedLensSeriesCartItems.value.reduce((total, entry) => total + (entry.series.price * entry.quantity), 0)
 })
 
 const normalizeVariationName = (value) => {
@@ -383,25 +266,35 @@ const selectedFrameVariationOptions = computed(() => {
 
 const purchaseAvailability = computed(() => {
     if (isLensProduct.value) {
-        const selectedItems = selectedLensItems.value
-        const availableItems = selectedItems.filter((item) => getProductItemStock(item) > 0)
-        const stock = availableItems.reduce((total, item) => total + getProductItemStock(item), 0)
+        const selectedSeries = selectedLensSeriesCartItems.value
+        const stock = selectedSeries.reduce((total, entry) => total + entry.series.totalStock, 0)
 
-        if (selectedItems.length === 0) {
+        if (!hasLensSeries.value) {
             return {
                 isAvailable: false,
                 stock: 0,
                 label: 'No disponible',
-                detail: 'No hay combinaciones seleccionadas con inventario.'
+                detail: 'Esta mica no tiene series disponibles.'
             }
         }
 
-        if (availableItems.length !== selectedItems.length) {
+        if (selectedSeries.length === 0) {
+            return {
+                isAvailable: false,
+                stock: 0,
+                label: 'Selecciona una serie',
+                detail: 'Elige la cantidad de al menos una serie para comprar.'
+            }
+        }
+
+        const unavailableSeries = selectedSeries.filter((entry) => entry.series.totalStock <= 0)
+
+        if (unavailableSeries.length > 0) {
             return {
                 isAvailable: false,
                 stock,
                 label: 'No disponible',
-                detail: `${availableItems.length} de ${selectedItems.length} combinaciones tienen inventario.`
+                detail: `${unavailableSeries.length} series seleccionadas no tienen inventario.`
             }
         }
 
@@ -409,7 +302,7 @@ const purchaseAvailability = computed(() => {
             isAvailable: true,
             stock,
             label: 'Disponible',
-            detail: `${selectedItems.length} combinaciones disponibles.`
+            detail: `${selectedLensSeriesTotalQuantity.value} series seleccionadas.`
         }
     }
 
@@ -424,20 +317,9 @@ const purchaseAvailability = computed(() => {
     }
 })
 
-const lensSelectionSummary = computed(() => {
-    if (!isLensProduct.value) return null
-
-    return {
-        sphereStart: formatLensValue(selectedSphereRange.value[0]),
-        sphereEnd: formatLensValue(selectedSphereRange.value[1]),
-        cylinderStart: formatLensValue(selectedCylinderRange.value[0]),
-        cylinderEnd: formatLensValue(selectedCylinderRange.value[1])
-    }
-})
-
 const isAddToCartDisabled = computed(() => {
     if (isLensProduct.value) {
-        return selectedLensItems.value.length === 0 || !purchaseAvailability.value.isAvailable
+        return selectedLensSeriesCartItems.value.length === 0 || !purchaseAvailability.value.isAvailable
     }
 
     if (isFrameProduct.value) {
@@ -447,22 +329,19 @@ const isAddToCartDisabled = computed(() => {
     return !product.value?.product_item_id || !purchaseAvailability.value.isAvailable
 })
 
-function snapRangeToBounds(range, bounds) {
-    const min = Number(bounds?.min ?? 0)
-    const max = Number(bounds?.max ?? 0)
-    const rawStart = Number(range?.[0] ?? min)
-    const rawEnd = Number(range?.[1] ?? max)
-    const start = Math.min(Math.max(rawStart, min), max)
-    const end = Math.min(Math.max(rawEnd, min), max)
-
-    return start <= end ? [start, end] : [end, start]
+function setLensSeriesQuantity(seriesKey, quantity) {
+    selectedLensSeriesQuantities.value = {
+        ...selectedLensSeriesQuantities.value,
+        [seriesKey]: Math.max(0, Number(quantity) || 0)
+    }
 }
 
-function initializeLensSelectors() {
-    if (!isLensProduct.value) return
+function decreaseLensSeriesQuantity(seriesKey) {
+    setLensSeriesQuantity(seriesKey, Number(selectedLensSeriesQuantities.value[seriesKey] ?? 0) - 1)
+}
 
-    selectedSphereRange.value = [sphereSliderBounds.value.min, sphereSliderBounds.value.max]
-    selectedCylinderRange.value = [cylinderSliderBounds.value.max, cylinderSliderBounds.value.min]
+function increaseLensSeriesQuantity(seriesKey) {
+    setLensSeriesQuantity(seriesKey, Number(selectedLensSeriesQuantities.value[seriesKey] ?? 0) + 1)
 }
 
 function initializeFrameSelectors() {
@@ -500,33 +379,6 @@ function isFrameOptionAvailable(variationId, optionId) {
     ))
 }
 
-watch(lensVariants, (variants) => {
-    if (!isLensProduct.value || variants.sphereValues.length === 0 || variants.cylinderValues.length === 0) {
-        return
-    }
-
-    if (selectedSphereRange.value.length !== 2 || selectedCylinderRange.value.length !== 2) {
-        initializeLensSelectors()
-        return
-    }
-
-    selectedSphereRange.value = snapRangeToBounds(selectedSphereRange.value, sphereSliderBounds.value)
-    selectedCylinderRange.value = snapRangeToBounds(selectedCylinderRange.value, cylinderSliderBounds.value)
-}, { immediate: true })
-
-watch(selectedLensItem, (item) => {
-    if (!isLensProduct.value) return
-
-    product.value = {
-        ...product.value,
-        product_item_id: item?.id ?? null,
-        code: item?.SKU ?? product.value.code,
-        price: item?.price ?? product.value.price,
-        image_url: item?.product_image ?? product.value.image_url,
-        stock: getProductItemStock(item)
-    }
-}, { immediate: true })
-
 watch(frameVariantData, (variantData) => {
     if (!isFrameProduct.value || variantData.variations.length === 0) return
 
@@ -543,7 +395,6 @@ watch(selectedFrameItem, (item) => {
     const nextProductItemId = item?.id ?? null
     const nextCode = item?.SKU ?? product.value.code
     const nextPrice = item?.price ?? product.value.price
-    const nextImageUrl = item?.product_image ?? product.value.image_url
     const nextStock = getProductItemStock(item)
     const nextVariationOptions = selectedFrameVariationOptions.value
 
@@ -551,7 +402,6 @@ watch(selectedFrameItem, (item) => {
         product.value?.product_item_id === nextProductItemId &&
         product.value?.code === nextCode &&
         product.value?.price === nextPrice &&
-        product.value?.image_url === nextImageUrl &&
         product.value?.stock === nextStock &&
         JSON.stringify(product.value?.variation_options ?? []) === JSON.stringify(nextVariationOptions)
     ) {
@@ -564,7 +414,6 @@ watch(selectedFrameItem, (item) => {
         code: nextCode,
         SKU: nextCode,
         price: nextPrice,
-        image_url: nextImageUrl,
         stock: nextStock,
         variation_options: nextVariationOptions
     }
@@ -602,7 +451,7 @@ onMounted(async () => {
         productConfigurations.value = Array.isArray(productConfigurationsResponse.data) ? productConfigurationsResponse.data : []
         productItemsForProduct.value = productItems
             .filter((item) => Number(item?.product_id) === Number(enrichedProduct?.id))
-        const primaryProductItem = productItemsForProduct.value[0] ?? null
+        const primaryProductItem = chooseRepresentativeProductItem(productItemsForProduct.value)
 
         product.value = {
             ...enrichedProduct,
@@ -610,15 +459,11 @@ onMounted(async () => {
             code: primaryProductItem?.SKU ?? enrichedProduct.code,
             SKU: primaryProductItem?.SKU ?? enrichedProduct.SKU,
             price: primaryProductItem?.price ?? enrichedProduct.price,
-            image_url: primaryProductItem?.product_image ?? enrichedProduct.image_url,
+            image_url: enrichedProduct.image_url,
             stock: getProductItemStock(primaryProductItem)
         }
         lensProductItems.value = productItemsForProduct.value
         frameProductItems.value = productItemsForProduct.value
-
-        if (isLensProduct.value) {
-            initializeLensSelectors()
-        }
 
         if (isFrameProduct.value) {
             initializeFrameSelectors()
@@ -680,20 +525,25 @@ const addToCart = async () => {
         isAddingToCart.value = true
 
         if (isLensProduct.value) {
-            await cart.addProducts(selectedLensItems.value.map((item) => ({
-                ...product.value,
-                product_item_id: item.id,
-                code: item.SKU ?? product.value.code,
-                SKU: item.SKU ?? product.value.code,
-                price: item.price ?? product.value.price,
-                image_url: item.product_image ?? product.value.image_url,
-                stock: getProductItemStock(item)
-            })), 1)
+            for (const entry of selectedLensSeriesCartItems.value) {
+                const item = entry.series.representativeItem
+
+                await cart.addProduct({
+                    ...product.value,
+                    product_item_id: item.id,
+                    code: item.SKU ?? product.value.code,
+                    SKU: item.SKU ?? product.value.code,
+                    name: `${product.value.name} - ${entry.series.label}`,
+                    price: entry.series.price,
+                    image_url: entry.series.image_url || product.value.image_url,
+                    stock: entry.series.totalStock
+                }, entry.quantity)
+            }
 
             toast.add({
                 severity: 'success',
                 summary: 'Agregado',
-                detail: `${selectedLensItems.value.length} variantes agregadas al carrito.`,
+                detail: `${selectedLensSeriesTotalQuantity.value} series agregadas al carrito.`,
                 life: 3000
             })
 
@@ -836,66 +686,87 @@ const editProduct = () => {
                     </div>
 
                     <div
-                        v-if="isLensProduct"
-                        class="mt-2 flex flex-col gap-5 rounded-2xl border border-sky-100 bg-sky-50/80 p-5"
+                        v-if="isLensProduct && hasLensSeries"
+                        class="mt-2 flex flex-col gap-5 rounded-xl border border-sky-100 bg-sky-50/80 p-5"
                     >
                         <div class="flex flex-col gap-1">
                             <div class="font-semibold text-lg text-sky-800">
-                                Configura tu mica
+                                Series disponibles
                             </div>
                             <div class="text-sm text-slate-600">
-                                Ajusta el rango de esferas y el rango de cilindros disponibles para esta mica.
+                                Selecciona las series que quieres agregar a tu pedido.
                             </div>
                         </div>
 
-                        <div class="flex flex-col gap-3">
-                            <div class="flex items-center justify-between gap-4">
-                                <div class="font-semibold text-sky-800">Esferas</div>
-                                <div class="text-sm font-medium text-sky-800">
-                                    {{ lensSelectionSummary?.sphereStart }} a {{ lensSelectionSummary?.sphereEnd }}
+                        <div class="grid gap-3">
+                            <div
+                                v-for="series in lensSeries"
+                                :key="series.key"
+                                class="rounded-xl border border-sky-100 bg-white p-4"
+                            >
+                                <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+                                    <img
+                                        :src="`${backendUrl}/storage/${series.image_url || product.image_url}`"
+                                        :alt="series.label"
+                                        class="h-24 w-24 shrink-0 rounded-lg border border-slate-200 bg-white object-contain object-center"
+                                    >
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-start justify-between gap-2">
+                                            <div>
+                                                <div class="font-bold text-sky-800">{{ series.label }}</div>
+                                                <div class="text-sm font-medium text-slate-600">
+                                                    {{ series.items.length }} combinaciones
+                                                </div>
+                                            </div>
+                                            <div class="text-xl font-bold text-sky-800">
+                                                ${{ formatPrice(series.price) }}
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 text-sm font-medium text-slate-600">
+                                            Esfera {{ formatLensValue(series.sphereMin) }} a {{ formatLensValue(series.sphereMax) }}
+                                        </div>
+                                        <div class="text-sm font-medium text-slate-600">
+                                            Cilindro {{ formatLensValue(series.cylinderMax) }} a {{ formatLensValue(series.cylinderMin) }}
+                                        </div>
+                                        <div class="mt-1 text-sm font-semibold text-emerald-700">
+                                            Stock total: {{ series.totalStock }}
+                                        </div>
+                                    </div>
+                                    <div class="grid w-full grid-cols-[40px_1fr_40px] gap-2 sm:w-36">
+                                        <button
+                                            type="button"
+                                            class="rounded-lg bg-sky-700 text-lg font-bold text-white transition hover:bg-sky-800"
+                                            @click="decreaseLensSeriesQuantity(series.key)"
+                                        >
+                                            -
+                                        </button>
+                                        <input
+                                            :value="selectedLensSeriesQuantities[series.key] ?? 0"
+                                            type="number"
+                                            min="0"
+                                            class="min-w-0 rounded-lg border border-slate-300 px-2 py-2 text-center font-bold text-sky-800"
+                                            @input="setLensSeriesQuantity(series.key, $event.target.value)"
+                                        >
+                                        <button
+                                            type="button"
+                                            class="rounded-lg bg-sky-700 text-lg font-bold text-white transition hover:bg-sky-800"
+                                            @click="increaseLensSeriesQuantity(series.key)"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                            <Slider
-                                v-model="selectedSphereRange"
-                                range
-                                :min="sphereSliderBounds.min"
-                                :max="sphereSliderBounds.max"
-                                :step="STEP_CENTS / 100"
-                                class="w-full"
-                            />
-                            <div class="text-sm text-slate-600">
-                                Disponibles en inventario: {{ formatLensValue(availableSphereRange?.min) }} a {{ formatLensValue(availableSphereRange?.max) }}
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col gap-3">
-                            <div class="flex items-center justify-between gap-4">
-                                <div class="font-semibold text-sky-800">Cilindros</div>
-                                <div class="text-sm font-medium text-sky-800">
-                                    {{ lensSelectionSummary?.cylinderStart }} a {{ lensSelectionSummary?.cylinderEnd }}
-                                </div>
-                            </div>
-                            <Slider
-                                v-model="selectedCylinderRange"
-                                range
-                                :min="cylinderSliderBounds.min"
-                                :max="cylinderSliderBounds.max"
-                                :step="STEP_CENTS / 100"
-                                class="w-full"
-                            />
-                            <div class="text-sm text-slate-600">
-                                Disponibles en inventario: {{ formatLensValue(availableCylinderRange?.min) }} a {{ formatLensValue(availableCylinderRange?.max) }}
                             </div>
                         </div>
 
                         <div class="rounded-xl border-2 border-slate-500 bg-white px-5 py-4">
                             <div class="flex items-center justify-between gap-4 text-lg text-slate-600">
-                                <span>Total de combinaciones:</span>
-                                <span class="font-semibold text-slate-600">{{ selectedLensItems.length }}</span>
+                                <span>Series seleccionadas:</span>
+                                <span class="font-semibold text-slate-600">{{ selectedLensSeriesTotalQuantity }}</span>
                             </div>
                             <div class="mt-2 flex items-center justify-between gap-4 text-xl text-slate-600">
-                                <span>Precio total estimado:</span>
-                                <span class="font-bold text-3xl text-sky-800">${{ formatPrice(selectedLensTotalPrice) }}</span>
+                                <span>Total estimado:</span>
+                                <span class="font-bold text-3xl text-sky-800">${{ formatPrice(selectedLensSeriesTotalPrice) }}</span>
                             </div>
                         </div>
                     </div>

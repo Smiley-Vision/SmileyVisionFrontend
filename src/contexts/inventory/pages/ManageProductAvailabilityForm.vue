@@ -1,6 +1,6 @@
 <script setup>
 import { api } from '@/shared/infrastructure/http/api';
-import { getCategorySlug } from '@/shared/utils/productApiAdapters';
+import { buildLensSeries, getCategorySlug } from '@/shared/utils/productApiAdapters';
 import { useToast } from 'primevue';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
@@ -16,6 +16,7 @@ const product = ref({})
 const productItems = ref([])
 const productConfigurations = ref([])
 const selectedProductItemId = ref(null)
+const selectedLensSeriesKey = ref(null)
 const selectedOfficeID = ref('')
 const productStock = ref(0)
 const initialStock = ref(0)
@@ -45,16 +46,29 @@ const productCategorySlug = computed(() => {
 })
 
 const hasProductItems = computed(() => productItems.value.length > 0)
+const isLensProduct = computed(() => productCategorySlug.value === 'micas')
+const lensSeries = computed(() => buildLensSeries(productItems.value, product.value?.image_url ?? product.value?.product_image ?? ''))
+const selectedLensSeries = computed(() => {
+    return lensSeries.value.find((series) => series.key === selectedLensSeriesKey.value) ?? null
+})
 
 const selectedOfficeName = computed(() => {
     return branchOffices.value.find((office) => Number(office.id) === Number(selectedOfficeID.value))?.name ?? ''
 })
 
 const totalStock = computed(() => {
+    if (isLensProduct.value) {
+        return lensSeries.value.reduce((total, series) => total + series.totalStock, 0)
+    }
+
     return productItems.value.reduce((total, item) => total + getItemTotalStock(item), 0)
 })
 
-const selectedItemTotalStock = computed(() => getItemTotalStock(selectedProductItem.value))
+const selectedItemTotalStock = computed(() => {
+    if (isLensProduct.value) return selectedLensSeries.value?.totalStock ?? 0
+
+    return getItemTotalStock(selectedProductItem.value)
+})
 
 const isStockModified = computed(() => {
     return Number(productStock.value) !== Number(initialStock.value)
@@ -63,7 +77,9 @@ const isStockModified = computed(() => {
 const stockDelta = computed(() => Number(productStock.value) - Number(initialStock.value))
 
 const selectedItemImageSrc = computed(() => {
-    const imagePath = selectedProductItem.value?.product_image ?? product.value?.product_image ?? product.value?.image_url
+    const imagePath = isLensProduct.value
+        ? selectedLensSeries.value?.image_url || product.value?.image_url || product.value?.product_image
+        : product.value?.image_url ?? product.value?.product_image
 
     return imagePath ? `${backendUrl}/storage/${imagePath}` : ''
 })
@@ -131,17 +147,18 @@ function getFrameVariationDetails(item) {
 
 function parseLensSku(sku) {
     const normalizedSku = String(sku ?? '').trim().toUpperCase()
-    const match = normalizedSku.match(/-S([NP]?)(\d{3})-CN(\d{3})$/)
+    const match = normalizedSku.match(/-S([NP]?)(\d{3})-C(N?)(\d{3})$/)
 
     if (!match) return null
 
     const spherePrefix = match[1]
     const sphereMagnitude = Number(match[2]) / 100
-    const cylinderMagnitude = Number(match[3]) / 100
+    const cylinderPrefix = match[3]
+    const cylinderMagnitude = Number(match[4]) / 100
 
     return {
         sphere: spherePrefix === 'N' ? -sphereMagnitude : spherePrefix === 'P' ? sphereMagnitude : 0,
-        cylinder: -cylinderMagnitude
+        cylinder: cylinderPrefix === 'N' ? -cylinderMagnitude : cylinderMagnitude
     }
 }
 
@@ -172,7 +189,9 @@ function getItemSubtitle(item) {
 }
 
 function refreshStockFromSelection() {
-    const currentStock = getItemOfficeStock(selectedProductItem.value, selectedOfficeID.value)
+    const currentStock = isLensProduct.value
+        ? getItemOfficeStock(selectedLensSeries.value?.representativeItem, selectedOfficeID.value)
+        : getItemOfficeStock(selectedProductItem.value, selectedOfficeID.value)
 
     productStock.value = currentStock
     initialStock.value = currentStock
@@ -180,6 +199,11 @@ function refreshStockFromSelection() {
 
 function selectProductItem(itemId) {
     selectedProductItemId.value = itemId
+    refreshStockFromSelection()
+}
+
+function selectLensSeries(seriesKey) {
+    selectedLensSeriesKey.value = seriesKey
     refreshStockFromSelection()
 }
 
@@ -198,39 +222,53 @@ function increase() {
 
 async function submitForm() {
     try {
-        if (!selectedOfficeID.value || selectedProductItemId.value === null) {
+        if (!selectedOfficeID.value || (!isLensProduct.value && selectedProductItemId.value === null) || (isLensProduct.value && !selectedLensSeries.value)) {
             throw new Error('Datos incompletos para actualizar el inventario')
         }
 
         isSubmitting.value = true
 
-        await api.post('inventory', {
-            product_item_id: Number(selectedProductItemId.value),
-            branch_office_id: Number(selectedOfficeID.value),
-            stock: Number(productStock.value)
-        })
+        const targetItems = isLensProduct.value
+            ? selectedLensSeries.value.items
+            : [selectedProductItem.value]
 
-        const inventoryRows = getItemInventoryRows(selectedProductItem.value)
-        const existingRow = inventoryRows.find((row) => Number(row.branch_office_id) === Number(selectedOfficeID.value))
+        for (const item of targetItems) {
+            await api.post('inventory', {
+                product_item_id: Number(item.id),
+                branch_office_id: Number(selectedOfficeID.value),
+                stock: Number(productStock.value)
+            })
 
-        if (existingRow) {
-            existingRow.stock = Number(productStock.value)
+            const inventoryRows = getItemInventoryRows(item)
+            const existingRow = inventoryRows.find((row) => Number(row.branch_office_id) === Number(selectedOfficeID.value))
+
+            if (existingRow) {
+                existingRow.stock = Number(productStock.value)
+            } else {
+                item.inventory = [
+                    ...inventoryRows,
+                    {
+                        product_item_id: Number(item.id),
+                        branch_office_id: Number(selectedOfficeID.value),
+                        stock: Number(productStock.value)
+                    }
+                ]
+            }
+        }
+
+        if (isLensProduct.value) {
+            selectedLensSeries.value.totalStock = selectedLensSeries.value.items.reduce((total, item) => total + getItemTotalStock(item), 0)
         } else {
-            selectedProductItem.value.inventory = [
-                ...inventoryRows,
-                {
-                    product_item_id: Number(selectedProductItemId.value),
-                    branch_office_id: Number(selectedOfficeID.value),
-                    stock: Number(productStock.value)
-                }
-            ]
+            selectedProductItem.value.stock = Number(productStock.value)
         }
 
         initialStock.value = Number(productStock.value)
         toast.add({
             severity: 'success',
             summary: 'Disponibilidad actualizada',
-            detail: 'El stock de la variante se actualizó correctamente.',
+            detail: isLensProduct.value
+                ? 'El stock de la serie se actualizó correctamente.'
+                : 'El stock de la variante se actualizó correctamente.',
             life: 4000
         })
     } catch (error) {
@@ -259,6 +297,7 @@ async function retrieveData() {
         : []
 
     selectedProductItemId.value = productItems.value[0]?.id ?? null
+    selectedLensSeriesKey.value = lensSeries.value[0]?.key ?? null
     selectedOfficeID.value = branchOffices.value[0]?.id ?? ''
     refreshStockFromSelection()
 }
@@ -301,7 +340,7 @@ onMounted(async () => {
         <div class="flex flex-col gap-2">
             <h2 class="text-3xl font-bold text-sky-800">Disponibilidad de {{ product.name }}</h2>
             <p class="max-w-3xl text-sm font-medium text-slate-600">
-                Selecciona una variante y una sucursal. El valor que captures reemplaza el stock actual de esa variante en esa sucursal.
+                {{ isLensProduct ? 'Selecciona una serie y una sucursal. El valor que captures se aplicará a todas las combinaciones de esa serie.' : 'Selecciona una variante y una sucursal. El valor que captures reemplaza el stock actual de esa variante en esa sucursal.' }}
             </p>
         </div>
 
@@ -313,8 +352,10 @@ onMounted(async () => {
             <section class="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
                 <div class="flex items-center justify-between gap-4">
                     <div>
-                        <h3 class="text-xl font-bold text-sky-800">Variantes</h3>
-                        <p class="text-sm font-medium text-slate-500">{{ productItems.length }} SKU disponibles para administrar.</p>
+                        <h3 class="text-xl font-bold text-sky-800">{{ isLensProduct ? 'Series' : 'Variantes' }}</h3>
+                        <p class="text-sm font-medium text-slate-500">
+                            {{ isLensProduct ? `${lensSeries.length} series disponibles para administrar.` : `${productItems.length} SKU disponibles para administrar.` }}
+                        </p>
                     </div>
                     <div class="rounded-lg bg-sky-50 px-4 py-2 text-right">
                         <div class="text-xs font-semibold text-sky-600">Stock total</div>
@@ -322,7 +363,39 @@ onMounted(async () => {
                     </div>
                 </div>
 
-                <div class="grid gap-3 md:grid-cols-2">
+                <div v-if="isLensProduct" class="grid gap-3 md:grid-cols-2">
+                    <button
+                        v-for="series in lensSeries"
+                        :key="series.key"
+                        type="button"
+                        @click="selectLensSeries(series.key)"
+                        :class="[
+                            selectedLensSeriesKey === series.key
+                                ? 'border-sky-600 bg-sky-50'
+                                : 'border-slate-200 bg-white hover:border-sky-300',
+                            'flex min-h-32 gap-3 rounded-xl border-2 p-3 text-left transition'
+                        ]"
+                    >
+                        <img
+                            :src="`${backendUrl}/storage/${series.image_url || product.image_url || product.product_image}`"
+                            :alt="series.label"
+                            class="h-20 w-20 shrink-0 rounded-lg border border-slate-200 bg-white object-contain object-center"
+                        >
+                        <span class="flex min-w-0 flex-1 flex-col gap-1">
+                            <span class="font-bold text-sky-800">{{ series.label }}</span>
+                            <span class="text-sm font-medium text-slate-600">${{ Number(series.price || 0).toFixed(2) }}</span>
+                            <span class="text-xs font-medium text-slate-600">
+                                Esfera {{ formatLensValue(series.sphereMin) }} a {{ formatLensValue(series.sphereMax) }}
+                            </span>
+                            <span class="text-xs font-medium text-slate-600">
+                                Cilindro {{ formatLensValue(series.cylinderMax) }} a {{ formatLensValue(series.cylinderMin) }}
+                            </span>
+                            <span class="text-sm font-semibold text-emerald-700">Total: {{ series.totalStock }}</span>
+                        </span>
+                    </button>
+                </div>
+
+                <div v-else class="grid gap-3 md:grid-cols-2">
                     <button
                         v-for="item in productItems"
                         :key="item.id"
@@ -336,7 +409,7 @@ onMounted(async () => {
                         ]"
                     >
                         <img
-                            :src="`${backendUrl}/storage/${item.product_image}`"
+                            :src="selectedItemImageSrc"
                             alt="Variante"
                             class="h-20 w-20 shrink-0 rounded-lg border border-slate-200 bg-white object-contain object-center"
                         >
@@ -358,9 +431,13 @@ onMounted(async () => {
                         class="h-28 w-28 rounded-xl border border-sky-200 bg-white object-contain object-center"
                     >
                     <div class="flex flex-col justify-center">
-                        <div class="text-sm font-semibold text-slate-500">SKU seleccionado</div>
-                        <div class="text-2xl font-bold text-sky-800">{{ selectedProductItem?.SKU }}</div>
-                        <div class="text-sm font-medium text-slate-600">{{ getItemSubtitle(selectedProductItem) }}</div>
+                        <div class="text-sm font-semibold text-slate-500">{{ isLensProduct ? 'Serie seleccionada' : 'SKU seleccionado' }}</div>
+                        <div class="text-2xl font-bold text-sky-800">
+                            {{ isLensProduct ? selectedLensSeries?.label : selectedProductItem?.SKU }}
+                        </div>
+                        <div class="text-sm font-medium text-slate-600">
+                            {{ isLensProduct ? `$${Number(selectedLensSeries?.price || 0).toFixed(2)}` : getItemSubtitle(selectedProductItem) }}
+                        </div>
                     </div>
                 </div>
 
@@ -381,7 +458,9 @@ onMounted(async () => {
                 <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <div class="text-sm font-semibold text-slate-500">Stock actual en {{ selectedOfficeName }}</div>
                     <div class="mt-1 text-3xl font-bold text-sky-800">{{ initialStock }}</div>
-                    <div class="mt-1 text-sm font-medium text-slate-500">Stock total de la variante: {{ selectedItemTotalStock }}</div>
+                    <div class="mt-1 text-sm font-medium text-slate-500">
+                        Stock total {{ isLensProduct ? 'de la serie' : 'de la variante' }}: {{ selectedItemTotalStock }}
+                    </div>
                 </div>
 
                 <div>

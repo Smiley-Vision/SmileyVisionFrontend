@@ -37,6 +37,10 @@ export async function createFrameItemService(formData) {
     return (await api.post('product-items/frame', formData)).data
 }
 
+export async function createProductItemService(formData) {
+    return (await api.post('product-items', formData)).data
+}
+
 export async function getMicasProductsService() {
     return (await api.get('products/micas')).data
 }
