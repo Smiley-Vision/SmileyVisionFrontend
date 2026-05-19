@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict'
-import test from 'node:test'
+import { expect, test } from 'vitest'
 
 import {
     buildAddressPayload,
@@ -33,7 +32,7 @@ function createValidForm() {
 test('buildUserPayload normalizes the registration payload expected by the backend', () => {
     const form = createValidForm()
 
-    assert.deepEqual(buildUserPayload(form), {
+    expect(buildUserPayload(form)).toEqual({
         first_name: 'Juan',
         last_name: 'Perez',
         email: 'usuario@example.com',
@@ -45,7 +44,7 @@ test('buildUserPayload normalizes the registration payload expected by the backe
 test('buildAddressPayload creates the address payload tied to the registered user', () => {
     const form = createValidForm()
 
-    assert.deepEqual(buildAddressPayload(form, 15), {
+    expect(buildAddressPayload(form, 15)).toEqual({
         user_id: 15,
         city_id: 4,
         street: '56',
@@ -64,39 +63,34 @@ test('getRegistrationFormError rejects mismatched passwords before submitting', 
     const form = createValidForm()
     form.password_confirmation = 'different'
 
-    assert.equal(getRegistrationFormError(form), 'Las contrasenas no coinciden.')
+    expect(getRegistrationFormError(form)).toBe('Las contrasenas no coinciden.')
 })
 
 test('getRegistrationFormError accepts a complete valid form', () => {
-    assert.equal(getRegistrationFormError(createValidForm()), '')
+    expect(getRegistrationFormError(createValidForm())).toBe('')
 })
 
 test('getRegistrationFormError rejects emails longer than the database column', () => {
     const form = createValidForm()
     form.email = 'alejandro.castillo.avilez.30.06.71@gmail.com'
 
-    assert.equal(
-        getRegistrationFormError(form),
-        'El correo electronico no puede superar 40 caracteres.'
-    )
+    expect(getRegistrationFormError(form)).toBe('El correo electronico no puede superar 40 caracteres.')
 })
 
 test('getRegistrationApiErrorMessage maps backend SQL length errors to a readable message', () => {
-    assert.equal(
+    expect(
         getRegistrationApiErrorMessage({
             message: "SQLSTATE[22001]: Data too long for column 'email' at row 1"
-        }),
-        'El correo electronico no puede superar 40 caracteres.'
-    )
+        })
+    ).toBe('El correo electronico no puede superar 40 caracteres.')
 })
 
 test('getRegistrationApiErrorMessage returns the first validation error from Laravel', () => {
-    assert.equal(
+    expect(
         getRegistrationApiErrorMessage({
             errors: {
                 phone_number: ['El telefono ya esta en uso']
             }
-        }),
-        'El telefono ya esta en uso'
-    )
+        })
+    ).toBe('El telefono ya esta en uso')
 })

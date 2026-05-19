@@ -136,7 +136,7 @@ onMounted(async () => {
 
                 <div class="space-y-1">
                     <div class="font-medium text-gray-900 text-lg">{{ request.email }}</div>
-                    <div class="text-gray-600 text-sm">{{ request.request_body }}</div>
+                    <div class="text-gray-600 text-sm">{{ request.message }}</div>
                     <div class="text-gray-400 text-xs mt-1">Solicitado: {{ formatDate(request.created_at) }}</div>
                 </div>
 
