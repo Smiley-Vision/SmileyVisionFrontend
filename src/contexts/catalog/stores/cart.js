@@ -6,6 +6,8 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 const STORAGE_PREFIX = 'sv_cart_state_v1'
+const MICA_CATEGORY_ID = 1
+const ARMAZON_CATEGORY_ID = 2
 
 function toNumber(value, fallback = 0) {
     const parsed = Number(value)
@@ -49,6 +51,18 @@ function getProductItemStock(productItem) {
                 : []
 
     return inventoryRows.reduce((total, inventoryRow) => total + Math.max(0, toNumber(inventoryRow?.stock, 0)), 0)
+}
+
+function getCartItemImage(product, productItem) {
+    const categoryId = toNumber(product?.category_id, null)
+    const productItemImage = String(productItem?.product_image ?? productItem?.image_url ?? '').trim()
+    const productImage = String(product?.image_url ?? product?.product_image ?? '').trim()
+
+    if ([MICA_CATEGORY_ID, ARMAZON_CATEGORY_ID].includes(categoryId) && productItemImage) {
+        return productItemImage
+    }
+
+    return productImage || productItemImage
 }
 
 export const useCartStore = defineStore('cart', () => {
@@ -182,7 +196,7 @@ export const useCartStore = defineStore('cart', () => {
                 const productItem = productItemsById[normalizedItemId]
                 const productId = toNumber(productItem?.product_id, null)
                 const product = productsById[productId]
-                const productImage = String(product?.image_url ?? product?.product_image ?? '').trim()
+                const cartItemImage = getCartItemImage(product, productItem)
 
                 return {
                     cart_id: normalizedCartId,
@@ -193,7 +207,7 @@ export const useCartStore = defineStore('cart', () => {
                     sku: String(productItem?.SKU ?? ''),
                     name: String(product?.name ?? `Producto #${normalizedItemId}`),
                     description: String(product?.description ?? ''),
-                    image_url: productImage,
+                    image_url: cartItemImage,
                     price: toNumber(productItem?.price ?? product?.price, 0),
                     stock: getProductItemStock(productItem),
                     variation_options: variationOptionsByItemId[normalizedItemId] ?? [],

@@ -24,6 +24,7 @@ const productCode = route.params.code
 const isLoading = ref(true)
 const isAddingToCart = ref(false)
 const product = ref({})
+const baseProductImage = ref('')
 const productItemsForProduct = ref([])
 const lensProductItems = ref([])
 const frameProductItems = ref([])
@@ -130,6 +131,66 @@ const normalizeVariationName = (value) => {
         .trim()
 }
 
+const normalizeFrameMetadata = (value) => {
+    return normalizeVariationName(value).replace(/[^a-z0-9]+/g, ' ')
+}
+
+const getColorAliases = (value) => {
+    const normalized = normalizeFrameMetadata(value)
+    const aliasesByColor = {
+        negro: ['negro', 'black'],
+        plateado: ['plateado', 'plata', 'silver'],
+        plata: ['plateado', 'plata', 'silver'],
+        dorado: ['dorado', 'oro', 'gold'],
+        transparente: ['transparente', 'cristal', 'clear'],
+        azul: ['azul', 'blue'],
+        rojo: ['rojo', 'red'],
+        rosa: ['rosa', 'pink'],
+        cafe: ['cafe', 'brown'],
+        gris: ['gris', 'gray', 'grey'],
+        verde: ['verde', 'green']
+    }
+
+    return aliasesByColor[normalized] ?? [normalized]
+}
+
+const getFrameItemMetadataText = (item) => {
+    return normalizeFrameMetadata([
+        item?.SKU,
+        item?.product_image,
+        item?.image_url
+    ].filter(Boolean).join(' '))
+}
+
+function alignFrameColorOptionsWithItemImages(itemsById, variationsById) {
+    const colorVariations = [...variationsById.values()].filter((variation) => normalizeVariationName(variation.name) === 'color')
+
+    if (colorVariations.length === 0) return
+
+    for (const item of Object.values(itemsById)) {
+        const itemMetadata = getFrameItemMetadataText(item)
+
+        if (!itemMetadata) continue
+
+        for (const variation of colorVariations) {
+            const matchedOption = variation.options.find((option) => (
+                getColorAliases(option.value).some((alias) => itemMetadata.includes(alias))
+            ))
+
+            if (!matchedOption) continue
+
+            const previousOptionId = item.optionsByVariationId?.[variation.id]
+
+            if (previousOptionId) {
+                item.optionIds.delete(previousOptionId)
+            }
+
+            item.optionIds.add(matchedOption.id)
+            item.optionsByVariationId[variation.id] = matchedOption.id
+        }
+    }
+}
+
 const sortFrameVariations = (left, right) => {
     const order = {
         color: 1,
@@ -209,6 +270,8 @@ const frameVariantData = computed(() => {
         itemsById[itemId].optionsByVariationId[variationId] = optionId
     }
 
+    alignFrameColorOptionsWithItemImages(itemsById, variationsById)
+
     const variations = [...variationsById.values()]
         .map((variation) => ({
             ...variation,
@@ -242,6 +305,20 @@ const selectedFramePrice = computed(() => {
     const price = Number(selectedFrameItem.value?.price ?? product.value?.price ?? 0)
 
     return Number.isFinite(price) ? price : 0
+})
+
+const selectedFrameImage = computed(() => {
+    if (!isFrameProduct.value) return ''
+
+    return String(selectedFrameItem.value?.product_image ?? '').trim()
+})
+
+const displayProductImage = computed(() => {
+    if (isFrameProduct.value && selectedFrameImage.value) {
+        return selectedFrameImage.value
+    }
+
+    return baseProductImage.value || product.value?.image_url || ''
 })
 
 const selectedFrameVariationOptions = computed(() => {
@@ -396,6 +473,7 @@ watch(selectedFrameItem, (item) => {
     const nextCode = item?.SKU ?? product.value.code
     const nextPrice = item?.price ?? product.value.price
     const nextStock = getProductItemStock(item)
+    const nextImageUrl = item?.product_image || baseProductImage.value || product.value.image_url
     const nextVariationOptions = selectedFrameVariationOptions.value
 
     if (
@@ -403,6 +481,7 @@ watch(selectedFrameItem, (item) => {
         product.value?.code === nextCode &&
         product.value?.price === nextPrice &&
         product.value?.stock === nextStock &&
+        product.value?.image_url === nextImageUrl &&
         JSON.stringify(product.value?.variation_options ?? []) === JSON.stringify(nextVariationOptions)
     ) {
         return
@@ -414,6 +493,7 @@ watch(selectedFrameItem, (item) => {
         code: nextCode,
         SKU: nextCode,
         price: nextPrice,
+        image_url: nextImageUrl,
         stock: nextStock,
         variation_options: nextVariationOptions
     }
@@ -452,6 +532,7 @@ onMounted(async () => {
         productItemsForProduct.value = productItems
             .filter((item) => Number(item?.product_id) === Number(enrichedProduct?.id))
         const primaryProductItem = chooseRepresentativeProductItem(productItemsForProduct.value)
+        baseProductImage.value = enrichedProduct.image_url ?? ''
 
         product.value = {
             ...enrichedProduct,
@@ -608,7 +689,7 @@ const editProduct = () => {
                 
                 <!-- Product image -->
                 <img
-                    :src="`${backendUrl}/storage/${product.image_url}`"
+                    :src="`${backendUrl}/storage/${displayProductImage}`"
                     alt="Imagen del producto"
                     class="size-72 max-w-full object-contain object-center bg-white md:size-96 lg:size-[28rem] border-solid border-2 border-sky-600 rounded-lg shadow-xl"
                 >
