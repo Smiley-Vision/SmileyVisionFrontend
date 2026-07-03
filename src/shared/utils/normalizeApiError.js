@@ -1,46 +1,46 @@
 export function normalizeApiError(error) {
-    const firstValidationError = getFirstValidationError(error?.errors)
+  const firstValidationError = getFirstValidationError(error?.errors)
 
-    if (firstValidationError) {
-        return firstValidationError
-    }
+  if (firstValidationError) {
+    return firstValidationError
+  }
 
-    const message = getMessage(error)
+  const message = getMessage(error)
 
-    if (message) {
-        return message
-    }
+  if (message) {
+    return message
+  }
 
-    return 'Error inesperado'
+  return 'Error inesperado'
 }
 
 function getFirstValidationError(errors) {
-    if (!errors || typeof errors !== 'object') {
-        return ''
-    }
+  if (!errors || typeof errors !== 'object') {
+    return ''
+  }
 
-    const firstField = Object.keys(errors)[0]
-    const firstError = errors[firstField]
+  const firstField = Object.keys(errors)[0]
+  const firstError = errors[firstField]
 
-    if (Array.isArray(firstError)) {
-        return String(firstError[0] ?? '')
-    }
+  if (Array.isArray(firstError)) {
+    return String(firstError[0] ?? '')
+  }
 
-    return String(firstError || '')
+  return String(firstError || '')
 }
 
 function getMessage(error) {
-    if (typeof error === 'string') {
-        return error
-    }
+  if (typeof error === 'string') {
+    return error
+  }
 
-    const message = error?.message ?? error?.error
+  const message = error?.message ?? error?.error
 
-    if (!message) {
-        return ''
-    }
+  if (!message) {
+    return ''
+  }
 
-    const normalizedMessage = String(message)
+  const normalizedMessage = String(message)
 
-    return normalizedMessage.includes('[object Object]') ? '' : normalizedMessage
+  return normalizedMessage.includes('[object Object]') ? '' : normalizedMessage
 }

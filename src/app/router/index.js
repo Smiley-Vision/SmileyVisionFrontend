@@ -13,28 +13,28 @@ import { inventoryRoutes } from './modules/inventory.routes'
 import NotFoundView from '@/contexts/marketing/pages/NotFoundView.vue'
 
 const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
-    routes: [
-        ...marketingRoutes,
-        ...identityRoutes,
-        ...registrationRoutes,
-        ...catalogRoutes,
-        ...adminProductsRoutes,
-        ...inventoryRoutes,
-        {
-            path: '/:catchAll(.*)',
-            name: 'not-found',
-            component: NotFoundView
-        }
-    ]
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    ...marketingRoutes,
+    ...identityRoutes,
+    ...registrationRoutes,
+    ...catalogRoutes,
+    ...adminProductsRoutes,
+    ...inventoryRoutes,
+    {
+      path: '/:catchAll(.*)',
+      name: 'not-found',
+      component: NotFoundView,
+    },
+  ],
 })
 
 router.beforeEach((to) => {
-    if (!to.name || !to.name.toString().startsWith('admin')) {
-        return
-    }
+  if (!to.name || !to.name.toString().startsWith('admin')) {
+    return
+  }
 
-    return requireAuth(to) || requireAdmin(to)
+  return requireAuth(to) || requireAdmin(to)
 })
 
 export default router

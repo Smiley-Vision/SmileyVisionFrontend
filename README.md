@@ -3,6 +3,7 @@
 Frontend web de Smiley Vision construido con Vue 3 + Vite, organizado con **Screaming Architecture** (la estructura de carpetas “grita” el dominio del negocio: marketing, identidad, catálogo, registro, inventario, administración de productos).
 
 # ¿Qué es Smiley Vision?
+
 Smiley Vision es una empresa de distribución de productos para óptica que actualmente tiene sucursales en Ciudad de México, Mérida y Campeche. La empresa únicamente puede vender productos a ópticos; es decir, profesionales de la salud visual.
 
 ![Smiley Vision presentación](https://media-cdn.atlassian.com/us-east-1/v2/cdn/client/a3a9e008-34e8-48ed-824a-f2c0eef1b8c1/file/139b1493-10d8-4d9e-8dd9-53e86cffc9a4/image?allowAnimated=true&collection=contentId-950283&height=0&max-age=2592000&mode=full-fit&source=mediaCard&upscale=false&width=1920&token=eyJhbGciOiJSUzI1NiIsImtpZCI6ImdlbmVyaWMta2V5cGFpci9kdC1hcGktZmlsZXN0b3JlL2Nkbi1hdXRoLS1xa2NqdjlqazVnbTg1anZrIn0.eyJzdWIiOiJhM2E5ZTAwOC0zNGU4LTQ4ZWQtODI0YS1mMmMwZWVmMWI4YzEiLCJjbGllbnRJZCI6ImEzYTllMDA4LTM0ZTgtNDhlZC04MjRhLWYyYzBlZWYxYjhjMSIsImV4dElkIjoiMDUxNWJhYzUtNjYzMi00MDM3LWJmZDctZTJjNTg2OTU1ZGMwIiwiaW50SWQiOiIwNTE1YmFjNS02NjMyLTQwMzctYmZkNy1lMmM1ODY5NTVkYzAiLCJpc29sYXRlZCI6ZmFsc2UsInJlc291cmNlVHlwZSI6MywiaXBhIjpmYWxzZSwiZmIiOiJ0ZHAtb25seSIsImZtIjoidGRwLW9ubHkiLCJjbiI6InRkcC1vbmx5IiwicnMiOiJ0ZHAtb25seSIsImlzcyI6ImdlbmVyaWMta2V5cGFpci9kdC1hcGktZmlsZXN0b3JlIiwiYXVkIjoibWVkaWEiLCJpYXQiOjE3NzExMTc0MjgsIm5iZiI6MTc3MTExNzQyOCwiZXhwIjoxNzcxMTIwMzA2LCJqdGkiOiIzN2FiZDVkNzZjODI1ZWZlOTJiMTM2ZDc2ODdjOGI4ODA5NTVkZjM4In0.pkcuTmD9uHkX9h5UxCznzQ8E6d_9P1wxp_7Gqwg3JapsdbVSiKlXejCLC5Gbqx1dQ0V9penzPQT_VxOXWtLYQmq5tTi2J_3MB0AY34bTf94-7-fWubuDmxdVeSRj_yOYgWv03VEhL0UM6C_VqpERpnZ2nShC7KhRZUOs21kz3rNeN8KISA7c3FAVNW887cQOIUIIFdB-LVM3PJJkL7O1MC83bd5Rnm6tI8sQe2RwIT4E7-s-PseHpYBSGZSzCL9Ko0BCxpquVt6tuJTHH82PdlwrLgPe3BHvO0YAGBcvRZDbzOb_g2bc-kjGUOk77C5s7TKClfpiUhIzKdN6DMnejg&accept=image%2Fwebp&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9tZWRpYS1jZG4uYXRsYXNzaWFuLmNvbS91cy1lYXN0LTEvdjIvY2RuL2NsaWVudC9hM2E5ZTAwOC0zNGU4LTQ4ZWQtODI0YS1mMmMwZWVmMWI4YzEvZmlsZS8xMzliMTQ5My0xMGQ4LTRkOWUtOGRkOS01M2U4NmNmZmM5YTQvaW1hZ2U~KiIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc3MTEyMDMwNn19fV19&Key-Pair-Id=K3CEQBLVYJW0FT&Signature=5LH8APzluKGiF3Xvum2Y5oi-KdJoI00fkXi1E8FyR5xPASzDkEArfvsRb9gfXaFf1i~EgnJXPKW4YhtCujggiKnl6aYtnKBfJfmcW-gwUR0TA7GgGqG2FovDVa448tXO-pdrFsyfQwXKZqjCLuRiPuU5r1-76Gz8hP~aAB875CxvAssUmiE3IA~Gf~mq96SasoXP2VCT9L9ucwmKrk7jP3px6NU4HMtYqsY9v8jXOlFI-k8GBVPGNS~1vsY6Tl19El2WgmVX3kiIbb7xFBxNJdmbPmxfpHQOPfOYRUK9CweLxNLH~RVxg9brS0~Aq5FQoPtla9ijXC-m2tyDZhJdNg__)
@@ -169,29 +170,29 @@ src/
 
 ## Mapa de rutas
 
-| Path | Name | Módulo | Protección |
-|---|---|---|---|
-| `/` | `home` | `marketing.routes.js` | Pública |
-| `/about` | `about` | `marketing.routes.js` | Pública |
-| `/contact` | `contact` | `marketing.routes.js` | Pública |
-| `/login` | `login` | `identity.routes.js` | Pública |
-| `/register` | `register` | `registration.routes.js` | Pública |
-| `/admin/register` | `admin-register` | `registration.routes.js` | Auth + Admin |
-| `/shop` | `shop` | `catalog.routes.js` | Pública |
-| `/shop/micas` | `shop-Micas` | `catalog.routes.js` | Pública |
-| `/shop/micas/search` | `shop-search-Micas` | `catalog.routes.js` | Pública |
-| `/shop/armazones` | `shop-Armazones` | `catalog.routes.js` | Pública |
-| `/shop/armazones/search` | `shop-search-Armazones` | `catalog.routes.js` | Pública |
-| `/shop/equipos` | `shop-Equipos` | `catalog.routes.js` | Pública |
-| `/shop/equipos/search` | `shop-search-Equipos` | `catalog.routes.js` | Pública |
-| `/shop/products/:code` | `product` | `catalog.routes.js` | Pública |
-| `/admin/products` | `admin-products` | `adminProducts.routes.js` | Auth + Admin |
-| `/admin/products/create` | `admin-products-create` | `adminProducts.routes.js` | Auth + Admin |
-| `/admin/products/modify` | `admin-products-modify` | `adminProducts.routes.js` | Auth + Admin |
-| `/admin/products/modify/:code` | `admin-products-modify-form` | `adminProducts.routes.js` | Auth + Admin |
-| `/admin/products/availability` | `admin-products-availability` | `inventory.routes.js` | Auth + Admin |
-| `/admin/products/availability/:code` | `admin-products-availability-form` | `inventory.routes.js` | Auth + Admin |
-| `/:catchAll(.*)` | `not-found` | `router/index.js` | Pública |
+| Path                                 | Name                               | Módulo                    | Protección   |
+| ------------------------------------ | ---------------------------------- | ------------------------- | ------------ |
+| `/`                                  | `home`                             | `marketing.routes.js`     | Pública      |
+| `/about`                             | `about`                            | `marketing.routes.js`     | Pública      |
+| `/contact`                           | `contact`                          | `marketing.routes.js`     | Pública      |
+| `/login`                             | `login`                            | `identity.routes.js`      | Pública      |
+| `/register`                          | `register`                         | `registration.routes.js`  | Pública      |
+| `/admin/register`                    | `admin-register`                   | `registration.routes.js`  | Auth + Admin |
+| `/shop`                              | `shop`                             | `catalog.routes.js`       | Pública      |
+| `/shop/micas`                        | `shop-Micas`                       | `catalog.routes.js`       | Pública      |
+| `/shop/micas/search`                 | `shop-search-Micas`                | `catalog.routes.js`       | Pública      |
+| `/shop/armazones`                    | `shop-Armazones`                   | `catalog.routes.js`       | Pública      |
+| `/shop/armazones/search`             | `shop-search-Armazones`            | `catalog.routes.js`       | Pública      |
+| `/shop/equipos`                      | `shop-Equipos`                     | `catalog.routes.js`       | Pública      |
+| `/shop/equipos/search`               | `shop-search-Equipos`              | `catalog.routes.js`       | Pública      |
+| `/shop/products/:code`               | `product`                          | `catalog.routes.js`       | Pública      |
+| `/admin/products`                    | `admin-products`                   | `adminProducts.routes.js` | Auth + Admin |
+| `/admin/products/create`             | `admin-products-create`            | `adminProducts.routes.js` | Auth + Admin |
+| `/admin/products/modify`             | `admin-products-modify`            | `adminProducts.routes.js` | Auth + Admin |
+| `/admin/products/modify/:code`       | `admin-products-modify-form`       | `adminProducts.routes.js` | Auth + Admin |
+| `/admin/products/availability`       | `admin-products-availability`      | `inventory.routes.js`     | Auth + Admin |
+| `/admin/products/availability/:code` | `admin-products-availability-form` | `inventory.routes.js`     | Auth + Admin |
+| `/:catchAll(.*)`                     | `not-found`                        | `router/index.js`         | Pública      |
 
 ---
 
@@ -604,4 +605,5 @@ A continuación, se describe cada archivo de `src/` y para qué modificarlo.
 6. Para rutas admin, conserva prefijo de nombre `admin-` para que el guard global siga funcionando.
 
 ---
+
 > Documentación y refactorización hecha por: Jose Manuel Castillo Queh (14/02/2026)

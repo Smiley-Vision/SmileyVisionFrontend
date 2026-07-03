@@ -3,7 +3,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        'sans': ['Lexend\\ Deca', 'ui-sans-serif', 'system-ui'],
+        sans: ['Lexend\\ Deca', 'ui-sans-serif', 'system-ui'],
       },
       gridTemplateColumns: {
         '70/30': '70% 28%',
@@ -11,4 +11,4 @@ export default {
     },
   },
   plugins: [],
-};
+}

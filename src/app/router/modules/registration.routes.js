@@ -2,14 +2,14 @@ const UserRegisterView = () => import('@/contexts/registration/pages/UserRegiste
 const RegisterView = () => import('@/contexts/registration/pages/RegisterView.vue')
 
 export const registrationRoutes = [
-    {
-        path: '/register',
-        name: 'register',
-        component: UserRegisterView
-    },
-    {
-        path: '/admin/register',
-        name: 'admin-register',
-        component: RegisterView
-    }
+  {
+    path: '/register',
+    name: 'register',
+    component: UserRegisterView,
+  },
+  {
+    path: '/admin/register',
+    name: 'admin-register',
+    component: RegisterView,
+  },
 ]

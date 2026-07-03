@@ -1,3 +1,3 @@
 export function useRegistrationRequest() {
-    return {}
+  return {}
 }

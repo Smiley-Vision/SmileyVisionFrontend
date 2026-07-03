@@ -1,9 +1,9 @@
 import { useAuthStore } from '@/contexts/identity/stores/auth'
 
 export function requireAdmin() {
-    const auth = useAuthStore()
+  const auth = useAuthStore()
 
-    if (!auth.isAdmin) {
-        return { name: 'login' }
-    }
+  if (!auth.isAdmin) {
+    return { name: 'login' }
+  }
 }

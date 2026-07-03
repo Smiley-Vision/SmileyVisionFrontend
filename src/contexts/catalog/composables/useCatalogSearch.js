@@ -1,3 +1,3 @@
 export function useCatalogSearch() {
-    return {}
+  return {}
 }

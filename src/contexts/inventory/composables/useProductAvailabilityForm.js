@@ -1,3 +1,3 @@
 export function useProductAvailabilityForm() {
-    return {}
+  return {}
 }

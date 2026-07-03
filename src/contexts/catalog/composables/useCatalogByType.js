@@ -1,3 +1,3 @@
 export function useCatalogByType() {
-    return {}
+  return {}
 }

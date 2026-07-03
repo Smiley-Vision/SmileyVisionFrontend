@@ -1,3 +1,3 @@
 export function useRegistrationGateway() {
-    return {}
+  return {}
 }

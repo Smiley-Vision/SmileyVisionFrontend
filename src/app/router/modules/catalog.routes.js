@@ -11,50 +11,50 @@ const CartView = () => import('@/contexts/catalog/pages/CartView.vue')
 import { requireAuth } from '../guards/requireAuth'
 
 export const catalogRoutes = [
-    {
-        path: '/shop',
-        name: 'shop',
-        component: ShopView
-    },
-    {
-        path: '/shop/micas',
-        name: 'shop-Micas',
-        component: MicasView
-    },
-    {
-        path: '/shop/micas/search',
-        name: 'shop-search-Micas',
-        component: SearchMicasView
-    },
-    {
-        path: '/shop/armazones',
-        name: 'shop-Armazones',
-        component: ArmazonesView
-    },
-    {
-        path: '/shop/armazones/search',
-        name: 'shop-search-Armazones',
-        component: SearchArmazonesView
-    },
-    {
-        path: '/shop/equipos',
-        name: 'shop-Equipos',
-        component: EquiposView
-    },
-    {
-        path: '/shop/equipos/search',
-        name: 'shop-search-Equipos',
-        component: SearchEquiposView
-    },
-    {
-        path: '/shop/products/:code',
-        name: 'product',
-        component: ProductView
-    },
-    {
-        path: '/shop/cart',
-        name: 'cart',
-        component: CartView,
-        beforeEnter: requireAuth
-    }
+  {
+    path: '/shop',
+    name: 'shop',
+    component: ShopView,
+  },
+  {
+    path: '/shop/micas',
+    name: 'shop-Micas',
+    component: MicasView,
+  },
+  {
+    path: '/shop/micas/search',
+    name: 'shop-search-Micas',
+    component: SearchMicasView,
+  },
+  {
+    path: '/shop/armazones',
+    name: 'shop-Armazones',
+    component: ArmazonesView,
+  },
+  {
+    path: '/shop/armazones/search',
+    name: 'shop-search-Armazones',
+    component: SearchArmazonesView,
+  },
+  {
+    path: '/shop/equipos',
+    name: 'shop-Equipos',
+    component: EquiposView,
+  },
+  {
+    path: '/shop/equipos/search',
+    name: 'shop-search-Equipos',
+    component: SearchEquiposView,
+  },
+  {
+    path: '/shop/products/:code',
+    name: 'product',
+    component: ProductView,
+  },
+  {
+    path: '/shop/cart',
+    name: 'cart',
+    component: CartView,
+    beforeEnter: requireAuth,
+  },
 ]

@@ -1,3 +1,3 @@
 export function useCreateProductForm() {
-    return {}
+  return {}
 }

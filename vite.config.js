@@ -11,18 +11,18 @@ export default defineConfig({
     vue({
       template: {
         compilerOptions: {
-          isCustomElement: (tag) => tag === 'model-viewer'
-        }
-      }
+          isCustomElement: (tag) => tag === 'model-viewer',
+        },
+      },
     }),
     vueDevTools(),
   ],
   server: {
-    port: 3000
+    port: 3000,
   },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
 })
