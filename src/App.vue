@@ -1,7 +1,8 @@
 <script setup>
-import Footer from '@/modules/shared/ui/layout/Footer.vue'
-import Navbar from '@/modules/shared/ui/layout/Navbar.vue'
 import { RouterView } from 'vue-router'
+
+import Footer from './modules/core/components/Footer.vue'
+import Navbar from './modules/core/components/Navbar.vue'
 </script>
 
 <template>

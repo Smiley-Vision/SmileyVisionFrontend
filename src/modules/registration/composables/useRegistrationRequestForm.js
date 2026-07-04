@@ -1,6 +1,6 @@
-import { normalizeApiError } from '@/modules/shared/utils/normalizeApiError'
 import { reactive, ref } from 'vue'
 import { createRegistrationRequestService } from '../services/registrationService'
+import { normalizeApiError } from '@/modules/core/utils/normalizeApiError.js'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 

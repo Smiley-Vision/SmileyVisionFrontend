@@ -1,5 +1,3 @@
-import { api } from '@/modules/shared/infrastructure/http/api'
-
 export async function getCartItemsService() {
   return (await api.get('cart-items')).data
 }

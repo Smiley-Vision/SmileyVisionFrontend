@@ -1,5 +1,3 @@
-import { api } from '@/modules/shared/infrastructure/http/api'
-
 export async function createRegistrationRequestService(body) {
   return (await api.post('register-requests', body)).data
 }

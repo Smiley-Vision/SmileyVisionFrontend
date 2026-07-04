@@ -1,7 +1,5 @@
-import { api } from '@/modules/shared/infrastructure/http/api'
-
 export async function getAuthenticatedUserService() {
-  return (await api.get('user')).data
+  return (await api.get('me')).data
 }
 
 export async function getUserAddressesService(userId) {

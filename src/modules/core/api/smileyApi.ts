@@ -1,5 +1,7 @@
-import { useAuthStore } from '@/modules/core/stores/auth'
 import axios from 'axios'
+
+import { useAuthStore } from '@/modules/core/stores/auth'
+
 import { toApiProblem } from './apiProblem'
 
 const smileyApi = axios.create({

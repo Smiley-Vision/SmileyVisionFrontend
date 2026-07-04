@@ -1,5 +1,3 @@
-import { api } from '@/modules/shared/infrastructure/http/api'
-
 export async function getProductTypesService() {
   return (await api.get('product-categories')).data
 }

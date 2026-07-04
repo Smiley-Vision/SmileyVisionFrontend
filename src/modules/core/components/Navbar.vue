@@ -1,7 +1,7 @@
 <script setup>
 import { getUserAddressesService } from '@/modules/identity/services/profileService'
 import { useCartStore } from '@/modules/catalog/stores/cart'
-import { useAuthStore } from '@/modules/identity/stores/auth'
+import { useAuthStore } from '../stores/auth'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 

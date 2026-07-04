@@ -1,4 +1,4 @@
-import smileyApi from '@/modules/core/api/smileyvisionApi'
+import smileyApi from '@/modules/core/api/smileyApi'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { AuthUser } from '../interfaces/AuthUser'

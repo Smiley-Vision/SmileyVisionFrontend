@@ -1,7 +1,7 @@
 import './assets/main.css'
 import router from './router'
 
-import { revealOnScroll } from '@/modules/shared/ui/motion/revealOnScroll'
+import { revealOnScroll } from '@/modules/core/motion/revealOnScroll'
 import '@fontsource/prompt/400.css'
 import '@fontsource/prompt/500.css'
 import '@fontsource/prompt/700.css'

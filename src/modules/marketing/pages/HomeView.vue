@@ -1,14 +1,15 @@
 <script setup>
+import { useToast } from 'primevue'
+import { computed, nextTick, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
+import { useAuthStore } from '@/modules/core/stores/auth.ts'
 import BenefitsSection from '@/modules/marketing/components/home/BenefitsSection.vue'
 import BranchesSection from '@/modules/marketing/components/home/BranchesSection.vue'
 import HeroSection from '@/modules/marketing/components/home/HeroSection.vue'
 import RegistrationRequestSection from '@/modules/marketing/components/home/RegistrationRequestSection.vue'
 import StoreSection from '@/modules/marketing/components/home/StoreSection.vue'
 import WelcomeSection from '@/modules/marketing/components/home/WelcomeSection.vue'
-import { useAuthStore } from '@/modules/identity/stores/auth'
-import { useToast } from 'primevue'
-import { computed, nextTick, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()

@@ -8,8 +8,8 @@ import {
   getProductItemsService,
   getProductsService,
 } from '@/modules/catalog/services/catalogService'
-import { useAuthStore } from '@/modules/identity/stores/auth'
-import { normalizeProductListPayload } from '@/modules/shared/utils/productApiAdapters'
+import { useAuthStore } from '@/modules/core/stores/auth'
+import { normalizeProductListPayload } from '@/modules/core/utils/productApiAdapters'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
