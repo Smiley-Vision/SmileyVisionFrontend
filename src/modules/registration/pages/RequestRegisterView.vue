@@ -1,6 +1,6 @@
 <script setup>
-import { useAuthStore } from '@/contexts/identity/stores/auth'
-import { useRegistrationRequestForm } from '@/contexts/registration/composables/useRegistrationRequestForm'
+import { useAuthStore } from '@/modules/identity/stores/auth'
+import { useRegistrationRequestForm } from '@/modules/registration/composables/useRegistrationRequestForm'
 import { useToast } from 'primevue'
 import { useRouter } from 'vue-router'
 

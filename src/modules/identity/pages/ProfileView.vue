@@ -1,7 +1,7 @@
 <script setup>
-import AddressFormFields from '@/contexts/identity/components/AddressFormFields.vue'
-import ProfileAddressCard from '@/contexts/identity/components/ProfileAddressCard.vue'
-import { useProfileView } from '@/contexts/identity/composables/useProfileView'
+import AddressFormFields from '@/modules/identity/components/AddressFormFields.vue'
+import ProfileAddressCard from '@/modules/identity/components/ProfileAddressCard.vue'
+import { useProfileView } from '@/modules/identity/composables/useProfileView'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import Dialog from 'primevue/dialog'

@@ -1,4 +1,4 @@
-import '../assets/main.css'
+import './assets/main.css'
 import router from './router'
 
 import { revealOnScroll } from '@/modules/shared/ui/motion/revealOnScroll'

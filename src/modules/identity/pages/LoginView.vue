@@ -1,7 +1,7 @@
 <script setup>
-import { useAuthStore } from '@/contexts/identity/stores/auth'
+import { firstProblemMessage } from '@/modules/core/api/apiProblem'
+import { useAuthStore } from '@/modules/core/stores/auth'
 import { useToast } from 'primevue'
-import { onMounted } from 'vue'
 import { reactive } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
@@ -20,31 +20,14 @@ const submitLogin = async () => {
     await auth.login(form.email, form.password)
     router.push({ name: 'home', query: { justLoggedIn: 'true' } })
   } catch (error) {
-    // Show the first validation error
-    const firstField = Object.keys(error.errors)[0]
-    const message = error.errors[firstField][0]
-
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: message,
+      detail: firstProblemMessage(error),
       life: 4000,
     })
   }
 }
-
-onMounted(() => {
-  if (route.query.justRegistered === 'true') {
-    toast.add({
-      severity: 'success',
-      summary: 'Éxito',
-      detail: 'Registro exitoso. Puede iniciar sesión',
-      life: 4000, // 4 seconds
-    })
-  }
-
-  auth.justRegistered = false
-})
 </script>
 
 <template>
@@ -96,9 +79,6 @@ onMounted(() => {
           Iniciar sesión
         </button>
       </form>
-
-      <!-- Toast -->
-      <Toast position="bottom-right" />
     </div>
   </div>
 </template>

@@ -1,6 +1,9 @@
 <script setup>
 import { api } from '@/modules/shared/infrastructure/http/api'
-import { buildProductItemsByProductId, enrichProduct } from '@/modules/shared/utils/productApiAdapters'
+import {
+  buildProductItemsByProductId,
+  enrichProduct,
+} from '@/modules/shared/utils/productApiAdapters'
 import { useToast } from 'primevue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'

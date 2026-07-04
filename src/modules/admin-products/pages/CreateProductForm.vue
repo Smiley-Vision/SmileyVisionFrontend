@@ -1,15 +1,18 @@
 <script setup>
 import {
-    createEquipmentItemService,
-    createFrameItemService,
-    createProductItemService,
-    createProductService,
-    getAdminProductTypesService,
-    getSuppliersByProductCategoryService,
-    getVariationsService,
-} from '@/contexts/admin-products/services/adminProductsService'
+  createEquipmentItemService,
+  createFrameItemService,
+  createProductItemService,
+  createProductService,
+  getAdminProductTypesService,
+  getSuppliersByProductCategoryService,
+  getVariationsService,
+} from '@/modules/admin-products/services/adminProductsService'
 import { normalizeApiError } from '@/modules/shared/utils/normalizeApiError'
-import { getCategorySlug, normalizeCategoriesPayload } from '@/modules/shared/utils/productApiAdapters'
+import {
+  getCategorySlug,
+  normalizeCategoriesPayload,
+} from '@/modules/shared/utils/productApiAdapters'
 import { useToast } from 'primevue'
 import { computed, onMounted, reactive, ref } from 'vue'
 

@@ -1,5 +1,5 @@
 <script setup>
-import { useRegistrationRequestForm } from '@/contexts/registration/composables/useRegistrationRequestForm'
+import { useRegistrationRequestForm } from '@/modules/registration/composables/useRegistrationRequestForm'
 import { useToast } from 'primevue'
 import { computed } from 'vue'
 import SectionHeading from './SectionHeading.vue'

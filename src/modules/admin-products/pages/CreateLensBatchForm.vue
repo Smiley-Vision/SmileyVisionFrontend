@@ -2,7 +2,7 @@
 import { onMounted } from 'vue'
 import { useToast } from 'primevue'
 
-import { useBatchLensesCreation } from '@/contexts/admin-products/composables/useBatchLensesCreation'
+import { useBatchLensesCreation } from '@/modules/admin-products/composables/useBatchLensesCreation'
 
 const toast = useToast()
 

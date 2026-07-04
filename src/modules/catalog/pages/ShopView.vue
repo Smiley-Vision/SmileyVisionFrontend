@@ -1,8 +1,8 @@
 <script setup>
 import { api } from '@/modules/shared/infrastructure/http/api'
 import {
-    getShopRouteNameByCategory,
-    normalizeCategoriesPayload,
+  getShopRouteNameByCategory,
+  normalizeCategoriesPayload,
 } from '@/modules/shared/utils/productApiAdapters'
 import { useToast } from 'primevue'
 import { onMounted, ref } from 'vue'

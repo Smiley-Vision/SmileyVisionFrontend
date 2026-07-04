@@ -1,10 +1,10 @@
-import { useAuthStore } from '@/contexts/identity/stores/auth'
+import { useAuthStore } from '@/modules/identity/stores/auth'
 import {
   createAddressService,
   getAuthenticatedUserService,
   getUserAddressesService,
   updateDefaultAddressService,
-} from '@/contexts/identity/services/profileService'
+} from '@/modules/identity/services/profileService'
 import { useToast } from 'primevue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'

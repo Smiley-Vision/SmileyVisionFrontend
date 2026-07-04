@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/contexts/identity/stores/auth'
+import { useAuthStore } from '@/modules/identity/stores/auth'
 
 export function requireAdmin() {
   const auth = useAuthStore()

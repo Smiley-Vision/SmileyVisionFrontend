@@ -1,16 +1,16 @@
 <script setup>
-import { useAuthStore } from '@/contexts/identity/stores/auth'
+import { useAuthStore } from '@/modules/identity/stores/auth'
 import { api } from '@/modules/shared/infrastructure/http/api'
 import { useToast } from 'primevue'
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-    buildAddressPayload,
-    buildUserPayload,
-    createRegistrationForm,
-    getRegistrationApiErrorMessage,
-    getRegistrationFormError,
-    registrationCityOptions,
+  buildAddressPayload,
+  buildUserPayload,
+  createRegistrationForm,
+  getRegistrationApiErrorMessage,
+  getRegistrationFormError,
+  registrationCityOptions,
 } from '../utils/registerUserForm'
 
 const auth = useAuthStore()

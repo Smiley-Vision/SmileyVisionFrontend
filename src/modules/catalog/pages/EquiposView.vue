@@ -1,9 +1,9 @@
 <script setup>
 import { api } from '@/modules/shared/infrastructure/http/api'
 import {
-    buildProductItemsByProductId,
-    enrichProducts,
-    normalizeProductListPayload,
+  buildProductItemsByProductId,
+  enrichProducts,
+  normalizeProductListPayload,
 } from '@/modules/shared/utils/productApiAdapters'
 import { useToast } from 'primevue'
 import { onMounted, ref } from 'vue'

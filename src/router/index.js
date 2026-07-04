@@ -10,7 +10,7 @@ import { catalogRoutes } from './modules/catalog.routes'
 import { adminProductsRoutes } from './modules/adminProducts.routes'
 import { inventoryRoutes } from './modules/inventory.routes'
 
-import NotFoundView from '@/contexts/marketing/pages/NotFoundView.vue'
+import NotFoundView from '@/modules/marketing/pages/NotFoundView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

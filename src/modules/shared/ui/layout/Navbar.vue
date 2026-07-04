@@ -1,7 +1,7 @@
 <script setup>
-import { getUserAddressesService } from '@/contexts/identity/services/profileService'
-import { useCartStore } from '@/contexts/catalog/stores/cart'
-import { useAuthStore } from '@/contexts/identity/stores/auth'
+import { getUserAddressesService } from '@/modules/identity/services/profileService'
+import { useCartStore } from '@/modules/catalog/stores/cart'
+import { useAuthStore } from '@/modules/identity/stores/auth'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
@@ -9,7 +9,6 @@ const auth = useAuthStore()
 const cart = useCartStore()
 const route = useRoute()
 const router = useRouter()
-const emit = defineEmits(['toggle-menu'])
 
 const isMenuOpen = ref(false)
 const dropDownMenu = ref(null)
@@ -104,18 +103,15 @@ function handleClickOutside(event) {
     event.target !== document.getElementById('menu-button')
   ) {
     isMenuOpen.value = false
-    emit('toggle-menu', false)
   }
 }
 
 function toggleMenu() {
   isMenuOpen.value = !isMenuOpen.value
-  emit('toggle-menu', isMenuOpen.value)
 }
 
 function closeMenu() {
   isMenuOpen.value = false
-  emit('toggle-menu', false)
 }
 
 function submitSearch() {
@@ -366,6 +362,8 @@ watch(
       </div>
     </div>
   </header>
+
+  <div v-if="isMenuOpen" class="fixed inset-0 top-[7rem] z-40 w-full bg-black/30 lg:hidden"></div>
 
   <div ref="dropDownMenu" class="sticky top-[76px] z-50 flex justify-end lg:hidden">
     <div

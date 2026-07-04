@@ -3,7 +3,7 @@ import { computed, reactive, ref } from 'vue'
 import {
   batchCreateLensItemsService,
   getMicasProductsService,
-} from '@/contexts/admin-products/services/adminProductsService'
+} from '@/modules/admin-products/services/adminProductsService'
 import { normalizeApiError } from '@/modules/shared/utils/normalizeApiError'
 
 const STEP_CENTS = 25
@@ -117,16 +117,16 @@ export function useBatchLensesCreation(toast) {
       errors.length > 0
         ? null
         : {
-          product_id: Number(form.productId),
-          sphere: {
-            min: centsToDecimal(sphereMinCents),
-            max: centsToDecimal(sphereMaxCents),
-          },
-          cylinder: {
-            min: centsToDecimal(cylinderMinCents),
-            max: centsToDecimal(cylinderMaxCents),
-          },
-        }
+            product_id: Number(form.productId),
+            sphere: {
+              min: centsToDecimal(sphereMinCents),
+              max: centsToDecimal(sphereMaxCents),
+            },
+            cylinder: {
+              min: centsToDecimal(cylinderMinCents),
+              max: centsToDecimal(cylinderMaxCents),
+            },
+          }
 
     return {
       errors,

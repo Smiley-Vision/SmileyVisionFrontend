@@ -1,7 +1,7 @@
 <script setup>
-import { useCartStore } from '@/contexts/catalog/stores/cart'
-import { getUserAddressesService } from '@/contexts/identity/services/profileService'
-import { useAuthStore } from '@/contexts/identity/stores/auth'
+import { useCartStore } from '@/modules/catalog/stores/cart'
+import { getUserAddressesService } from '@/modules/identity/services/profileService'
+import { useAuthStore } from '@/modules/identity/stores/auth'
 import { formatPrice } from '@/modules/shared/utils/formatPrice'
 import router from '@/router'
 import { useToast } from 'primevue'

@@ -1,8 +1,8 @@
-const ManageProductsView = () => import('@/contexts/admin-products/pages/ManageProductsView.vue')
-const CreateProductForm = () => import('@/contexts/admin-products/pages/CreateProductForm.vue')
-const CreateLensBatchForm = () => import('@/contexts/admin-products/pages/CreateLensBatchForm.vue')
-const ModifyProductView = () => import('@/contexts/admin-products/pages/ModifyProductView.vue')
-const ModifyProductForm = () => import('@/contexts/admin-products/pages/ModifyProductForm.vue')
+const ManageProductsView = () => import('@/modules/admin-products/pages/ManageProductsView.vue')
+const CreateProductForm = () => import('@/modules/admin-products/pages/CreateProductForm.vue')
+const CreateLensBatchForm = () => import('@/modules/admin-products/pages/CreateLensBatchForm.vue')
+const ModifyProductView = () => import('@/modules/admin-products/pages/ModifyProductView.vue')
+const ModifyProductForm = () => import('@/modules/admin-products/pages/ModifyProductForm.vue')
 
 export const adminProductsRoutes = [
   {

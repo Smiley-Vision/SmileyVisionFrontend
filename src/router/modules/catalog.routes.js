@@ -1,12 +1,12 @@
-const ShopView = () => import('@/contexts/catalog/pages/ShopView.vue')
-const MicasView = () => import('@/contexts/catalog/pages/MicasView.vue')
-const SearchMicasView = () => import('@/contexts/catalog/pages/SearchMicasView.vue')
-const ArmazonesView = () => import('@/contexts/catalog/pages/ArmazonesView.vue')
-const SearchArmazonesView = () => import('@/contexts/catalog/pages/SearchArmazonesView.vue')
-const EquiposView = () => import('@/contexts/catalog/pages/EquiposView.vue')
-const SearchEquiposView = () => import('@/contexts/catalog/pages/SearchEquiposView.vue')
-const ProductView = () => import('@/contexts/catalog/pages/ProductView.vue')
-const CartView = () => import('@/contexts/catalog/pages/CartView.vue')
+const ShopView = () => import('@/modules/catalog/pages/ShopView.vue')
+const MicasView = () => import('@/modules/catalog/pages/MicasView.vue')
+const SearchMicasView = () => import('@/modules/catalog/pages/SearchMicasView.vue')
+const ArmazonesView = () => import('@/modules/catalog/pages/ArmazonesView.vue')
+const SearchArmazonesView = () => import('@/modules/catalog/pages/SearchArmazonesView.vue')
+const EquiposView = () => import('@/modules/catalog/pages/EquiposView.vue')
+const SearchEquiposView = () => import('@/modules/catalog/pages/SearchEquiposView.vue')
+const ProductView = () => import('@/modules/catalog/pages/ProductView.vue')
+const CartView = () => import('@/modules/catalog/pages/CartView.vue')
 
 import { requireAuth } from '../guards/requireAuth'
 

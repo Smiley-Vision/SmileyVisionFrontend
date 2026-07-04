@@ -1,5 +1,5 @@
 <script setup>
-import { useAuthStore } from '@/contexts/identity/stores/auth'
+import { useAuthStore } from '@/modules/identity/stores/auth'
 import { useToast } from 'primevue'
 import { ref } from 'vue'
 import { onMounted } from 'vue'

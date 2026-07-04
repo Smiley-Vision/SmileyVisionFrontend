@@ -2,13 +2,13 @@ import {
   addProductToCartService,
   getCartItemsService,
   removeProductFromCartService,
-} from '@/contexts/catalog/services/cartService'
+} from '@/modules/catalog/services/cartService'
 import {
   getProductConfigurationsService,
   getProductItemsService,
   getProductsService,
-} from '@/contexts/catalog/services/catalogService'
-import { useAuthStore } from '@/contexts/identity/stores/auth'
+} from '@/modules/catalog/services/catalogService'
+import { useAuthStore } from '@/modules/identity/stores/auth'
 import { normalizeProductListPayload } from '@/modules/shared/utils/productApiAdapters'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'

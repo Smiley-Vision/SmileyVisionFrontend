@@ -1,5 +1,5 @@
-const LoginView = () => import('@/contexts/identity/pages/LoginView.vue')
-const ProfileView = () => import('@/contexts/identity/pages/ProfileView.vue')
+const LoginView = () => import('@/modules/identity/pages/LoginView.vue')
+const ProfileView = () => import('@/modules/identity/pages/ProfileView.vue')
 
 import { requireAuth } from '../guards/requireAuth'
 

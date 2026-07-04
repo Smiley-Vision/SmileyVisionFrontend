@@ -1,14 +1,14 @@
 <script setup>
-import { useCartStore } from '@/contexts/catalog/stores/cart'
-import { useAuthStore } from '@/contexts/identity/stores/auth'
+import { useCartStore } from '@/modules/catalog/stores/cart'
+import { useAuthStore } from '@/modules/identity/stores/auth'
 import { api } from '@/modules/shared/infrastructure/http/api'
 import { normalizeApiError } from '@/modules/shared/utils/normalizeApiError'
 import {
-    buildLensSeries,
-    buildProductItemsByProductId,
-    chooseRepresentativeProductItem,
-    enrichProduct,
-    getCategorySlug,
+  buildLensSeries,
+  buildProductItemsByProductId,
+  chooseRepresentativeProductItem,
+  enrichProduct,
+  getCategorySlug,
 } from '@/modules/shared/utils/productApiAdapters'
 import router from '@/router'
 import { useToast } from 'primevue'
