@@ -1,10 +1,10 @@
 <script setup>
-import SectionHeading from './SectionHeading.vue'
 import ArmazonesImg from '@/assets/images/landing/armazones.jpg'
-import MicasImg from '@/assets/images/landing/micas.jpg'
 import EquiposImg from '@/assets/images/landing/equipos.jpg'
+import MicasImg from '@/assets/images/landing/micas.jpg'
 
-const backendUrl = import.meta.env.VITE_BACKEND_BASE
+import SectionHeading from './SectionHeading.vue'
+
 const categories = [
   {
     title: 'Micas',

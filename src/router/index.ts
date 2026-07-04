@@ -1,16 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import { requireAuth } from './guards/requireAuth'
-import { requireAdmin } from './guards/requireAdmin'
-
-import { marketingRoutes } from './modules/marketing.routes'
-import { identityRoutes } from './modules/identity.routes'
-import { registrationRoutes } from './modules/registration.routes'
-import { catalogRoutes } from './modules/catalog.routes'
-import { adminProductsRoutes } from './modules/adminProducts.routes'
-import { inventoryRoutes } from './modules/inventory.routes'
-
 import NotFoundView from '@/modules/marketing/pages/NotFoundView.vue'
+
+import { requireAdmin } from './guards/requireAdmin'
+import { requireAuth } from './guards/requireAuth'
+import { adminProductsRoutes } from './modules/adminProducts.routes'
+import { catalogRoutes } from './modules/catalog.routes'
+import { identityRoutes } from './modules/identity.routes'
+import { inventoryRoutes } from './modules/inventory.routes'
+import { marketingRoutes } from './modules/marketing.routes'
+import { registrationRoutes } from './modules/registration.routes'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

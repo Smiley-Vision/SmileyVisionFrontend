@@ -1,7 +1,9 @@
+import type { RouteRecordRaw } from 'vue-router'
+
 const UserRegisterView = () => import('@/modules/registration/pages/UserRegisterView.vue')
 const RegisterView = () => import('@/modules/registration/pages/RegisterView.vue')
 
-export const registrationRoutes = [
+export const registrationRoutes: RouteRecordRaw[] = [
   {
     path: '/register',
     name: 'register',

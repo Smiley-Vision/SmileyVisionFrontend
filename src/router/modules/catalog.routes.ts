@@ -1,3 +1,7 @@
+import type { RouteRecordRaw } from 'vue-router'
+
+import { requireAuth } from '../guards/requireAuth'
+
 const ShopView = () => import('@/modules/catalog/pages/ShopView.vue')
 const MicasView = () => import('@/modules/catalog/pages/MicasView.vue')
 const SearchMicasView = () => import('@/modules/catalog/pages/SearchMicasView.vue')
@@ -8,9 +12,7 @@ const SearchEquiposView = () => import('@/modules/catalog/pages/SearchEquiposVie
 const ProductView = () => import('@/modules/catalog/pages/ProductView.vue')
 const CartView = () => import('@/modules/catalog/pages/CartView.vue')
 
-import { requireAuth } from '../guards/requireAuth'
-
-export const catalogRoutes = [
+export const catalogRoutes: RouteRecordRaw[] = [
   {
     path: '/shop',
     name: 'shop',

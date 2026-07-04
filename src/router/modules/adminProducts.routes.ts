@@ -1,10 +1,12 @@
+import type { RouteRecordRaw } from 'vue-router'
+
 const ManageProductsView = () => import('@/modules/admin-products/pages/ManageProductsView.vue')
 const CreateProductForm = () => import('@/modules/admin-products/pages/CreateProductForm.vue')
 const CreateLensBatchForm = () => import('@/modules/admin-products/pages/CreateLensBatchForm.vue')
 const ModifyProductView = () => import('@/modules/admin-products/pages/ModifyProductView.vue')
 const ModifyProductForm = () => import('@/modules/admin-products/pages/ModifyProductForm.vue')
 
-export const adminProductsRoutes = [
+export const adminProductsRoutes: RouteRecordRaw[] = [
   {
     path: '/admin/products',
     name: 'admin-products',
