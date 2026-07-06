@@ -6,11 +6,10 @@ import Navbar from './modules/core/components/Navbar.vue'
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
+  <div class="grid min-h-screen grid-rows-[auto_1fr_auto]">
     <Navbar />
 
-    <!-- Content -->
-    <main class="flex flex-1 flex-col min-h-screen">
+    <main class="flex flex-col">
       <RouterView />
     </main>
 

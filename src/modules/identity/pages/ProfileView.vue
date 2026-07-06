@@ -1,5 +1,7 @@
 <script setup>
 import Spinner from '@/modules/core/components/Spinner.vue'
+import AddressFormFields from '@/modules/identity/components/AddressFormFields.vue'
+import ProfileAddressCard from '@/modules/identity/components/ProfileAddressCard.vue'
 import { useProfileView } from '@/modules/identity/composables/useProfileView'
 
 const {
