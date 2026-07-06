@@ -1,8 +1,9 @@
 <script setup>
-import { useAuthStore } from '@/modules/identity/stores/auth'
-import { useRegistrationRequestForm } from '@/modules/registration/composables/useRegistrationRequestForm'
 import { useToast } from 'primevue'
 import { useRouter } from 'vue-router'
+
+import { useRegistrationRequestForm } from '@/modules/registration/composables/useRegistrationRequestForm'
+import { useAuthStore } from '@/modules/core/stores/auth'
 
 const auth = useAuthStore()
 const toast = useToast()

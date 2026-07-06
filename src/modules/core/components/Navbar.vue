@@ -1,9 +1,11 @@
 <script setup>
-import { getUserAddressesService } from '@/modules/identity/services/profileService'
-import { useCartStore } from '@/modules/catalog/stores/cart'
-import { useAuthStore } from '../stores/auth'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+
+import { useCartStore } from '@/modules/catalog/stores/cart'
+import { getUserAddressesService } from '@/modules/user/services/profileService'
+
+import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const cart = useCartStore()
@@ -135,8 +137,8 @@ async function loadPrimaryAddress() {
   }
 
   try {
-    const response = await getUserAddressesService(auth.user.id)
-    const addresses = Array.isArray(response?.addresses) ? response.addresses : []
+    const response = await getUserAddressesService()
+    const addresses = Array.isArray(response?.data) ? response.data : []
     primaryAddress.value = addresses.find((address) => address?.is_default) ?? addresses[0] ?? null
   } catch {
     primaryAddress.value = null
@@ -174,7 +176,7 @@ watch(
   <header
     class="sticky top-0 z-50 border-b border-sky-900/10 bg-sky-800 text-white shadow-[0_10px_24px_rgba(7,89,133,0.18)]"
   >
-    <div class="mx-auto max-w-[1600px] px-4 py-2.5 sm:px-6 lg:px-12">
+    <div class="mx-auto max-w-[1600px] lg:px-12 px-6 py-2.5">
       <div
         class="hidden items-center gap-5 lg:grid lg:grid-cols-[220px_minmax(320px,1fr)_260px_220px]"
       >

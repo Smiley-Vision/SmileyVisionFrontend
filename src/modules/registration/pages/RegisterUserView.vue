@@ -1,9 +1,11 @@
 <script setup>
-import { useAuthStore } from '@/modules/identity/stores/auth'
-import { api } from '@/modules/shared/infrastructure/http/api'
 import { useToast } from 'primevue'
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
+
+import { api } from '@/modules/shared/infrastructure/http/api'
+import { useAuthStore } from '@/modules/core/stores/auth'
+
 import {
   buildAddressPayload,
   buildUserPayload,

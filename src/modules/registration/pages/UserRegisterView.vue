@@ -1,12 +1,13 @@
 <script setup>
-import { useAuthStore } from '@/modules/identity/stores/auth'
 import { useToast } from 'primevue'
-import { ref } from 'vue'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import RequestRegisterView from './RequestRegisterView.vue'
-import RegisterUserView from './RegisterUserView.vue'
+
+import { useAuthStore } from '@/modules/core/stores/auth'
+
 import InvalidTokenView from './InvalidTokenView.vue'
+import RegisterUserView from './RegisterUserView.vue'
+import RequestRegisterView from './RequestRegisterView.vue'
 
 const route = useRoute()
 const toast = useToast()

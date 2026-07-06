@@ -2,8 +2,8 @@ import type { RouteRecordRaw } from 'vue-router'
 
 import { requireAuth } from '../guards/requireAuth'
 
-const LoginView = () => import('@/modules/identity/pages/LoginView.vue')
-const ProfileView = () => import('@/modules/identity/pages/ProfileView.vue')
+const LoginView = () => import('@/modules/auth/views/LoginView.vue')
+const ProfileView = () => import('@/modules/user/views/ProfileView.vue')
 
 export const identityRoutes: RouteRecordRaw[] = [
   {

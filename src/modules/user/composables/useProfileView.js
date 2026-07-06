@@ -1,13 +1,16 @@
-import { useAuthStore } from '@/modules/core/stores/auth.ts'
-import {
-  createAddressService,
-  getAuthenticatedUserService,
-  getUserAddressesService,
-  updateDefaultAddressService,
-} from '@/modules/identity/services/profileService'
 import { useToast } from 'primevue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+
+import { firstProblemMessage } from '@/modules/core/api/apiProblem.ts'
+import { useAuthStore } from '@/modules/core/stores/auth.ts'
+import {
+  createAddressService,
+  deleteAddressService,
+  getUserAddressesService,
+  updateAddressService,
+  updateDefaultAddressService,
+} from '@/modules/user/services/profileService.js'
 
 const roleLabels = {
   1: 'Admin',
@@ -80,6 +83,7 @@ export function useProfileView() {
   const isLoggingOut = ref(false)
   const isSavingProfile = ref(false)
   const isSavingAddress = ref(false)
+  const isDeletingAddress = ref(false)
   const user = ref(null)
   const addresses = ref([])
 
@@ -135,11 +139,6 @@ export function useProfileView() {
       },
     },
   ])
-
-  function syncAuthUser(updatedUser) {
-    auth.user = updatedUser
-    localStorage.setItem('user', JSON.stringify(updatedUser))
-  }
 
   function mergeCityOption(cityId) {
     const normalizedId = Number(cityId)
@@ -307,9 +306,8 @@ export function useProfileView() {
     profileForm.phone_number = String(user.value?.phone_number ?? '').replace(/\D/g, '')
   }
 
-  function buildAddressPayload(formData, forceDefaultFalse = false) {
+  function buildAddressPayload(formData) {
     return {
-      user_id: user.value.id,
       city_id: Number(formData.city_id),
       street: String(formData.street).trim(),
       between_a: String(formData.between_a).trim(),
@@ -319,23 +317,26 @@ export function useProfileView() {
       district: String(formData.district).trim(),
       postal_code: String(formData.postal_code).trim(),
       notes: String(formData.notes).trim(),
-      is_default: forceDefaultFalse ? false : !!formData.is_default,
     }
   }
 
+  function extractAddressList(response) {
+    return Array.isArray(response?.data) ? response.data : []
+  }
+
   async function loadAddresses() {
-    const response = await getUserAddressesService(user.value.id)
-    const addressList = Array.isArray(response?.addresses) ? response.addresses : []
+    const response = await getUserAddressesService()
+    const addressList = extractAddressList(response)
 
     addressList.forEach((address) => mergeCityOption(address.city_id))
 
     let normalized = sortAddresses(addressList.map((address) => normalizeAddress(address)))
 
     if (normalized.length > 0 && !normalized.some((address) => address.is_default)) {
-      await updateDefaultAddressService(user.value.id, normalized[0].id)
+      await updateDefaultAddressService(normalized[0].id)
 
-      const retryResponse = await getUserAddressesService(user.value.id)
-      const retryList = Array.isArray(retryResponse?.addresses) ? retryResponse.addresses : []
+      const retryResponse = await getUserAddressesService()
+      const retryList = extractAddressList(retryResponse)
 
       retryList.forEach((address) => mergeCityOption(address.city_id))
       normalized = sortAddresses(retryList.map((address) => normalizeAddress(address)))
@@ -346,10 +347,7 @@ export function useProfileView() {
   }
 
   async function loadProfileData() {
-    const authenticatedUser = await getAuthenticatedUserService()
-
-    user.value = authenticatedUser
-    syncAuthUser(authenticatedUser)
+    user.value = await auth.fetchMe()
     assignProfileForm()
 
     await loadAddresses()
@@ -393,7 +391,7 @@ export function useProfileView() {
       }
 
       user.value = updatedUser
-      syncAuthUser(updatedUser)
+      auth.setSession(auth.token, updatedUser)
       showEditProfileModal.value = false
 
       toast.add({
@@ -420,27 +418,17 @@ export function useProfileView() {
       isSavingAddress.value = true
 
       const hadAddressesBefore = addresses.value.length > 0
-      const payload = buildAddressPayload(createAddressForm, hadAddressesBefore)
+      const wantsDefault = createAddressForm.is_default
+      const payload = buildAddressPayload(createAddressForm)
 
-      await createAddressService(payload)
-      await loadAddresses()
+      const response = await createAddressService(payload)
+      const createdAddress = response?.data
 
-      if (hadAddressesBefore && createAddressForm.is_default) {
-        const latestAddress = [...addresses.value]
-          .sort((a, b) => Number(b.id) - Number(a.id))
-          .find(
-            (address) =>
-              address.street === payload.street &&
-              String(address.external_number) === String(payload.external_number) &&
-              Number(address.city_id) === Number(payload.city_id),
-          )
-
-        if (latestAddress) {
-          await updateDefaultAddressService(user.value.id, latestAddress.id)
-          await loadAddresses()
-        }
+      if (hadAddressesBefore && wantsDefault && createdAddress?.id) {
+        await updateDefaultAddressService(createdAddress.id)
       }
 
+      await loadAddresses()
       showAddAddressModal.value = false
 
       toast.add({
@@ -450,14 +438,10 @@ export function useProfileView() {
         life: 3500,
       })
     } catch (error) {
-      const message = error?.errors
-        ? error.errors[Object.keys(error.errors)[0]][0]
-        : 'No se pudo agregar la dirección.'
-
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: message,
+        detail: firstProblemMessage(error),
         life: 4500,
       })
     } finally {
@@ -473,85 +457,65 @@ export function useProfileView() {
       return
     }
 
-    addresses.value = sortAddresses(
-      addresses.value.map((address) => {
-        if (address.id !== editAddressForm.id) return address
+    try {
+      isSavingAddress.value = true
 
-        return {
-          ...address,
-          ...editAddressForm,
-          city_id: Number(editAddressForm.city_id),
-          external_number: Number(editAddressForm.external_number),
-          internal_number:
-            editAddressForm.internal_number === '' ? null : Number(editAddressForm.internal_number),
-          is_default: !!editAddressForm.is_default,
-        }
-      }),
-    )
-    if (!previousAddress.is_default && editAddressForm.is_default) {
-      try {
-        await updateDefaultAddressService(user.value.id, editAddressForm.id)
-        await loadAddresses()
+      const payload = buildAddressPayload(editAddressForm)
+      await updateAddressService(editAddressForm.id, payload)
 
-        toast.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: 'Dirección principal actualizada.',
-          life: 3000,
-        })
-      } catch (error) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No se pudo actualizar la dirección principal.',
-          life: 4000,
-        })
+      if (!previousAddress.is_default && editAddressForm.is_default) {
+        await updateDefaultAddressService(editAddressForm.id)
       }
+
+      await loadAddresses()
+      showEditAddressModal.value = false
+
+      toast.add({
+        severity: 'success',
+        summary: 'Éxito',
+        detail: 'Dirección actualizada correctamente.',
+        life: 3500,
+      })
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: firstProblemMessage(error),
+        life: 4500,
+      })
+    } finally {
+      isSavingAddress.value = false
     }
-
-    showEditAddressModal.value = false
-
-    toast.add({
-      severity: 'warn',
-      summary: 'Atención',
-      detail:
-        'La API actual no expone endpoint para editar direcciones. Cambio visual solo en esta sesión.',
-      life: 5500,
-    })
   }
 
   async function confirmDeleteAddress() {
     if (!addressToDelete.value) return
 
-    const deletingId = addressToDelete.value.id
-    const wasDefault = !!addressToDelete.value.is_default
+    try {
+      isDeletingAddress.value = true
 
-    addresses.value = addresses.value.filter((address) => address.id !== deletingId)
+      await deleteAddressService(addressToDelete.value.id)
+      await loadAddresses()
 
-    if (wasDefault && addresses.value.length > 0) {
-      try {
-        await updateDefaultAddressService(user.value.id, addresses.value[0].id)
-        await loadAddresses()
-      } catch (error) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No se pudo reasignar la dirección principal.',
-          life: 4000,
-        })
-      }
+      showDeleteAddressModal.value = false
+      addressToDelete.value = null
+
+      toast.add({
+        severity: 'success',
+        summary: 'Éxito',
+        detail: 'Dirección eliminada correctamente.',
+        life: 3500,
+      })
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: firstProblemMessage(error),
+        life: 4000,
+      })
+    } finally {
+      isDeletingAddress.value = false
     }
-
-    showDeleteAddressModal.value = false
-    addressToDelete.value = null
-
-    toast.add({
-      severity: 'warn',
-      summary: 'Atención',
-      detail:
-        'La API actual no expone endpoint para eliminar direcciones. Cambio visual solo en esta sesión.',
-      life: 5500,
-    })
   }
 
   async function handleLogout() {
@@ -600,6 +564,7 @@ export function useProfileView() {
     isLoggingOut,
     isSavingProfile,
     isSavingAddress,
+    isDeletingAddress,
     user,
     addresses,
     showEditProfileModal,

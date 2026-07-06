@@ -1,9 +1,10 @@
 <script setup>
-import { firstProblemMessage } from '@/modules/core/api/apiProblem'
-import { useAuthStore } from '@/modules/core/stores/auth'
 import { useToast } from 'primevue'
 import { reactive } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+
+import { firstProblemMessage } from '@/modules/core/api/apiProblem.ts'
+import { useAuthStore } from '@/modules/core/stores/auth.ts'
 
 const route = useRoute()
 const toast = useToast()

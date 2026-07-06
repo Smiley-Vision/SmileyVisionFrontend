@@ -1,12 +1,13 @@
 <script setup>
-import { useCartStore } from '@/modules/catalog/stores/cart'
-import { getUserAddressesService } from '@/modules/identity/services/profileService'
-import { useAuthStore } from '@/modules/identity/stores/auth'
-import { formatPrice } from '@/modules/shared/utils/formatPrice'
-import router from '@/router'
 import { useToast } from 'primevue'
 import Button from 'primevue/button'
 import { computed, onMounted, ref } from 'vue'
+
+import { useCartStore } from '@/modules/catalog/stores/cart'
+import { formatPrice } from '@/modules/shared/utils/formatPrice'
+import { getUserAddressesService } from '@/modules/user/services/profileService'
+import { useAuthStore } from '@/modules/core/stores/auth'
+import router from '@/router'
 
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
@@ -152,8 +153,8 @@ async function loadDeliveryAddresses() {
   if (!auth.user?.id) return
 
   try {
-    const response = await getUserAddressesService(auth.user.id)
-    const list = Array.isArray(response?.addresses) ? response.addresses : []
+    const response = await getUserAddressesService()
+    const list = Array.isArray(response?.data) ? response.data : []
     addresses.value = list.map((address) => ({
       ...address,
       is_default:

@@ -1,6 +1,10 @@
 <script setup>
+import { useToast } from 'primevue'
+import Button from 'primevue/button'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+
 import { useCartStore } from '@/modules/catalog/stores/cart'
-import { useAuthStore } from '@/modules/identity/stores/auth'
 import { api } from '@/modules/shared/infrastructure/http/api'
 import { normalizeApiError } from '@/modules/shared/utils/normalizeApiError'
 import {
@@ -10,11 +14,8 @@ import {
   enrichProduct,
   getCategorySlug,
 } from '@/modules/shared/utils/productApiAdapters'
+import { useAuthStore } from '@/modules/core/stores/auth'
 import router from '@/router'
-import { useToast } from 'primevue'
-import Button from 'primevue/button'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
 
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
 const MICA_CATEGORY_ID = 1
