@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/modules/identity/stores/auth'
+import { useAuthStore } from '@/modules/core/stores/auth.ts'
 import {
   createAddressService,
   getAuthenticatedUserService,

@@ -1,14 +1,6 @@
 <script setup>
-import AddressFormFields from '@/modules/identity/components/AddressFormFields.vue'
-import ProfileAddressCard from '@/modules/identity/components/ProfileAddressCard.vue'
+import Spinner from '@/modules/core/components/Spinner.vue'
 import { useProfileView } from '@/modules/identity/composables/useProfileView'
-import Button from 'primevue/button'
-import Card from 'primevue/card'
-import Dialog from 'primevue/dialog'
-import InputMask from 'primevue/inputmask'
-import InputText from 'primevue/inputtext'
-import Menu from 'primevue/menu'
-import Tag from 'primevue/tag'
 
 const {
   cityOptions,
@@ -50,15 +42,9 @@ function handleAddressActions(payload) {
 </script>
 
 <template>
-  <div v-if="isLoading" class="flex flex-col mx-auto my-auto items-center gap-y-8 mt-24">
-    <div
-      class="text-sky-600 pi pi-spinner-dotted animate-spin slow-spin"
-      style="font-size: 8rem"
-    ></div>
-    <div class="lg:text-5xl text-4xl text-sky-700 font-bold">Cargando...</div>
-  </div>
+  <Spinner :isLoading text="Cargando perfil..." />
 
-  <div v-else class="xl:px-20 md:px-12 px-8 lg:mt-14 md:py-10 py-8">
+  <div v-if="!isLoading" class="xl:px-20 md:px-12 px-8 lg:mt-14 md:py-10 py-8">
     <h1 class="text-5xl font-bold text-sky-800 mb-8">Perfil</h1>
 
     <Card class="border border-slate-200 rounded-[20px] shadow-[0_8px_30px_rgba(14,88,128,0.1)]">

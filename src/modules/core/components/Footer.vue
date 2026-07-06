@@ -1,6 +1,4 @@
-<script setup>
-import { RouterLink } from 'vue-router'
-</script>
+<script setup></script>
 
 <template>
   <footer class="mt-8 bg-sky-800 text-white shadow-[0_-18px_50px_rgba(12,94,137,0.18)]">
@@ -76,11 +74,11 @@ import { RouterLink } from 'vue-router'
       >
         <p>© 2026 Smiley Vision. Todos los derechos reservados</p>
         <div class="mt-3 flex flex-wrap items-center justify-center gap-3">
-          <RouterLink :to="{ name: 'privacy' }" class="transition hover:text-white">
+          <RouterLink :to="{ name: 'home' }" class="transition hover:text-white">
             Aviso de privacidad
           </RouterLink>
           <span class="hidden h-4 w-px bg-white/20 sm:block"></span>
-          <RouterLink :to="{ name: 'terms' }" class="transition hover:text-white">
+          <RouterLink :to="{ name: 'home' }" class="transition hover:text-white">
             Términos y condiciones
           </RouterLink>
         </div>
