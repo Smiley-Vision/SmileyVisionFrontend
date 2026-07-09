@@ -80,6 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     fetchMe,
+    setSession,
     clearSession,
   }
 })

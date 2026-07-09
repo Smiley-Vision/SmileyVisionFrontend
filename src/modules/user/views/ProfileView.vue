@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import Spinner from '@/modules/core/components/Spinner.vue'
 import AddAddressModal from '@/modules/user/components/AddAddressModal.vue'
 import DeleteAddressModal from '@/modules/user/components/DeleteAddressModal.vue'
@@ -7,7 +7,8 @@ import EditProfileModal from '@/modules/user/components/EditProfileModal.vue'
 import GeneralUserData from '@/modules/user/components/GeneralUserData.vue'
 import ProfileAddressList from '@/modules/user/components/ProfileAddressList.vue'
 import ProfileHeader from '@/modules/user/components/ProfileHeader.vue'
-import { useProfileView } from '@/modules/user/composables/useProfileView.js'
+import { useProfileView } from '@/modules/user/composables/useProfileView'
+import type { Address } from '@/modules/user/interfaces/Address'
 
 const {
   cityOptions,
@@ -28,7 +29,6 @@ const {
   fullName,
   roleLabel,
   hasAddresses,
-  addressActionsMenu,
   addressMenuItems,
   formatPhone,
   formatAddressLine,
@@ -44,7 +44,7 @@ const {
   confirmDeleteAddress,
 } = useProfileView()
 
-function handleAddressActions(payload) {
+function handleAddressActions(payload: { event: Event; address: Address }) {
   toggleAddressActionsMenu(payload.event, payload.address)
 }
 </script>
@@ -52,11 +52,13 @@ function handleAddressActions(payload) {
 <template>
   <Spinner :isLoading text="Cargando perfil..." />
 
+  <!-- Profile information -->
   <div v-if="!isLoading" class="lg:px-12 px-6 lg:py-10 py-6">
     <h1 class="text-5xl font-bold text-sky-800 mb-8">Perfil</h1>
 
     <Card class="border border-slate-200 rounded-[20px] shadow-[0_8px_30px_rgba(14,88,128,0.1)]">
       <template #content>
+        <!-- User name, role label, actions -->
         <ProfileHeader
           :full-name="fullName"
           :role-label="roleLabel"
@@ -65,8 +67,10 @@ function handleAddressActions(payload) {
           @logout="handleLogout"
         />
 
+        <!-- Phone number, email -->
         <GeneralUserData :phone="formatPhone(user?.phone_number)" :email="user?.email" />
 
+        <!-- User's address list -->
         <ProfileAddressList
           ref="addressActionsMenu"
           :addresses="addresses"
@@ -80,6 +84,8 @@ function handleAddressActions(payload) {
         />
       </template>
     </Card>
+
+    <!-- Modals -->
 
     <EditProfileModal
       v-model:visible="showEditProfileModal"
