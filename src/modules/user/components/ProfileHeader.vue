@@ -1,23 +1,22 @@
-<script setup>
+<script setup lang="ts">
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 
-defineProps({
-  fullName: {
-    type: String,
-    required: true,
+withDefaults(
+  defineProps<{
+    fullName: string
+    roleLabel: string
+    isLoggingOut?: boolean
+  }>(),
+  {
+    isLoggingOut: false,
   },
-  roleLabel: {
-    type: String,
-    required: true,
-  },
-  isLoggingOut: {
-    type: Boolean,
-    default: false,
-  },
-})
+)
 
-defineEmits(['edit-profile', 'logout'])
+defineEmits<{
+  'edit-profile': []
+  logout: []
+}>()
 </script>
 
 <template>

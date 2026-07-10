@@ -1,14 +1,13 @@
-<script setup>
-defineProps({
-  phone: {
-    type: String,
-    required: true,
+<script setup lang="ts">
+withDefaults(
+  defineProps<{
+    phone: string
+    email?: string
+  }>(),
+  {
+    email: '',
   },
-  email: {
-    type: String,
-    default: '',
-  },
-})
+)
 </script>
 
 <template>

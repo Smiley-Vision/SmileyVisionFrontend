@@ -1,23 +1,17 @@
-<script setup>
+<script setup lang="ts">
 import Checkbox from 'primevue/checkbox'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
 
-defineProps({
-  form: {
-    type: Object,
-    required: true,
-  },
-  cityOptions: {
-    type: Array,
-    required: true,
-  },
-  idPrefix: {
-    type: String,
-    required: true,
-  },
-})
+import type { AddressFormData } from '@/modules/user/interfaces/Address'
+import type { CityOption } from '@/modules/user/interfaces/CityOption'
+
+defineProps<{
+  form: AddressFormData
+  cityOptions: CityOption[]
+  idPrefix: string
+}>()
 </script>
 
 <template>

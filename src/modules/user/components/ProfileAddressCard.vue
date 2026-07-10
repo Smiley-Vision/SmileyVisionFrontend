@@ -1,29 +1,21 @@
-<script setup>
+<script setup lang="ts">
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 
-const props = defineProps({
-  address: {
-    type: Object,
-    required: true,
-  },
-  mapSrc: {
-    type: String,
-    required: true,
-  },
-  mainLine: {
-    type: String,
-    required: true,
-  },
-  secondaryLine: {
-    type: String,
-    required: true,
-  },
-})
+import type { Address } from '@/modules/user/interfaces/Address'
 
-const emit = defineEmits(['open-actions'])
+const props = defineProps<{
+  address: Address
+  mapSrc: string
+  mainLine: string
+  secondaryLine: string
+}>()
 
-function handleOpenActions(event) {
+const emit = defineEmits<{
+  'open-actions': [payload: { event: Event; address: Address }]
+}>()
+
+function handleOpenActions(event: Event) {
   emit('open-actions', {
     event,
     address: props.address,

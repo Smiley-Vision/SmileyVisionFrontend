@@ -1,29 +1,27 @@
-<script setup>
+<script setup lang="ts">
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 
 import AddressFormFields from '@/modules/user/components/AddressFormFields.vue'
+import type { AddressFormData } from '@/modules/user/interfaces/Address'
+import type { CityOption } from '@/modules/user/interfaces/CityOption'
 
-defineProps({
-  visible: {
-    type: Boolean,
-    required: true,
+withDefaults(
+  defineProps<{
+    visible: boolean
+    form: AddressFormData
+    cityOptions: CityOption[]
+    isSaving?: boolean
+  }>(),
+  {
+    isSaving: false,
   },
-  form: {
-    type: Object,
-    required: true,
-  },
-  cityOptions: {
-    type: Array,
-    required: true,
-  },
-  isSaving: {
-    type: Boolean,
-    default: false,
-  },
-})
+)
 
-defineEmits(['update:visible', 'submit'])
+defineEmits<{
+  'update:visible': [value: boolean]
+  submit: []
+}>()
 </script>
 
 <template>

@@ -1,42 +1,29 @@
-<script setup>
+<script setup lang="ts">
 import Button from 'primevue/button'
 import Menu from 'primevue/menu'
+import type { MenuItem } from 'primevue/menuitem'
 import { ref } from 'vue'
 
 import ProfileAddressCard from '@/modules/user/components/ProfileAddressCard.vue'
+import type { Address } from '@/modules/user/interfaces/Address'
 
-defineProps({
-  addresses: {
-    type: Array,
-    required: true,
-  },
-  hasAddresses: {
-    type: Boolean,
-    required: true,
-  },
-  menuItems: {
-    type: Array,
-    required: true,
-  },
-  getMapThumbnail: {
-    type: Function,
-    required: true,
-  },
-  formatMainLine: {
-    type: Function,
-    required: true,
-  },
-  formatSecondaryLine: {
-    type: Function,
-    required: true,
-  },
-})
+defineProps<{
+  addresses: Address[]
+  hasAddresses: boolean
+  menuItems: MenuItem[]
+  getMapThumbnail: (address: Address) => string
+  formatMainLine: (address: Address) => string
+  formatSecondaryLine: (address: Address) => string
+}>()
 
-defineEmits(['open-actions', 'add-address'])
+defineEmits<{
+  'open-actions': [payload: { event: Event; address: Address }]
+  'add-address': []
+}>()
 
-const menuRef = ref(null)
+const menuRef = ref<InstanceType<typeof Menu> | null>(null)
 
-function toggle(event) {
+function toggle(event: Event) {
   menuRef.value?.toggle(event)
 }
 

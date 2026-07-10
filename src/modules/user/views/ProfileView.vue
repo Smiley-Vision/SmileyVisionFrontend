@@ -9,6 +9,8 @@ import ProfileAddressList from '@/modules/user/components/ProfileAddressList.vue
 import ProfileHeader from '@/modules/user/components/ProfileHeader.vue'
 import { useProfileView } from '@/modules/user/composables/useProfileView'
 import type { Address } from '@/modules/user/interfaces/Address'
+import { formatAddressLine } from '@/modules/user/utils/address'
+import { formatPhone } from '@/modules/user/utils/phone'
 
 const {
   cityOptions,
@@ -30,8 +32,6 @@ const {
   roleLabel,
   hasAddresses,
   addressMenuItems,
-  formatPhone,
-  formatAddressLine,
   formatAddressLocation,
   getAddressMapThumbnail,
   openEditProfile,

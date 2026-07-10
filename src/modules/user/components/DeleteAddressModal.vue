@@ -1,19 +1,21 @@
-<script setup>
+<script setup lang="ts">
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 
-defineProps({
-  visible: {
-    type: Boolean,
-    required: true,
+withDefaults(
+  defineProps<{
+    visible: boolean
+    isDeleting?: boolean
+  }>(),
+  {
+    isDeleting: false,
   },
-  isDeleting: {
-    type: Boolean,
-    default: false,
-  },
-})
+)
 
-defineEmits(['update:visible', 'confirm'])
+defineEmits<{
+  'update:visible': [value: boolean]
+  confirm: []
+}>()
 </script>
 
 <template>

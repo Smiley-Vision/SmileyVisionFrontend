@@ -5,8 +5,6 @@ import { useRouter } from 'vue-router'
 import type { AuthUser } from '@/modules/core/interfaces/AuthUser'
 import { useAuthStore } from '@/modules/core/stores/auth'
 import { USER_ROLE_LABELS, UserRole } from '@/modules/user/enums/UserRole'
-import { formatAddressLine } from '@/modules/user/utils/address'
-import { formatPhone } from '@/modules/user/utils/phone'
 
 import { useAddressBook } from './useAddressBook'
 import { useAddressMapThumbnails } from './useAddressMapThumbnails'
@@ -108,8 +106,6 @@ export function useProfileView() {
     hasAddresses: addressBook.hasAddresses,
     addressActionsMenu: addressBook.addressActionsMenu,
     addressMenuItems: addressBook.addressMenuItems,
-    formatPhone,
-    formatAddressLine,
     formatAddressLocation: cityCatalog.formatAddressLocation,
     getAddressMapThumbnail: mapThumbnails.getAddressMapThumbnail,
     openEditProfile: profile.openEditProfile,

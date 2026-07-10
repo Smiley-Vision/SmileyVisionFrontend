@@ -1,29 +1,28 @@
-<script setup>
+<script setup lang="ts">
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import InputMask from 'primevue/inputmask'
 import InputText from 'primevue/inputtext'
 
-defineProps({
-  visible: {
-    type: Boolean,
-    required: true,
-  },
-  form: {
-    type: Object,
-    required: true,
-  },
-  email: {
-    type: String,
-    default: '',
-  },
-  isSaving: {
-    type: Boolean,
-    default: false,
-  },
-})
+import type { ProfileFormData } from '@/modules/user/interfaces/ProfileForm'
 
-defineEmits(['update:visible', 'submit'])
+withDefaults(
+  defineProps<{
+    visible: boolean
+    form: ProfileFormData
+    email?: string
+    isSaving?: boolean
+  }>(),
+  {
+    email: '',
+    isSaving: false,
+  },
+)
+
+defineEmits<{
+  'update:visible': [value: boolean]
+  submit: []
+}>()
 </script>
 
 <template>
