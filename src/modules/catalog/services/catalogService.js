@@ -1,22 +1,24 @@
+import smileyApi from '@/modules/core/api/smileyApi'
+
 export async function getProductTypesService() {
-  return (await api.get('product-categories')).data
+  return (await smileyApi.get('product-categories')).data
 }
 
 export async function getMicasService() {
-  return (await api.get('products/micas')).data
+  return (await smileyApi.get('products/micas')).data
 }
 
 export async function getArmazonesService() {
-  return (await api.get('products/armazones')).data
+  return (await smileyApi.get('products/armazones')).data
 }
 
 export async function getEquiposService() {
-  return (await api.get('products/equipos')).data
+  return (await smileyApi.get('products/equipos')).data
 }
 
 export async function searchProductsService(query, typeId) {
   return (
-    await api.get('products/search', {
+    await smileyApi.get('products/search', {
       params: {
         searchQuery: query,
         categoryID: typeId,
@@ -26,17 +28,17 @@ export async function searchProductsService(query, typeId) {
 }
 
 export async function getProductByCodeService(code) {
-  return (await api.get(`products/${code}`)).data
+  return (await smileyApi.get(`products/${code}`)).data
 }
 
 export async function getProductsService() {
-  return (await api.get('products')).data
+  return (await smileyApi.get('products')).data
 }
 
 export async function getProductItemsService() {
-  return (await api.get('product-items')).data
+  return (await smileyApi.get('product-items')).data
 }
 
 export async function getProductConfigurationsService() {
-  return (await api.get('product-configurations')).data
+  return (await smileyApi.get('product-configurations')).data
 }

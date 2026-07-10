@@ -1,8 +1,6 @@
-import {
-  addProductToCartService,
-  getCartItemsService,
-  removeProductFromCartService,
-} from '@/modules/catalog/services/cartService'
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
+
 import {
   getProductConfigurationsService,
   getProductItemsService,
@@ -10,34 +8,44 @@ import {
 } from '@/modules/catalog/services/catalogService'
 import { useAuthStore } from '@/modules/core/stores/auth'
 import { normalizeProductListPayload } from '@/modules/core/utils/productApiAdapters'
-import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { PRODUCT_CATEGORY_ID } from '@/modules/user/constants/productCategories'
+import type {
+  CartItem,
+  CartProductInput,
+  RawShoppingCartItem,
+} from '@/modules/user/interfaces/Cart'
+import {
+  addOrUpdateCartItemService,
+  getCartItemsService,
+  removeCartItemService,
+} from '@/modules/user/services/cartService'
 
 const STORAGE_PREFIX = 'sv_cart_state_v1'
-const MICA_CATEGORY_ID = 1
-const ARMAZON_CATEGORY_ID = 2
 
-function toNumber(value, fallback = 0) {
+function toNumber(value: unknown, fallback?: number): number
+function toNumber(value: unknown, fallback: null): number | null
+function toNumber(value: unknown, fallback: number | null = 0): number | null {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
-function normalizeProductItemsPayload(payload) {
+function normalizeProductItemsPayload(payload: unknown): Record<string, unknown>[] {
   if (Array.isArray(payload)) return payload
-  if (Array.isArray(payload?.product_items)) return payload.product_items
+  const wrapped = (payload as { product_items?: unknown })?.product_items
+  return Array.isArray(wrapped) ? wrapped : []
+}
+
+function normalizeCartItemsPayload(payload: unknown): RawShoppingCartItem[] {
+  if (Array.isArray(payload)) return payload
+  const items = (payload as { items?: unknown })?.items
+  if (Array.isArray(items)) return items
+  const cartItems = (payload as { cart_items?: unknown })?.cart_items
+  if (Array.isArray(cartItems)) return cartItems
 
   return []
 }
 
-function normalizeCartItemsPayload(payload) {
-  if (Array.isArray(payload)) return payload
-  if (Array.isArray(payload?.items)) return payload.items
-  if (Array.isArray(payload?.cart_items)) return payload.cart_items
-
-  return []
-}
-
-function getProductItemStock(productItem) {
+function getProductItemStock(productItem: Record<string, unknown> | undefined): number {
   const directStock = [
     productItem?.stock,
     productItem?.total_stock,
@@ -50,13 +58,15 @@ function getProductItemStock(productItem) {
 
   if (directStock !== undefined) return Math.max(0, directStock)
 
-  const inventoryRows = Array.isArray(productItem?.inventory)
-    ? productItem.inventory
-    : Array.isArray(productItem?.inventories)
-      ? productItem.inventories
-      : Array.isArray(productItem?.inventory_items)
-        ? productItem.inventory_items
-        : []
+  const inventoryRows = (
+    Array.isArray(productItem?.inventory)
+      ? productItem.inventory
+      : Array.isArray(productItem?.inventories)
+        ? productItem.inventories
+        : Array.isArray(productItem?.inventory_items)
+          ? productItem.inventory_items
+          : []
+  ) as Record<string, unknown>[]
 
   return inventoryRows.reduce(
     (total, inventoryRow) => total + Math.max(0, toNumber(inventoryRow?.stock, 0)),
@@ -64,12 +74,19 @@ function getProductItemStock(productItem) {
   )
 }
 
-function getCartItemImage(product, productItem) {
+function getCartItemImage(
+  product: Record<string, unknown> | undefined,
+  productItem: Record<string, unknown> | undefined,
+): string {
   const categoryId = toNumber(product?.category_id, null)
   const productItemImage = String(productItem?.product_image ?? productItem?.image_url ?? '').trim()
   const productImage = String(product?.image_url ?? product?.product_image ?? '').trim()
 
-  if ([MICA_CATEGORY_ID, ARMAZON_CATEGORY_ID].includes(categoryId) && productItemImage) {
+  if (
+    categoryId !== null &&
+    (categoryId === PRODUCT_CATEGORY_ID.MICA || categoryId === PRODUCT_CATEGORY_ID.ARMAZON) &&
+    productItemImage
+  ) {
     return productItemImage
   }
 
@@ -79,9 +96,8 @@ function getCartItemImage(product, productItem) {
 export const useCartStore = defineStore('cart', () => {
   const auth = useAuthStore()
 
-  const items = ref([])
-  const cartId = ref(null)
-  const initializedUserId = ref(null)
+  const items = ref<CartItem[]>([])
+  const initializedUserId = ref<number | null>(null)
   const hasLoadedRemoteForUser = ref(false)
   const isSyncing = ref(false)
 
@@ -94,52 +110,51 @@ export const useCartStore = defineStore('cart', () => {
   const hasItems = computed(() => items.value.length > 0)
   const canUseCart = computed(() => auth.isAuthenticated && auth.isBuyer)
 
-  function getStorageKey(userId) {
+  function getStorageKey(userId: number) {
     return `${STORAGE_PREFIX}_${userId}`
   }
 
   function resetRuntimeState() {
     items.value = []
-    cartId.value = null
   }
 
   function persistCartState() {
     if (!canUseCart.value || !auth.user?.id) return
 
     localStorage.setItem(
-      getStorageKey(auth.user.id),
-      JSON.stringify({
-        cartId: cartId.value,
-        items: items.value,
-      }),
+      getStorageKey(Number(auth.user.id)),
+      JSON.stringify({ items: items.value }),
     )
   }
 
-  function hydrateFromLocalCache(currentUserId) {
+  function hydrateFromLocalCache(currentUserId: number) {
     try {
       const savedState = JSON.parse(localStorage.getItem(getStorageKey(currentUserId)) ?? '{}')
       const savedItems = Array.isArray(savedState?.items) ? savedState.items : []
-      const savedCartId = toNumber(savedState?.cartId, null)
 
       items.value = savedItems
-        .map((item) => ({
-          ...item,
-          price: toNumber(item.price),
-          quantity: Math.max(1, toNumber(item.quantity, 1)),
-          product_item_id: toNumber(item.product_item_id, null),
-          product_id: toNumber(item.product_id, null),
+        .map((item: Partial<CartItem>): CartItem => ({
           cart_id: toNumber(item.cart_id, null),
-          variation_options: Array.isArray(item?.variation_options) ? item.variation_options : [],
+          product_item_id: toNumber(item.product_item_id, 0),
+          product_id: toNumber(item.product_id, null),
+          category_id: toNumber(item.category_id, null),
+          code: String(item.code ?? ''),
+          sku: String(item.sku ?? ''),
+          name: String(item.name ?? ''),
+          description: String(item.description ?? ''),
+          image_path: String(item.image_path ?? ''),
+          price: toNumber(item.price),
+          stock: toNumber(item.stock),
+          variation_options: Array.isArray(item.variation_options) ? item.variation_options : [],
+          quantity: Math.max(1, toNumber(item.quantity, 1)),
         }))
-        .filter((item) => item.product_item_id)
-
-      cartId.value = savedCartId
-    } catch (error) {
+        .filter((item: CartItem) => item.product_item_id)
+    } catch {
       resetRuntimeState()
     }
   }
 
-  async function enrichCartItems(rawCartItems) {
+  async function enrichCartItems(rawCartItems: RawShoppingCartItem[]): Promise<CartItem[]> {
     if (!rawCartItems.length) return []
 
     const [productItemsPayload, productsPayload, productConfigurationsPayload] = await Promise.all([
@@ -149,31 +164,37 @@ export const useCartStore = defineStore('cart', () => {
     ])
 
     const productItems = normalizeProductItemsPayload(productItemsPayload)
-    const products = normalizeProductListPayload(productsPayload)
+    const products = normalizeProductListPayload(productsPayload) as Record<string, unknown>[]
     const productConfigurations = Array.isArray(productConfigurationsPayload)
-      ? productConfigurationsPayload
+      ? (productConfigurationsPayload as Record<string, unknown>[])
       : []
 
-    const productItemsById = productItems.reduce((map, productItem) => {
-      if (productItem?.id != null) {
-        map[Number(productItem.id)] = productItem
-      }
+    const productItemsById = productItems.reduce<Record<number, Record<string, unknown>>>(
+      (map, productItem) => {
+        if (productItem?.id != null) {
+          map[Number(productItem.id)] = productItem
+        }
+        return map
+      },
+      {},
+    )
 
-      return map
-    }, {})
+    const productsById = products.reduce<Record<number, Record<string, unknown>>>(
+      (map, product) => {
+        if (product?.id != null) {
+          map[Number(product.id)] = product
+        }
+        return map
+      },
+      {},
+    )
 
-    const productsById = products.reduce((map, product) => {
-      if (product?.id != null) {
-        map[Number(product.id)] = product
-      }
-
-      return map
-    }, {})
-
-    const variationOptionsByItemId = productConfigurations.reduce((map, configuration) => {
+    const variationOptionsByItemId = productConfigurations.reduce<
+      Record<number, CartItem['variation_options']>
+    >((map, configuration) => {
       const itemId = toNumber(configuration?.product_item_id, null)
-      const variationOption = configuration?.variation_option
-      const variation = variationOption?.variation
+      const variationOption = configuration?.variation_option as Record<string, unknown>
+      const variation = variationOption?.variation as Record<string, unknown>
 
       if (!itemId || !variationOption) return map
 
@@ -193,12 +214,9 @@ export const useCartStore = defineStore('cart', () => {
 
     Object.values(variationOptionsByItemId).forEach((variationOptions) => {
       variationOptions.sort((left, right) => {
-        const order = {
-          color: 1,
-          material: 2,
-        }
-        const normalize = (value) =>
-          String(value ?? '')
+        const order: Record<string, number> = { color: 1, material: 2 }
+        const normalize = (value: string) =>
+          value
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')
             .toLowerCase()
@@ -212,14 +230,14 @@ export const useCartStore = defineStore('cart', () => {
     })
 
     return rawCartItems
-      .map((row) => {
-        const normalizedItemId = toNumber(row?.product_item_id, null)
+      .map((row): CartItem => {
+        const normalizedItemId = toNumber(row?.product_item_id, 0)
         const normalizedCartId = toNumber(row?.cart_id, null)
         const quantity = Math.max(1, toNumber(row?.quantity, 1))
 
         const productItem = productItemsById[normalizedItemId]
         const productId = toNumber(productItem?.product_id, null)
-        const product = productsById[productId]
+        const product = productId !== null ? productsById[productId] : undefined
         const cartItemImage = getCartItemImage(product, productItem)
 
         return {
@@ -231,7 +249,7 @@ export const useCartStore = defineStore('cart', () => {
           sku: String(productItem?.SKU ?? ''),
           name: String(product?.name ?? `Producto #${normalizedItemId}`),
           description: String(product?.description ?? ''),
-          image_url: cartItemImage,
+          image_path: cartItemImage,
           price: toNumber(productItem?.price ?? product?.price, 0),
           stock: getProductItemStock(productItem),
           variation_options: variationOptionsByItemId[normalizedItemId] ?? [],
@@ -247,12 +265,7 @@ export const useCartStore = defineStore('cart', () => {
       return []
     }
 
-    const payload = await getCartItemsService()
-    const rawItems = normalizeCartItemsPayload(payload)
-
-    if (rawItems.length > 0) {
-      cartId.value = toNumber(rawItems[0]?.cart_id, cartId.value)
-    }
+    const rawItems = normalizeCartItemsPayload(await getCartItemsService())
 
     items.value = await enrichCartItems(rawItems)
     persistCartState()
@@ -260,7 +273,7 @@ export const useCartStore = defineStore('cart', () => {
     return items.value
   }
 
-  async function initializeForSession({ forceRemote = false } = {}) {
+  async function initializeForSession({ forceRemote = false }: { forceRemote?: boolean } = {}) {
     if (!canUseCart.value || !auth.user?.id) {
       initializedUserId.value = null
       hasLoadedRemoteForUser.value = false
@@ -286,7 +299,7 @@ export const useCartStore = defineStore('cart', () => {
     hasLoadedRemoteForUser.value = true
   }
 
-  function normalizeProductForCart(product) {
+  function normalizeProductForCart(product: CartProductInput): Omit<CartItem, 'quantity'> {
     const productItemId = toNumber(product?.product_item_id, null)
 
     if (!productItemId) {
@@ -294,6 +307,7 @@ export const useCartStore = defineStore('cart', () => {
     }
 
     return {
+      cart_id: null,
       product_item_id: productItemId,
       product_id: toNumber(product?.id, null),
       category_id: toNumber(product?.category_id, null),
@@ -301,46 +315,14 @@ export const useCartStore = defineStore('cart', () => {
       sku: String(product?.SKU ?? product?.code ?? productItemId),
       name: String(product?.name ?? ''),
       description: String(product?.description ?? ''),
-      image_url: String(product?.image_url ?? product?.product_image ?? ''),
+      image_path: String(product?.image_path ?? product?.product_image ?? ''),
       price: toNumber(product?.price, 0),
       stock: toNumber(product?.stock, 0),
-      variation_options: Array.isArray(product?.variation_options) ? product.variation_options : [],
-      quantity: 1,
+      variation_options: product?.variation_options ?? [],
     }
   }
 
-  function buildCartIdCandidates() {
-    const rawCandidates = [
-      cartId.value,
-      auth.user?.shopping_cart_id,
-      auth.user?.shoppingCart?.id,
-      auth.user?.cart_id,
-      Number(auth.user?.id) > 1 ? Number(auth.user?.id) - 1 : null,
-      auth.user?.id,
-    ]
-
-    return [
-      ...new Set(
-        rawCandidates
-          .map((candidate) => toNumber(candidate, null))
-          .filter((candidate) => Number.isInteger(candidate) && candidate > 0),
-      ),
-    ]
-  }
-
-  function isRecoverableCartError(error) {
-    const message = String(error?.message ?? '').toLowerCase()
-    const cartValidationError = String(error?.errors?.cart_id?.[0] ?? '').toLowerCase()
-
-    return (
-      message.includes('not allowed to modify this cart') ||
-      message.includes('could not create product') ||
-      cartValidationError.includes('carrito') ||
-      cartValidationError.includes('cart')
-    )
-  }
-
-  function upsertLocalItem(productData, quantity) {
+  function upsertLocalItem(productData: Omit<CartItem, 'quantity'>, quantity: number) {
     const sanitizedQuantity = Math.max(1, toNumber(quantity, 1))
     const existingIndex = items.value.findIndex(
       (item) => item.product_item_id === productData.product_item_id,
@@ -353,44 +335,11 @@ export const useCartStore = defineStore('cart', () => {
         quantity: sanitizedQuantity,
       }
     } else {
-      items.value.push({
-        ...productData,
-        quantity: sanitizedQuantity,
-      })
+      items.value.push({ ...productData, quantity: sanitizedQuantity })
     }
   }
 
-  async function syncAddOrUpdateItem(productItemId, quantity, preferredCandidates = []) {
-    const candidates = [...new Set([...preferredCandidates, ...buildCartIdCandidates()])]
-    let lastError = null
-
-    for (const candidateCartId of candidates) {
-      try {
-        const response = await addProductToCartService({
-          cart_id: candidateCartId,
-          product_item_id: productItemId,
-          quantity,
-        })
-        const backendCartItem = response?.['shopping cart item']
-
-        cartId.value = toNumber(backendCartItem?.cart_id, candidateCartId)
-        persistCartState()
-
-        return
-      } catch (error) {
-        lastError = error
-        if (!isRecoverableCartError(error)) {
-          throw error
-        }
-      }
-    }
-
-    throw lastError ?? new Error('No se pudo resolver el cart_id para este usuario.')
-  }
-
-  async function addProduct(product, quantityDelta = 1) {
-    await initializeForSession()
-
+  function assertCartUsable() {
     if (!auth.isAuthenticated) {
       throw new Error('Necesitas iniciar sesión para usar el carrito.')
     }
@@ -398,6 +347,11 @@ export const useCartStore = defineStore('cart', () => {
     if (!canUseCart.value) {
       throw new Error('El carrito solo esta disponible para usuarios compradores.')
     }
+  }
+
+  async function addProduct(product: CartProductInput, quantityDelta = 1) {
+    await initializeForSession()
+    assertCartUsable()
 
     const normalizedProduct = normalizeProductForCart(product)
     const existing = items.value.find(
@@ -410,7 +364,7 @@ export const useCartStore = defineStore('cart', () => {
 
     isSyncing.value = true
     try {
-      await syncAddOrUpdateItem(normalizedProduct.product_item_id, nextQuantity)
+      await addOrUpdateCartItemService(normalizedProduct.product_item_id, nextQuantity)
       upsertLocalItem(normalizedProduct, nextQuantity)
       persistCartState()
     } finally {
@@ -418,16 +372,9 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
-  async function addProducts(products, quantityDelta = 1) {
+  async function addProducts(products: CartProductInput[], quantityDelta = 1) {
     await initializeForSession()
-
-    if (!auth.isAuthenticated) {
-      throw new Error('Necesitas iniciar sesión para usar el carrito.')
-    }
-
-    if (!canUseCart.value) {
-      throw new Error('El carrito solo esta disponible para usuarios compradores.')
-    }
+    assertCartUsable()
 
     const normalizedProducts = products
       .map((product) => normalizeProductForCart(product))
@@ -448,7 +395,7 @@ export const useCartStore = defineStore('cart', () => {
           toNumber(existing?.quantity, 0) + Math.max(1, toNumber(quantityDelta, 1)),
         )
 
-        await syncAddOrUpdateItem(normalizedProduct.product_item_id, nextQuantity)
+        await addOrUpdateCartItemService(normalizedProduct.product_item_id, nextQuantity)
         upsertLocalItem(normalizedProduct, nextQuantity)
       }
 
@@ -458,7 +405,7 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
-  async function setItemQuantity(productItemId, quantity) {
+  async function setItemQuantity(productItemId: number, quantity: number) {
     await initializeForSession()
 
     const normalizedItemId = toNumber(productItemId, null)
@@ -475,7 +422,7 @@ export const useCartStore = defineStore('cart', () => {
 
     isSyncing.value = true
     try {
-      await syncAddOrUpdateItem(normalizedItemId, nextQuantity)
+      await addOrUpdateCartItemService(normalizedItemId, nextQuantity)
       upsertLocalItem(existing, nextQuantity)
       persistCartState()
     } finally {
@@ -483,33 +430,17 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
-  async function removeItem(productItemId) {
+  async function removeItem(productItemId: number) {
     await initializeForSession()
 
     const normalizedItemId = toNumber(productItemId, null)
     if (!normalizedItemId) return
 
-    const candidates = buildCartIdCandidates()
-    let lastError = null
-
     isSyncing.value = true
     try {
-      for (const candidateCartId of candidates) {
-        try {
-          await removeProductFromCartService(candidateCartId, normalizedItemId)
-          cartId.value = candidateCartId
-          items.value = items.value.filter((item) => item.product_item_id !== normalizedItemId)
-          persistCartState()
-          return
-        } catch (error) {
-          lastError = error
-          if (!isRecoverableCartError(error)) {
-            throw error
-          }
-        }
-      }
-
-      throw lastError ?? new Error('No se pudo eliminar el producto del carrito.')
+      await removeCartItemService(normalizedItemId)
+      items.value = items.value.filter((item) => item.product_item_id !== normalizedItemId)
+      persistCartState()
     } finally {
       isSyncing.value = false
     }
@@ -518,12 +449,11 @@ export const useCartStore = defineStore('cart', () => {
   function clearLocalCart() {
     if (!canUseCart.value || !auth.user?.id) return
 
-    localStorage.removeItem(getStorageKey(auth.user.id))
+    localStorage.removeItem(getStorageKey(Number(auth.user.id)))
     resetRuntimeState()
   }
 
   return {
-    cartId,
     items,
     itemCount,
     subtotal,

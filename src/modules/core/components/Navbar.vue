@@ -2,8 +2,8 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
-import { useCartStore } from '@/modules/catalog/stores/cart'
 import { getUserAddressesService } from '@/modules/user/services/profileService'
+import { useCartStore } from '@/modules/user/stores/cart'
 
 import { useAuthStore } from '../stores/auth'
 

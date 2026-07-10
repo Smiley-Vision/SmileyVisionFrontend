@@ -10,7 +10,7 @@ interface Coordinates {
   lon: number
 }
 
-const mapFallbackThumbnail =
+export const mapFallbackThumbnail =
   'https://maps.google.com/maps?q=19.833141,-90.521352&z=17&hl=es&output=embed'
 
 export function useAddressMapThumbnails(cityCatalog: ReturnType<typeof useCityCatalog>) {
