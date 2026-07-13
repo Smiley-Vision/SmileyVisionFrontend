@@ -31,6 +31,7 @@ const {
   fullName,
   roleLabel,
   hasAddresses,
+  addressActionsMenu,
   addressMenuItems,
   formatAddressLocation,
   getAddressMapThumbnail,

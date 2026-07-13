@@ -45,7 +45,12 @@ defineEmits<{
           text
           @click="$emit('update:visible', false)"
         />
-        <Button type="submit" label="Guardar" :loading="isSaving" />
+        <Button
+          type="submit"
+          label="Guardar"
+          :loading="isSaving"
+          :disabled="form.latitude === null || form.longitude === null"
+        />
       </div>
     </form>
   </Dialog>

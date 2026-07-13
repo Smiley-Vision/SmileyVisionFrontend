@@ -1,7 +1,7 @@
 import { reactive } from 'vue'
 
 import type { Address } from '@/modules/user/interfaces/Address'
-import { buildAddressSearchQuery } from '@/modules/user/utils/address'
+import { buildAddressSearchQueryCandidates } from '@/modules/user/utils/address'
 
 import type { useCityCatalog } from './useCityCatalog'
 
@@ -98,16 +98,37 @@ export function useAddressMapThumbnails(cityCatalog: ReturnType<typeof useCityCa
     for (const address of addressList) {
       if (!address?.id || addressMapThumbnailById[address.id]) continue
 
+      if (Number.isFinite(address.latitude) && Number.isFinite(address.longitude)) {
+        addressMapThumbnailById[address.id] = buildMapThumbnailUrl('', {
+          lat: address.latitude as number,
+          lon: address.longitude as number,
+        })
+        continue
+      }
+
       const cityName = cityCatalog.resolveCityName(address.city_id)
       const stateName = cityCatalog.resolveStateName(address.city_id)
-      const searchQuery = buildAddressSearchQuery(address, cityName, stateName)
+      const searchQueries = buildAddressSearchQueryCandidates(address, cityName, stateName)
 
-      try {
-        const coordinates = await geocodeAddress(searchQuery)
-        addressMapThumbnailById[address.id] = buildMapThumbnailUrl(searchQuery, coordinates)
-      } catch {
-        addressMapThumbnailById[address.id] = mapFallbackThumbnail
+      let coordinates: Coordinates | null = null
+      let matchedQuery = searchQueries[0] ?? ''
+
+      for (const candidateQuery of searchQueries) {
+        try {
+          coordinates = await geocodeAddress(candidateQuery)
+        } catch {
+          coordinates = null
+        }
+
+        if (coordinates) {
+          matchedQuery = candidateQuery
+          break
+        }
       }
+
+      addressMapThumbnailById[address.id] = coordinates
+        ? buildMapThumbnailUrl(matchedQuery, coordinates)
+        : mapFallbackThumbnail
     }
 
     const availableIds = new Set(addressList.map((address) => address.id))

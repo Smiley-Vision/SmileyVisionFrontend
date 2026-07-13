@@ -4,10 +4,19 @@ export function toBoolean(value: unknown): boolean {
   return value === true || value === 1 || value === '1'
 }
 
+function toNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null
+
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
 export function normalizeAddress(address: Address): Address {
   return {
     ...address,
     is_default: toBoolean(address?.is_default),
+    latitude: toNullableNumber(address?.latitude),
+    longitude: toNullableNumber(address?.longitude),
   }
 }
 
@@ -38,6 +47,8 @@ export function createEmptyAddressForm(): AddressFormData {
     postal_code: '',
     notes: '',
     is_default: false,
+    latitude: null,
+    longitude: null,
   }
 }
 
@@ -62,6 +73,8 @@ export function buildAddressPayload(formData: AddressFormData): AddressPayload {
     district: String(formData.district).trim(),
     postal_code: String(formData.postal_code).trim(),
     notes: String(formData.notes).trim(),
+    latitude: formData.latitude,
+    longitude: formData.longitude,
   }
 }
 
@@ -69,19 +82,39 @@ export function formatAddressLine(address: Address): string {
   return `Calle ${address.street}, Colonia ${address.district}`
 }
 
-export function buildAddressSearchQuery(
+/**
+ * Builds geocoding search queries from most to least specific. Some Mexican postal
+ * codes have sparse OpenStreetMap coverage, so a fully-specific query can fail to
+ * geocode even though the address itself is valid; falling back to progressively
+ * broader queries keeps the map centered near the real address instead of jumping
+ * straight to the generic fallback thumbnail.
+ */
+export function buildAddressSearchQueryCandidates(
   address: Address,
   cityName: string,
   stateName: string,
-): string {
+): string[] {
   const street = String(address.street ?? '').trim()
   const number = String(address.external_number ?? '').trim()
+  const betweenA = String(address.between_a ?? '').trim()
+  const betweenB = String(address.between_b ?? '').trim()
   const district = String(address.district ?? '').trim()
   const postalCode = String(address.postal_code ?? '').trim()
-  const streetWithNumber = street ? `Calle ${street}${number ? ` #${number}` : ''}` : ''
+  const betweenLabel = betweenA && betweenB ? ` entre Calle ${betweenA} y Calle ${betweenB}` : ''
+  const streetWithNumber = street
+    ? `Calle ${street}${number ? ` #${number}` : ''}${betweenLabel}`
+    : ''
   const districtLabel = district ? `Colonia ${district}` : ''
 
-  return [cityName, stateName, streetWithNumber, districtLabel, postalCode, 'Mexico']
-    .filter(Boolean)
-    .join(', ')
+  const candidateParts = [
+    [cityName, stateName, streetWithNumber, districtLabel, postalCode, 'Mexico'],
+    [cityName, stateName, streetWithNumber, districtLabel, 'Mexico'],
+    [cityName, stateName, districtLabel, postalCode, 'Mexico'],
+    [cityName, stateName, districtLabel, 'Mexico'],
+    [cityName, stateName, 'Mexico'],
+  ]
+
+  const queries = candidateParts.map((parts) => parts.filter(Boolean).join(', '))
+
+  return queries.filter((query, index) => query && queries.indexOf(query) === index)
 }

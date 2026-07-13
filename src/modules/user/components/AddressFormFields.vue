@@ -1,17 +1,42 @@
 <script setup lang="ts">
+import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
+import { ref } from 'vue'
 
+import AddressLocationPicker from '@/modules/user/components/AddressLocationPicker.vue'
 import type { AddressFormData } from '@/modules/user/interfaces/Address'
 import type { CityOption } from '@/modules/user/interfaces/CityOption'
 
-defineProps<{
+const props = defineProps<{
   form: AddressFormData
   cityOptions: CityOption[]
   idPrefix: string
 }>()
+
+const showLocationPicker = ref(false)
+
+function handleLocationConfirm(payload: {
+  latitude: number
+  longitude: number
+  street?: string
+  district?: string
+  postal_code?: string
+}) {
+  props.form.latitude = payload.latitude
+  props.form.longitude = payload.longitude
+
+  if (payload.street) props.form.street = payload.street
+  if (payload.district) props.form.district = payload.district
+  if (payload.postal_code) props.form.postal_code = payload.postal_code
+}
+
+function clearLocation() {
+  props.form.latitude = null
+  props.form.longitude = null
+}
 </script>
 
 <template>
@@ -32,6 +57,39 @@ defineProps<{
       <InputText :id="`${idPrefix}_district`" v-model="form.district" required />
     </div>
   </div>
+
+  <div class="flex flex-col gap-1">
+    <label>Ubicación en el mapa <span class="text-red-600">*</span></label>
+    <div class="flex items-center gap-3">
+      <Button
+        type="button"
+        label="Ubicar en el mapa"
+        icon="pi pi-map-marker"
+        severity="secondary"
+        outlined
+        :disabled="!form.city_id"
+        @click="showLocationPicker = true"
+      />
+      <span v-if="form.latitude !== null && form.longitude !== null" class="text-sm text-slate-600">
+        Ubicación guardada
+        <button type="button" class="underline ml-1" @click="clearLocation">Quitar</button>
+      </span>
+      <span v-else class="text-sm text-red-600">
+        Debes ubicar tu dirección en el mapa para poder guardar.
+      </span>
+    </div>
+  </div>
+
+  <AddressLocationPicker
+    v-model:visible="showLocationPicker"
+    :city-id="form.city_id"
+    :initial-latitude="form.latitude"
+    :initial-longitude="form.longitude"
+    :initial-street="form.street"
+    :initial-district="form.district"
+    :initial-postal-code="form.postal_code"
+    @confirm="handleLocationConfirm"
+  />
 
   <div class="grid md:grid-cols-2 grid-cols-1 gap-3">
     <div class="flex flex-col gap-1">

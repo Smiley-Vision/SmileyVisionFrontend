@@ -10,6 +10,8 @@ export interface Address {
   postal_code: string
   notes: string
   is_default: boolean
+  latitude: number | null
+  longitude: number | null
 }
 
 export interface AddressFormData {
@@ -24,6 +26,8 @@ export interface AddressFormData {
   postal_code: string
   notes: string
   is_default: boolean
+  latitude: number | null
+  longitude: number | null
 }
 
 export interface AddressPayload {
@@ -36,4 +40,6 @@ export interface AddressPayload {
   district: string
   postal_code: string
   notes: string
+  latitude: number | null
+  longitude: number | null
 }
