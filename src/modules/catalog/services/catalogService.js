@@ -1,5 +1,27 @@
 import smileyApi from '@/modules/core/api/smileyApi'
 
+/**
+ * The backend paginates `products` and `product-items`, but most callers
+ * (cart enrichment, admin listings) need the complete catalog rather than
+ * a single page. Walk every page and return the flattened result.
+ */
+async function fetchAllPages(path) {
+  const items = []
+  let page = 1
+  let lastPage = 1
+
+  do {
+    const { data: payload } = await smileyApi.get(path, { params: { page } })
+    const pageItems = Array.isArray(payload?.data) ? payload.data : []
+
+    items.push(...pageItems)
+    lastPage = Number(payload?.meta?.last_page) || 1
+    page += 1
+  } while (page <= lastPage)
+
+  return items
+}
+
 export async function getProductTypesService() {
   return (await smileyApi.get('product-categories')).data
 }
@@ -32,11 +54,11 @@ export async function getProductByCodeService(code) {
 }
 
 export async function getProductsService() {
-  return (await smileyApi.get('products')).data
+  return fetchAllPages('products')
 }
 
 export async function getProductItemsService() {
-  return (await smileyApi.get('product-items')).data
+  return fetchAllPages('product-items')
 }
 
 export async function getProductConfigurationsService() {
