@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import L from 'leaflet'
 import Button from 'primevue/button'
+import Checkbox from 'primevue/checkbox'
 import Dialog from 'primevue/dialog'
 import { ref } from 'vue'
 
@@ -39,6 +40,7 @@ const isLocating = ref(false)
 const suggestedStreet = ref('')
 const suggestedDistrict = ref('')
 const suggestedPostalCode = ref('')
+const applySuggestion = ref(false)
 
 const markerIcon = L.divIcon({
   className: 'sv-location-marker',
@@ -98,6 +100,9 @@ function initMap() {
     ? { lat: props.initialLatitude as number, lng: props.initialLongitude as number }
     : getCityCenter(props.cityId)
 
+  applySuggestion.value =
+    !props.initialStreet.trim() && !props.initialDistrict.trim() && !props.initialPostalCode.trim()
+
   map = L.map(mapElement.value, { zoomControl: true }).setView([center.lat, center.lng], 16)
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -141,16 +146,10 @@ function handleConfirm() {
     longitude: pickedLng.value,
   }
 
-  if (!props.initialStreet.trim() && suggestedStreet.value) {
-    payload.street = suggestedStreet.value
-  }
-
-  if (!props.initialDistrict.trim() && suggestedDistrict.value) {
-    payload.district = suggestedDistrict.value
-  }
-
-  if (!props.initialPostalCode.trim() && suggestedPostalCode.value) {
-    payload.postal_code = suggestedPostalCode.value
+  if (applySuggestion.value) {
+    if (suggestedStreet.value) payload.street = suggestedStreet.value
+    if (suggestedDistrict.value) payload.district = suggestedDistrict.value
+    if (suggestedPostalCode.value) payload.postal_code = suggestedPostalCode.value
   }
 
   emit('confirm', payload)
@@ -180,12 +179,17 @@ function handleConfirm() {
     <p v-if="isLocating" class="text-sm text-slate-500 mt-2">
       Buscando sugerencia de dirección...
     </p>
-    <p
-      v-else-if="suggestedStreet || suggestedDistrict || suggestedPostalCode"
-      class="text-sm text-slate-600 mt-2"
-    >
-      Sugerencia: {{ [suggestedStreet, suggestedDistrict, suggestedPostalCode].filter(Boolean).join(', ') }}
-    </p>
+    <div v-else-if="suggestedStreet || suggestedDistrict || suggestedPostalCode" class="mt-2">
+      <p class="text-sm text-slate-600">
+        Sugerencia: {{ [suggestedStreet, suggestedDistrict, suggestedPostalCode].filter(Boolean).join(', ') }}
+      </p>
+      <div class="flex items-center gap-2 mt-1">
+        <Checkbox v-model="applySuggestion" inputId="apply_suggestion" binary />
+        <label for="apply_suggestion" class="text-sm text-slate-600">
+          Actualizar Calle/Colonia/Código postal con esta sugerencia
+        </label>
+      </div>
+    </div>
 
     <div class="flex justify-end gap-3 mt-4">
       <Button

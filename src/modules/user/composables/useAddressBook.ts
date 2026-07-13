@@ -5,6 +5,7 @@ import { computed, reactive, ref } from 'vue'
 import type { ApiProblemDetails } from '@/modules/core/api/apiProblem'
 import { firstProblemMessage } from '@/modules/core/api/apiProblem'
 import type { Address, AddressFormData } from '@/modules/user/interfaces/Address'
+import type { AddressFormValues } from '@/modules/user/schemas/address'
 import {
   createAddressService,
   deleteAddressService,
@@ -14,7 +15,6 @@ import {
 } from '@/modules/user/services/profileService'
 import {
   addressToFormData,
-  buildAddressPayload,
   createEmptyAddressForm,
   extractAddressList,
   normalizeAddress,
@@ -64,6 +64,7 @@ export function useAddressBook(
     {
       label: 'Eliminar',
       icon: 'pi pi-trash',
+      disabled: !!selectedAddress.value?.is_default,
       command: () => {
         if (selectedAddress.value) {
           openDeleteAddressModal(selectedAddress.value)
@@ -111,17 +112,26 @@ export function useAddressBook(
   }
 
   function openDeleteAddressModal(address: Address) {
+    if (address.is_default) {
+      toast.add({
+        severity: 'warn',
+        summary: 'No permitido',
+        detail: 'No puedes eliminar tu dirección principal. Marca otra como principal primero.',
+        life: 4000,
+      })
+      return
+    }
+
     addressToDelete.value = address
     showDeleteAddressModal.value = true
   }
 
-  async function submitCreateAddress() {
+  async function submitCreateAddress(values: AddressFormValues) {
     try {
       isSavingAddress.value = true
 
       const hadAddressesBefore = addresses.value.length > 0
-      const wantsDefault = createAddressForm.is_default
-      const payload = buildAddressPayload(createAddressForm)
+      const { is_default: wantsDefault, ...payload } = values
 
       const response = await createAddressService(payload)
       const createdAddress = response?.data
@@ -151,7 +161,7 @@ export function useAddressBook(
     }
   }
 
-  async function submitEditAddress() {
+  async function submitEditAddress(values: AddressFormValues) {
     const previousAddress = addresses.value.find((address) => address.id === editAddressForm.id)
 
     if (!previousAddress) {
@@ -162,10 +172,10 @@ export function useAddressBook(
     try {
       isSavingAddress.value = true
 
-      const payload = buildAddressPayload(editAddressForm)
+      const { is_default: wantsDefault, ...payload } = values
       await updateAddressService(editAddressForm.id as number, payload)
 
-      if (!previousAddress.is_default && editAddressForm.is_default) {
+      if (!previousAddress.is_default && wantsDefault) {
         await updateDefaultAddressService(editAddressForm.id as number)
       }
 

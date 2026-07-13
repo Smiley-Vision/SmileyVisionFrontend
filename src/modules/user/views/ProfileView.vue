@@ -98,7 +98,7 @@ function handleAddressActions(payload: { event: Event; address: Address }) {
 
     <AddAddressModal
       v-model:visible="showAddAddressModal"
-      :form="createAddressForm"
+      :initial-values="createAddressForm"
       :city-options="cityOptions"
       :is-saving="isSavingAddress"
       @submit="submitCreateAddress"
@@ -106,7 +106,7 @@ function handleAddressActions(payload: { event: Event; address: Address }) {
 
     <EditAddressModal
       v-model:visible="showEditAddressModal"
-      :form="editAddressForm"
+      :initial-values="editAddressForm"
       :city-options="cityOptions"
       :is-saving="isSavingAddress"
       @submit="submitEditAddress"

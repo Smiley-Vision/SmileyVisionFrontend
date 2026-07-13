@@ -1,4 +1,4 @@
-import type { Address, AddressFormData, AddressPayload } from '@/modules/user/interfaces/Address'
+import type { Address, AddressFormData } from '@/modules/user/interfaces/Address'
 
 export function toBoolean(value: unknown): boolean {
   return value === true || value === 1 || value === '1'
@@ -59,22 +59,6 @@ export function addressToFormData(address: Address): AddressFormData {
     external_number: String(address.external_number ?? ''),
     internal_number: address.internal_number === null ? '' : String(address.internal_number),
     is_default: !!address.is_default,
-  }
-}
-
-export function buildAddressPayload(formData: AddressFormData): AddressPayload {
-  return {
-    city_id: Number(formData.city_id),
-    street: String(formData.street).trim(),
-    between_a: String(formData.between_a).trim(),
-    between_b: String(formData.between_b).trim(),
-    external_number: Number(formData.external_number),
-    internal_number: formData.internal_number === '' ? null : Number(formData.internal_number),
-    district: String(formData.district).trim(),
-    postal_code: String(formData.postal_code).trim(),
-    notes: String(formData.notes).trim(),
-    latitude: formData.latitude,
-    longitude: formData.longitude,
   }
 }
 

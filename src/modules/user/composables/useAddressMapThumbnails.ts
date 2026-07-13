@@ -17,7 +17,21 @@ export function useAddressMapThumbnails(cityCatalog: ReturnType<typeof useCityCa
   const googleMapsEmbedApiKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_API_KEY as string | undefined
 
   const addressMapThumbnailById = reactive<Record<number, string>>({})
+  const addressSignatureById = reactive<Record<number, string>>({})
   const geocodingCacheByQuery = reactive<Record<string, Coordinates>>({})
+
+  function buildAddressSignature(address: Address): string {
+    return [
+      address.latitude,
+      address.longitude,
+      address.city_id,
+      address.street,
+      address.between_a,
+      address.between_b,
+      address.district,
+      address.postal_code,
+    ].join('|')
+  }
 
   function buildMapThumbnailUrl(query: string, location: Coordinates | null): string {
     const resolvedQuery = String(query ?? '').trim()
@@ -96,7 +110,15 @@ export function useAddressMapThumbnails(cityCatalog: ReturnType<typeof useCityCa
 
   async function loadAddressMapThumbnails(addressList: Address[]) {
     for (const address of addressList) {
-      if (!address?.id || addressMapThumbnailById[address.id]) continue
+      if (!address?.id) continue
+
+      const signature = buildAddressSignature(address)
+
+      if (addressMapThumbnailById[address.id] && addressSignatureById[address.id] === signature) {
+        continue
+      }
+
+      addressSignatureById[address.id] = signature
 
       if (Number.isFinite(address.latitude) && Number.isFinite(address.longitude)) {
         addressMapThumbnailById[address.id] = buildMapThumbnailUrl('', {
@@ -136,6 +158,7 @@ export function useAddressMapThumbnails(cityCatalog: ReturnType<typeof useCityCa
     Object.keys(addressMapThumbnailById).forEach((addressId) => {
       if (!availableIds.has(Number(addressId))) {
         delete addressMapThumbnailById[Number(addressId)]
+        delete addressSignatureById[Number(addressId)]
       }
     })
   }

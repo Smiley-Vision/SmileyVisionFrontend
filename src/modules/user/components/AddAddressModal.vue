@@ -1,15 +1,18 @@
 <script setup lang="ts">
+import { Form, type FormSubmitEvent } from '@primevue/forms'
+import { zodResolver } from '@primevue/forms/resolvers/zod'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 
 import AddressFormFields from '@/modules/user/components/AddressFormFields.vue'
 import type { AddressFormData } from '@/modules/user/interfaces/Address'
 import type { CityOption } from '@/modules/user/interfaces/CityOption'
+import { addressSchema, type AddressFormValues } from '@/modules/user/schemas/address'
 
 withDefaults(
   defineProps<{
     visible: boolean
-    form: AddressFormData
+    initialValues: AddressFormData
     cityOptions: CityOption[]
     isSaving?: boolean
   }>(),
@@ -18,10 +21,18 @@ withDefaults(
   },
 )
 
-defineEmits<{
+const emit = defineEmits<{
   'update:visible': [value: boolean]
-  submit: []
+  submit: [values: AddressFormValues]
 }>()
+
+const resolver = zodResolver(addressSchema)
+
+function handleSubmit(event: FormSubmitEvent) {
+  if (!event.valid) return
+
+  emit('submit', event.values as AddressFormValues)
+}
 </script>
 
 <template>
@@ -34,8 +45,13 @@ defineEmits<{
     <template #header>
       <div class="text-[#075985] font-semibold">Agregar dirección</div>
     </template>
-    <form class="flex flex-col gap-4" @submit.prevent="$emit('submit')">
-      <AddressFormFields :form="form" :city-options="cityOptions" id-prefix="new" />
+    <Form
+      class="flex flex-col gap-4"
+      :resolver="resolver"
+      :initial-values="initialValues"
+      @submit="handleSubmit"
+    >
+      <AddressFormFields :city-options="cityOptions" id-prefix="new" />
 
       <div class="flex justify-end gap-3 mt-4">
         <Button
@@ -45,13 +61,8 @@ defineEmits<{
           text
           @click="$emit('update:visible', false)"
         />
-        <Button
-          type="submit"
-          label="Guardar"
-          :loading="isSaving"
-          :disabled="form.latitude === null || form.longitude === null"
-        />
+        <Button type="submit" label="Guardar" :loading="isSaving" />
       </div>
-    </form>
+    </Form>
   </Dialog>
 </template>
