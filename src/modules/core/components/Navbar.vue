@@ -6,6 +6,7 @@ import { getUserAddressesService } from '@/modules/user/services/profileService'
 import { useCartStore } from '@/modules/user/stores/cart'
 
 import { useAuthStore } from '../stores/auth'
+import { formatStreetName } from '../utils/formatStreetName'
 
 const auth = useAuthStore()
 const cart = useCartStore()
@@ -45,7 +46,7 @@ const locationLabel = computed(() => {
 
   const street = String(primaryAddress.value.street ?? '').trim()
 
-  return street ? `Calle ${street}` : 'Sin ubicación principal'
+  return street ? formatStreetName(street) : 'Sin ubicación principal'
 })
 
 const leftNavItems = computed(() => {

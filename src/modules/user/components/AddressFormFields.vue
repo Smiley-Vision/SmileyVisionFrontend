@@ -29,7 +29,9 @@ interface PrimeVueFormInstance {
 
 const pcForm = inject<PrimeVueFormInstance>('$pcForm')
 
-const cityIdValue = computed(() => (pcForm?.getFieldState('city_id')?.value as number | null) ?? null)
+const cityIdValue = computed(
+  () => (pcForm?.getFieldState('city_id')?.value as number | null) ?? null,
+)
 const latitudeValue = computed(
   () => (pcForm?.getFieldState('latitude')?.value as number | null) ?? null,
 )
@@ -68,19 +70,23 @@ function clearLocation() {
 <template>
   <div class="grid md:grid-cols-2 grid-cols-1 gap-3">
     <FormField v-slot="$field" name="city_id" class="flex flex-col gap-1">
-      <label :for="`${idPrefix}_city_id`">Ciudad</label>
+      <label :for="`${idPrefix}_city_id`">Ciudad <span class="text-red-600">*</span></label>
       <Select
         :id="`${idPrefix}_city_id`"
         :options="cityOptions"
         optionLabel="label"
         optionValue="value"
       />
-      <Message v-if="$field.invalid" severity="error" size="small">{{ $field.error?.message }}</Message>
+      <Message v-if="$field.invalid" severity="error" size="small">{{
+        $field.error?.message
+      }}</Message>
     </FormField>
     <FormField v-slot="$field" name="district" class="flex flex-col gap-1">
-      <label :for="`${idPrefix}_district`">Colonia</label>
+      <label :for="`${idPrefix}_district`">Colonia <span class="text-red-600">*</span></label>
       <InputText :id="`${idPrefix}_district`" />
-      <Message v-if="$field.invalid" severity="error" size="small">{{ $field.error?.message }}</Message>
+      <Message v-if="$field.invalid" severity="error" size="small">{{
+        $field.error?.message
+      }}</Message>
     </FormField>
   </div>
 
@@ -126,47 +132,69 @@ function clearLocation() {
 
   <div class="grid md:grid-cols-2 grid-cols-1 gap-3">
     <FormField v-slot="$field" name="street" class="flex flex-col gap-1">
-      <label :for="`${idPrefix}_street`">Calle</label>
+      <label :for="`${idPrefix}_street`">Calle <span class="text-red-600">*</span></label>
       <InputText :id="`${idPrefix}_street`" />
-      <Message v-if="$field.invalid" severity="error" size="small">{{ $field.error?.message }}</Message>
+      <Message v-if="$field.invalid" severity="error" size="small">{{
+        $field.error?.message
+      }}</Message>
     </FormField>
     <FormField v-slot="$field" name="external_number" class="flex flex-col gap-1">
-      <label :for="`${idPrefix}_external_number`">Número exterior</label>
+      <label :for="`${idPrefix}_external_number`"
+        >Número exterior <span class="text-red-600">*</span></label
+      >
       <InputText :id="`${idPrefix}_external_number`" />
-      <Message v-if="$field.invalid" severity="error" size="small">{{ $field.error?.message }}</Message>
+      <Message v-if="$field.invalid" severity="error" size="small">{{
+        $field.error?.message
+      }}</Message>
     </FormField>
   </div>
 
   <div class="grid md:grid-cols-2 grid-cols-1 gap-3">
     <FormField v-slot="$field" name="between_a" class="flex flex-col gap-1">
-      <label :for="`${idPrefix}_between_a`">Entre calle A</label>
+      <label :for="`${idPrefix}_between_a`"
+        >Entre calle A <span class="text-red-600">*</span></label
+      >
       <InputText :id="`${idPrefix}_between_a`" />
-      <Message v-if="$field.invalid" severity="error" size="small">{{ $field.error?.message }}</Message>
+      <Message v-if="$field.invalid" severity="error" size="small">{{
+        $field.error?.message
+      }}</Message>
     </FormField>
     <FormField v-slot="$field" name="between_b" class="flex flex-col gap-1">
-      <label :for="`${idPrefix}_between_b`">Entre calle B</label>
+      <label :for="`${idPrefix}_between_b`"
+        >Entre calle B <span class="text-red-600">*</span></label
+      >
       <InputText :id="`${idPrefix}_between_b`" />
-      <Message v-if="$field.invalid" severity="error" size="small">{{ $field.error?.message }}</Message>
+      <Message v-if="$field.invalid" severity="error" size="small">{{
+        $field.error?.message
+      }}</Message>
     </FormField>
   </div>
 
   <div class="grid md:grid-cols-2 grid-cols-1 gap-3">
     <FormField v-slot="$field" name="internal_number" class="flex flex-col gap-1">
-      <label :for="`${idPrefix}_internal_number`">Número interior (opcional)</label>
+      <label :for="`${idPrefix}_internal_number`">Número interior</label>
       <InputText :id="`${idPrefix}_internal_number`" />
-      <Message v-if="$field.invalid" severity="error" size="small">{{ $field.error?.message }}</Message>
+      <Message v-if="$field.invalid" severity="error" size="small">{{
+        $field.error?.message
+      }}</Message>
     </FormField>
     <FormField v-slot="$field" name="postal_code" class="flex flex-col gap-1">
-      <label :for="`${idPrefix}_postal_code`">Código postal</label>
+      <label :for="`${idPrefix}_postal_code`"
+        >Código postal <span class="text-red-600">*</span></label
+      >
       <InputText :id="`${idPrefix}_postal_code`" />
-      <Message v-if="$field.invalid" severity="error" size="small">{{ $field.error?.message }}</Message>
+      <Message v-if="$field.invalid" severity="error" size="small">{{
+        $field.error?.message
+      }}</Message>
     </FormField>
   </div>
 
   <FormField v-slot="$field" name="notes" class="flex flex-col gap-1">
-    <label :for="`${idPrefix}_notes`">Referencias</label>
+    <label :for="`${idPrefix}_notes`">Referencias <span class="text-red-600">*</span></label>
     <Textarea :id="`${idPrefix}_notes`" rows="3" />
-    <Message v-if="$field.invalid" severity="error" size="small">{{ $field.error?.message }}</Message>
+    <Message v-if="$field.invalid" severity="error" size="small">{{
+      $field.error?.message
+    }}</Message>
   </FormField>
 
   <FormField name="is_default" as-child>

@@ -35,7 +35,7 @@ defineEmits<{
       </div>
     </div>
 
-    <div class="flex flex-col sm:flex-row gap-3">
+    <div class="flex flex-col lg:flex-row gap-3">
       <Button
         label="Editar información"
         icon="pi pi-pen-to-square"

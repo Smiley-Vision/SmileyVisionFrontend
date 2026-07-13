@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import L from 'leaflet'
 import Button from 'primevue/button'
-import Checkbox from 'primevue/checkbox'
 import Dialog from 'primevue/dialog'
 import { ref } from 'vue'
 
@@ -146,11 +145,9 @@ function handleConfirm() {
     longitude: pickedLng.value,
   }
 
-  if (applySuggestion.value) {
-    if (suggestedStreet.value) payload.street = suggestedStreet.value
-    if (suggestedDistrict.value) payload.district = suggestedDistrict.value
-    if (suggestedPostalCode.value) payload.postal_code = suggestedPostalCode.value
-  }
+  if (suggestedStreet.value) payload.street = suggestedStreet.value
+  if (suggestedDistrict.value) payload.district = suggestedDistrict.value
+  if (suggestedPostalCode.value) payload.postal_code = suggestedPostalCode.value
 
   emit('confirm', payload)
   emit('update:visible', false)
@@ -176,19 +173,11 @@ function handleConfirm() {
       Arrastra el pin o haz clic en el mapa para ubicar tu dirección.
     </p>
 
-    <p v-if="isLocating" class="text-sm text-slate-500 mt-2">
-      Buscando sugerencia de dirección...
-    </p>
+    <p v-if="isLocating" class="text-sm text-slate-500 mt-2">Buscando sugerencia de dirección...</p>
     <div v-else-if="suggestedStreet || suggestedDistrict || suggestedPostalCode" class="mt-2">
       <p class="text-sm text-slate-600">
-        Sugerencia: {{ [suggestedStreet, suggestedDistrict, suggestedPostalCode].filter(Boolean).join(', ') }}
+        {{ [suggestedStreet, suggestedDistrict, suggestedPostalCode].filter(Boolean).join(', ') }}
       </p>
-      <div class="flex items-center gap-2 mt-1">
-        <Checkbox v-model="applySuggestion" inputId="apply_suggestion" binary />
-        <label for="apply_suggestion" class="text-sm text-slate-600">
-          Actualizar Calle/Colonia/Código postal con esta sugerencia
-        </label>
-      </div>
     </div>
 
     <div class="flex justify-end gap-3 mt-4">

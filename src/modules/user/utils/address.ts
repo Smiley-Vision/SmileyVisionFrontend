@@ -1,6 +1,7 @@
+import { formatStreetName } from '@/modules/core/utils/formatStreetName'
 import type { Address, AddressFormData } from '@/modules/user/interfaces/Address'
 
-export function toBoolean(value: unknown): boolean {
+function toBoolean(value: unknown): boolean {
   return value === true || value === 1 || value === '1'
 }
 
@@ -63,7 +64,7 @@ export function addressToFormData(address: Address): AddressFormData {
 }
 
 export function formatAddressLine(address: Address): string {
-  return `Calle ${address.street}, Colonia ${address.district}`
+  return `${formatStreetName(address.street)}, Colonia ${address.district}`
 }
 
 /**
