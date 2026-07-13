@@ -8,11 +8,11 @@ import {
   getSuppliersByProductCategoryService,
   getVariationsService,
 } from '@/modules/admin-products/services/adminProductsService'
-import { normalizeApiError } from '@/modules/shared/utils/normalizeApiError'
+import { normalizeApiError } from '@/modules/core/utils/normalizeApiError'
 import {
   getCategorySlug,
   normalizeCategoriesPayload,
-} from '@/modules/shared/utils/productApiAdapters'
+} from '@/modules/core/utils/productApiAdapters'
 import { useToast } from 'primevue'
 import { computed, onMounted, reactive, ref } from 'vue'
 

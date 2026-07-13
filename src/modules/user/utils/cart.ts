@@ -5,9 +5,6 @@ import type { CartItem, CartItemVariationOption, LensDetails } from '@/modules/u
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 export function getCartItemImageSrc(item: CartItem): string {
-  if (!item.image_path) return ''
-  if (item.image_path.startsWith('http')) return item.image_path
-
   return `${backendUrl}/storage/${item.image_path}`
 }
 

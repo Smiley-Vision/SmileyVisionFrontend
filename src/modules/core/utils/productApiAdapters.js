@@ -42,6 +42,7 @@ export function normalizeCategoriesPayload(payload) {
 
 export function normalizeProductListPayload(payload) {
   if (Array.isArray(payload)) return payload
+  if (Array.isArray(payload?.data)) return payload.data
   if (Array.isArray(payload?.products)) return payload.products
 
   return []
@@ -50,9 +51,11 @@ export function normalizeProductListPayload(payload) {
 export function buildProductItemsByProductId(payload) {
   const items = Array.isArray(payload)
     ? payload
-    : Array.isArray(payload?.product_items)
-      ? payload.product_items
-      : []
+    : Array.isArray(payload?.data)
+      ? payload.data
+      : Array.isArray(payload?.product_items)
+        ? payload.product_items
+        : []
 
   const itemsByProductId = items.reduce((map, item) => {
     if (item?.product_id != null) {

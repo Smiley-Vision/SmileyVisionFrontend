@@ -1,4 +1,4 @@
-import { api } from '@/modules/shared/infrastructure/http/api'
+import api from '@/modules/core/api/smileyApi'
 
 export async function getAdminProductTypesService() {
   return (await api.get('product-categories')).data

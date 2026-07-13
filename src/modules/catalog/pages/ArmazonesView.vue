@@ -1,10 +1,10 @@
 <script setup>
-import { api } from '@/modules/shared/infrastructure/http/api'
+import api from '@/modules/core/api/smileyApi'
 import {
   buildProductItemsByProductId,
   enrichProducts,
   normalizeProductListPayload,
-} from '@/modules/shared/utils/productApiAdapters'
+} from '@/modules/core/utils/productApiAdapters'
 import { useToast } from 'primevue'
 import { onMounted, ref } from 'vue'
 

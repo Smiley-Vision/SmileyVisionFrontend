@@ -3,7 +3,7 @@ import { useToast } from 'primevue'
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { api } from '@/modules/shared/infrastructure/http/api'
+import api from '@/modules/core/api/smileyApi'
 import { useAuthStore } from '@/modules/core/stores/auth'
 
 import {

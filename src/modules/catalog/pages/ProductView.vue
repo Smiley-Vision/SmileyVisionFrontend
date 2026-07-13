@@ -5,15 +5,15 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { useAuthStore } from '@/modules/core/stores/auth'
-import { api } from '@/modules/shared/infrastructure/http/api'
-import { normalizeApiError } from '@/modules/shared/utils/normalizeApiError'
+import api from '@/modules/core/api/smileyApi'
+import { normalizeApiError } from '@/modules/core/utils/normalizeApiError'
 import {
   buildLensSeries,
   buildProductItemsByProductId,
   chooseRepresentativeProductItem,
   enrichProduct,
   getCategorySlug,
-} from '@/modules/shared/utils/productApiAdapters'
+} from '@/modules/core/utils/productApiAdapters'
 import { useCartStore } from '@/modules/user/stores/cart'
 import router from '@/router'
 

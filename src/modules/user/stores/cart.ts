@@ -31,6 +31,8 @@ function toNumber(value: unknown, fallback: number | null = 0): number | null {
 
 function normalizeProductItemsPayload(payload: unknown): Record<string, unknown>[] {
   if (Array.isArray(payload)) return payload
+  const data = (payload as { data?: unknown })?.data
+  if (Array.isArray(data)) return data
   const wrapped = (payload as { product_items?: unknown })?.product_items
   return Array.isArray(wrapped) ? wrapped : []
 }
@@ -79,7 +81,9 @@ function getCartItemImage(
   productItem: Record<string, unknown> | undefined,
 ): string {
   const categoryId = toNumber(product?.category_id, null)
-  const productItemImage = String(productItem?.product_image ?? productItem?.image_url ?? '').trim()
+  const productItemImage = String(
+    productItem?.image_path ?? productItem?.product_image ?? productItem?.image_url ?? '',
+  ).trim()
   const productImage = String(product?.image_url ?? product?.product_image ?? '').trim()
 
   if (

@@ -1,5 +1,5 @@
 <script setup>
-import { api } from '@/modules/shared/infrastructure/http/api'
+import api from '@/modules/core/api/smileyApi'
 import { useToast } from 'primevue'
 import { onMounted, ref } from 'vue'
 

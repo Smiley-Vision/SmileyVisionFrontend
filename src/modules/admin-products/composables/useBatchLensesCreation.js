@@ -4,7 +4,7 @@ import {
   batchCreateLensItemsService,
   getMicasProductsService,
 } from '@/modules/admin-products/services/adminProductsService'
-import { normalizeApiError } from '@/modules/shared/utils/normalizeApiError'
+import { normalizeApiError } from '@/modules/core/utils/normalizeApiError'
 
 const STEP_CENTS = 25
 

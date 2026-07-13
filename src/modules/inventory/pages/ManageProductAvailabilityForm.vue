@@ -1,6 +1,6 @@
 <script setup>
-import { api } from '@/modules/shared/infrastructure/http/api'
-import { buildLensSeries, getCategorySlug } from '@/modules/shared/utils/productApiAdapters'
+import api from '@/modules/core/api/smileyApi'
+import { buildLensSeries, getCategorySlug } from '@/modules/core/utils/productApiAdapters'
 import { useToast } from 'primevue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
