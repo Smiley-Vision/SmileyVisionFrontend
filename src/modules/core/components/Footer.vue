@@ -1,4 +1,4 @@
-<script setup></script>
+<script setup lang="ts"></script>
 
 <template>
   <footer class="bg-sky-800 text-white shadow-[0_-18px_50px_rgba(12,94,137,0.18)]">
