@@ -1,52 +1,88 @@
-<script setup>
-import { reactive } from 'vue'
-import { useRouter } from 'vue-router'
+<script setup lang="ts">
+import { Form, type FormSubmitEvent } from '@primevue/forms'
+import { zodResolver } from '@primevue/forms/resolvers/zod'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import Message from 'primevue/message'
+import Password from 'primevue/password'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-import { firstProblemMessage } from '@/modules/core/api/apiProblem'
-import api from '@/modules/core/api/smileyApi'
+import { firstProblemMessage, type ApiProblemDetails } from '@/modules/core/api/apiProblem'
+import smileyApi from '@/modules/core/api/smileyApi'
 import { useAppToast } from '@/modules/core/composables/useAppToast'
+import type { AuthUser } from '@/modules/core/interfaces/AuthUser'
 import { useAuthStore } from '@/modules/core/stores/auth'
+import AddressFormFields from '@/modules/user/components/AddressFormFields.vue'
+import { useCityCatalog } from '@/modules/user/composables/useCityCatalog'
+import { createAddressService } from '@/modules/user/services/profileService'
 
-import {
-  buildAddressPayload,
-  buildSignUpPayload,
-  createRegistrationForm,
-  getRegistrationFormError,
-  registrationCityOptions,
-} from '../utils/registerUserForm'
+import { registrationFormSchema, type RegistrationFormValues } from '../schemas/registrationForm'
+import { buildSignUpPayload, createRegistrationInitialValues } from '../utils/registrationUserForm'
+
+interface SignUpResponse {
+  message: string
+  data: {
+    user: AuthUser
+    token: string
+  }
+}
 
 const auth = useAuthStore()
 const notify = useAppToast()
 const router = useRouter()
+const route = useRoute()
+const { cityOptions } = useCityCatalog()
 
-const form = reactive(createRegistrationForm())
+const resolver = zodResolver(registrationFormSchema)
 
-// Submit the registration form
-const submitRegistration = async () => {
+const invitationEmail = typeof route.query.email === 'string' ? route.query.email : ''
+const invitationToken = typeof route.query.token === 'string' ? route.query.token : ''
+const isEmailFromInvitation = computed(() => invitationEmail.length > 0)
+
+const initialValues = createRegistrationInitialValues({
+  registrationToken: invitationToken,
+  email: invitationEmail,
+})
+
+async function handleSubmit(event: FormSubmitEvent) {
+  if (!event.valid) return
+
+  const values = event.values as RegistrationFormValues
+  const {
+    registration_token: _registrationToken,
+    first_name: _firstName,
+    last_name: _lastName,
+    email: _email,
+    phone_number: _phoneNumber,
+    password: _password,
+    password_confirmation: _passwordConfirmation,
+    ...addressValues
+  } = values
+
   try {
-    const validationMessage = getRegistrationFormError(form)
-
-    if (validationMessage) {
-      notify('error', 'Error', validationMessage)
-      return
-    }
-
-    const signUpResponse = (await api.post('signup', buildSignUpPayload(form))).data
+    const signUpResponse = (
+      await smileyApi.post<SignUpResponse>('signup', buildSignUpPayload(values))
+    ).data
     const { user, token } = signUpResponse.data
 
     // Sign the user in so the address can be created on their behalf
     auth.setSession(token, user)
 
     try {
-      await api.post('addresses', buildAddressPayload(form))
+      await createAddressService(addressValues)
     } catch (addressError) {
-      notify('error', 'Error', `No se pudo guardar tu dirección: ${firstProblemMessage(addressError)}`)
+      notify(
+        'error',
+        'Error',
+        `No se pudo guardar tu dirección: ${firstProblemMessage(addressError as ApiProblemDetails)}`,
+      )
     }
 
     notify('success', 'Éxito', `Registro exitoso. Bienvenido, ${user.first_name}`)
     router.push({ name: 'home' })
   } catch (error) {
-    notify('error', 'Error', firstProblemMessage(error))
+    notify('error', 'Error', firstProblemMessage(error as ApiProblemDetails))
   }
 }
 </script>
@@ -66,232 +102,110 @@ const submitRegistration = async () => {
       </div>
 
       <!-- Formulario -->
-      <form
-        @submit.prevent="submitRegistration"
+      <Form
+        v-slot="$form"
         class="flex flex-col gap-5 border-t border-slate-200 px-6 py-8 sm:px-10"
+        :resolver="resolver"
+        :initial-values="initialValues"
+        @submit="handleSubmit"
       >
         <div class="flex flex-col gap-2">
           <label for="registration_token" class="font-semibold text-slate-800"
             >Token de registro</label
           >
-          <input
-            v-model="form.registration_token"
-            type="text"
+          <InputText
             id="registration_token"
             name="registration_token"
-            class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
             placeholder="Ingrese el token enviado a su correo"
-            required
           />
+          <Message v-if="$form.registration_token?.invalid" severity="error" size="small">
+            {{ $form.registration_token.error?.message }}
+          </Message>
         </div>
 
         <div class="flex flex-col gap-2">
           <label for="first_name" class="font-semibold text-slate-800">Nombres</label>
-          <input
-            v-model="form.first_name"
-            type="text"
-            id="first_name"
-            name="first_name"
-            class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-            placeholder="Ingrese sus nombres"
-            required
-          />
+          <InputText id="first_name" name="first_name" placeholder="Ingrese sus nombres" />
+          <Message v-if="$form.first_name?.invalid" severity="error" size="small">
+            {{ $form.first_name.error?.message }}
+          </Message>
         </div>
 
         <div class="flex flex-col gap-2">
           <label for="last_name" class="font-semibold text-slate-800">Apellidos</label>
-          <input
-            v-model="form.last_name"
-            type="text"
-            id="last_name"
-            name="last_name"
-            class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-            placeholder="Ingrese sus apellidos"
-            required
-          />
+          <InputText id="last_name" name="last_name" placeholder="Ingrese sus apellidos" />
+          <Message v-if="$form.last_name?.invalid" severity="error" size="small">
+            {{ $form.last_name.error?.message }}
+          </Message>
         </div>
 
         <div class="flex flex-col gap-2">
           <label for="email" class="font-semibold text-slate-800">Correo Electrónico</label>
-          <input
-            v-model="form.email"
-            type="email"
+          <InputText
             id="email"
             name="email"
-            class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            :disabled="isEmailFromInvitation"
             placeholder="Ingrese su correo electrónico"
-            required
           />
+          <Message v-if="$form.email?.invalid" severity="error" size="small">
+            {{ $form.email.error?.message }}
+          </Message>
         </div>
 
         <div class="flex flex-col gap-2">
-          <label for="phone" class="font-semibold text-slate-800">Teléfono</label>
-          <input
-            v-model="form.phone_number"
-            type="tel"
-            id="phone"
-            name="phone"
-            inputmode="numeric"
-            class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-            placeholder="10 dígitos"
-            required
-          />
+          <label for="phone_number" class="font-semibold text-slate-800">Teléfono</label>
+          <InputText id="phone_number" name="phone_number" placeholder="10 dígitos (opcional)" />
+          <Message v-if="$form.phone_number?.invalid" severity="error" size="small">
+            {{ $form.phone_number.error?.message }}
+          </Message>
         </div>
 
         <div class="flex flex-col gap-2">
           <label for="password" class="font-semibold text-slate-800">Contraseña</label>
-          <input
-            v-model="form.password"
-            type="password"
+          <Password
             id="password"
             name="password"
-            class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
             placeholder="Mínimo 6 caracteres"
-            required
+            :feedback="false"
+            toggle-mask
+            fluid
           />
+          <Message v-if="$form.password?.invalid" severity="error" size="small">
+            {{ $form.password.error?.message }}
+          </Message>
         </div>
 
         <div class="flex flex-col gap-2">
           <label for="password_confirmation" class="font-semibold text-slate-800"
             >Confirmar contraseña</label
           >
-          <input
-            v-model="form.password_confirmation"
-            type="password"
+          <Password
             id="password_confirmation"
             name="password_confirmation"
-            class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
             placeholder="Repita su contraseña"
-            required
+            :feedback="false"
+            toggle-mask
+            fluid
           />
+          <Message v-if="$form.password_confirmation?.invalid" severity="error" size="small">
+            {{ $form.password_confirmation.error?.message }}
+          </Message>
         </div>
 
         <fieldset class="flex flex-col gap-4 border-t border-slate-200 pt-6">
           <legend class="mb-2 font-semibold text-slate-800">Ubicación</legend>
 
-          <div class="flex flex-col gap-2">
-            <label for="city_id" class="font-medium text-slate-700">Ciudad</label>
-            <select
-              v-model="form.address.city_id"
-              id="city_id"
-              name="city_id"
-              class="w-full rounded-md border border-slate-300 bg-white p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              required
-            >
-              <option :value="null" disabled>Seleccione una ciudad</option>
-              <option v-for="city in registrationCityOptions" :key="city.value" :value="city.value">
-                {{ city.label }}
-              </option>
-            </select>
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="district" class="font-medium text-slate-700">Colonia</label>
-            <input
-              v-model="form.address.district"
-              type="text"
-              id="district"
-              name="district"
-              class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              required
-            />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="street" class="font-medium text-slate-700">Calle</label>
-            <input
-              v-model="form.address.street"
-              type="text"
-              id="street"
-              name="street"
-              class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              required
-            />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="external_number" class="font-medium text-slate-700">Número exterior</label>
-            <input
-              v-model="form.address.external_number"
-              type="number"
-              id="external_number"
-              name="external_number"
-              class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              required
-            />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="internal_number" class="font-medium text-slate-700">Número interior</label>
-            <input
-              v-model="form.address.internal_number"
-              type="number"
-              id="internal_number"
-              name="internal_number"
-              class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              placeholder="Opcional"
-            />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="between_a" class="font-medium text-slate-700">Entre calle A</label>
-            <input
-              v-model="form.address.between_a"
-              type="text"
-              id="between_a"
-              name="between_a"
-              class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              required
-            />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="between_b" class="font-medium text-slate-700">Entre calle B</label>
-            <input
-              v-model="form.address.between_b"
-              type="text"
-              id="between_b"
-              name="between_b"
-              class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              required
-            />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="postal_code" class="font-medium text-slate-700">Código postal</label>
-            <input
-              v-model="form.address.postal_code"
-              type="text"
-              id="postal_code"
-              name="postal_code"
-              inputmode="numeric"
-              class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              required
-            />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="notes" class="font-medium text-slate-700">Referencias</label>
-            <textarea
-              v-model="form.address.notes"
-              id="notes"
-              name="notes"
-              rows="3"
-              class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              required
-            ></textarea>
-          </div>
+          <AddressFormFields
+            :city-options="cityOptions"
+            id-prefix="signup"
+            :show-default-option="false"
+          />
         </fieldset>
 
         <div class="pt-2">
-          <button
-            type="submit"
-            class="w-full rounded-md bg-sky-600 py-3 text-lg font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
-          >
-            Registrarse
-          </button>
+          <Button type="submit" label="Registrarse" class="w-full" size="large" />
         </div>
-      </form>
+      </Form>
     </div>
   </div>
 

@@ -11,10 +11,16 @@ import { computed, inject, ref } from 'vue'
 import AddressLocationPicker from '@/modules/user/components/AddressLocationPicker.vue'
 import type { CityOption } from '@/modules/user/interfaces/CityOption'
 
-defineProps<{
-  cityOptions: CityOption[]
-  idPrefix: string
-}>()
+withDefaults(
+  defineProps<{
+    cityOptions: CityOption[]
+    idPrefix: string
+    showDefaultOption?: boolean
+  }>(),
+  {
+    showDefaultOption: true,
+  },
+)
 
 interface PrimeVueFormFieldState {
   value: unknown
@@ -197,7 +203,7 @@ function clearLocation() {
     }}</Message>
   </FormField>
 
-  <FormField name="is_default" as-child>
+  <FormField v-if="showDefaultOption" name="is_default" as-child>
     <div class="flex items-center gap-2">
       <Checkbox :inputId="`${idPrefix}_is_default`" binary />
       <label :for="`${idPrefix}_is_default`">Marcar como dirección principal</label>

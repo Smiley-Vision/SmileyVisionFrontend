@@ -15,6 +15,9 @@ export const registrationRoutes: RouteRecordRaw[] = [
     path: '/register',
     name: 'request-registration',
     component: RequestRegistrationView,
+    meta: {
+      requireGuest: true,
+    },
   },
   {
     path: '/admin/registration-applications',

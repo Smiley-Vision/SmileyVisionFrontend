@@ -1,32 +1,39 @@
-<script setup>
-import { useToast } from 'primevue'
-import { reactive } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+<script setup lang="ts">
+import { Form, type FormSubmitEvent } from '@primevue/forms'
+import { zodResolver } from '@primevue/forms/resolvers/zod'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import Message from 'primevue/message'
+import Password from 'primevue/password'
+import { RouterLink, useRouter } from 'vue-router'
 
-import { firstProblemMessage } from '@/modules/core/api/apiProblem.ts'
-import { useAuthStore } from '@/modules/core/stores/auth.ts'
+import { firstProblemMessage, type ApiProblemDetails } from '@/modules/core/api/apiProblem'
+import { useAppToast } from '@/modules/core/composables/useAppToast'
+import { useAuthStore } from '@/modules/core/stores/auth'
 
-const route = useRoute()
-const toast = useToast()
+import { loginSchema, type LoginFormValues } from '../schemas/login'
+
+const notify = useAppToast()
 const auth = useAuthStore()
 const router = useRouter()
 
-const form = reactive({
+const resolver = zodResolver(loginSchema)
+
+const initialValues: LoginFormValues = {
   email: '',
   password: '',
-})
+}
 
-const submitLogin = async () => {
+async function handleSubmit(event: FormSubmitEvent) {
+  if (!event.valid) return
+
+  const values = event.values as LoginFormValues
+
   try {
-    await auth.login(form.email, form.password)
+    await auth.login(values.email, values.password)
     router.push({ name: 'home', query: { justLoggedIn: 'true' } })
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: firstProblemMessage(error),
-      life: 4000,
-    })
+    notify('error', 'Error', firstProblemMessage(error as ApiProblemDetails))
   }
 }
 </script>
@@ -46,40 +53,40 @@ const submitLogin = async () => {
       </div>
 
       <!-- Login form -->
-      <form @submit.prevent="submitLogin" class="flex flex-col gap-y-6">
+      <Form
+        v-slot="$form"
+        class="flex flex-col gap-y-6"
+        :resolver="resolver"
+        :initial-values="initialValues"
+        @submit="handleSubmit"
+      >
         <div class="flex flex-col gap-y-1">
           <label for="email" class="font-medium text-lg text-gray-700">Correo electrónico:</label>
-          <input
-            v-model="form.email"
-            type="email"
-            id="email"
-            name="email"
-            class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-            placeholder="Ingresa tu correo electrónico"
-            required
-          />
+          <InputText id="email" name="email" placeholder="Ingresa tu correo electrónico" fluid />
+          <Message v-if="$form.email?.invalid" severity="error" size="small">
+            {{ $form.email.error?.message }}
+          </Message>
         </div>
 
         <div class="flex flex-col gap-y-1">
           <label for="password" class="font-medium text-lg text-gray-700">Contraseña:</label>
-          <input
-            v-model="form.password"
-            type="password"
+          <Password
             id="password"
             name="password"
-            class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
             placeholder="Ingresa tu contraseña"
-            required
+            :feedback="false"
+            toggle-mask
+            fluid
           />
+          <Message v-if="$form.password?.invalid" severity="error" size="small">
+            {{ $form.password.error?.message }}
+          </Message>
         </div>
 
-        <button
-          type="submit"
-          class="w-full px-4 py-3 bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700"
-        >
-          Iniciar sesión
-        </button>
-      </form>
+        <Button type="submit" label="Iniciar sesión" class="w-full" size="large" />
+      </Form>
     </div>
   </div>
+
+  <Toast position="bottom-right" />
 </template>

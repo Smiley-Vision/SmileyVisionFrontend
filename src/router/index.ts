@@ -4,6 +4,7 @@ import NotFoundView from '@/modules/marketing/pages/NotFoundView.vue'
 
 import { requireAdmin } from './guards/requireAdmin'
 import { requireAuth } from './guards/requireAuth'
+import { requireGuest } from './guards/requireGuest'
 import { adminProductsRoutes } from './modules/adminProducts.routes'
 import { catalogRoutes } from './modules/catalog.routes'
 import { identityRoutes } from './modules/identity.routes'
@@ -29,6 +30,10 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
+  if (to.meta.requireGuest) {
+    return requireGuest(to)
+  }
+
   if (!to.name || !to.name.toString().startsWith('admin')) {
     return
   }
