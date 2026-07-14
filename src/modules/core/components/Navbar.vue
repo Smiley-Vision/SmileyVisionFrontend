@@ -31,7 +31,7 @@ const {
   <header
     class="sticky top-0 z-50 border-b border-sky-900/10 bg-sky-800 text-white shadow-[0_10px_24px_rgba(7,89,133,0.18)]"
   >
-    <div class="mx-auto max-w-[1600px] lg:px-12 px-6 py-2.5">
+    <div class="mx-auto max-w-[1600px] lg:px-32 px-6 py-2.5">
       <div
         class="hidden items-center gap-5 lg:grid lg:grid-cols-[220px_minmax(320px,1fr)_260px_220px]"
       >

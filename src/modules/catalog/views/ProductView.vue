@@ -8,6 +8,7 @@ import { useRoute } from 'vue-router'
 import { useProductDetail } from '@/modules/catalog/composables/useProductDetail'
 import { formatLensValue } from '@/modules/catalog/utils/lensSeries'
 import { slugify } from '@/modules/catalog/utils/slug'
+import Spinner from '@/modules/core/components/Spinner.vue'
 
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
 const route = useRoute()
@@ -53,17 +54,10 @@ const categoryHref = computed(() =>
 </script>
 
 <template>
-  <!-- Loading screen -->
-  <div v-if="isLoading" class="mx-auto my-auto flex flex-col items-center gap-y-8 mt-24">
-    <div
-      class="pi pi-spinner-dotted slow-spin animate-spin text-sky-800"
-      style="font-size: 8rem"
-    ></div>
-    <div class="text-4xl font-bold text-sky-800 lg:text-5xl">Cargando...</div>
-  </div>
+  <Spinner :is-loading text="Cargando producto..." />
 
   <!-- Content -->
-  <div v-else class="mx-auto flex max-w-6xl flex-col gap-y-8 px-6 py-10 lg:px-16 lg:py-14">
+  <div v-if="!isLoading" class="mx-auto flex max-w-6xl flex-col gap-y-8 px-6 py-10 lg:px-16 lg:py-14">
     <!-- Breadcrumb -->
     <nav class="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-500">
       <RouterLink :to="{ name: 'shop' }" class="hover:text-sky-800">Tienda</RouterLink>
@@ -81,7 +75,7 @@ const categoryHref = computed(() =>
         <img
           :src="`${backendUrl}/storage/${displayImage}`"
           alt="Imagen del producto"
-          class="size-72 max-w-full rounded-lg border-2 border-sky-600 bg-white object-contain object-center shadow-xl md:size-96 lg:size-[26rem]"
+          class="size-72 max-w-full rounded-md border-2 border-slate-100 bg-white object-contain object-center shadow-xl md:size-96 lg:size-[26rem]"
         />
       </div>
 

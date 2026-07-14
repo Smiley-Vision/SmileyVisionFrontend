@@ -106,8 +106,8 @@ function variationOptionKey(variationOptionIndex: number): string {
       </div>
     </div>
 
-    <div class="flex flex-col items-end justify-between gap-4">
-      <div class="font-bold text-3xl text-sky-800 whitespace-nowrap">
+    <div class="flex md:flex-col flex-row items-center items-end justify-between gap-4">
+      <div class="font-bold md:text-3xl text-xl text-sky-800 whitespace-nowrap">
         ${{ formatPrice(item.price * item.quantity) }} MXN
       </div>
       <Button

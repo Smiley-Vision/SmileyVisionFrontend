@@ -28,7 +28,7 @@ const {
 <template>
   <Spinner :isLoading text="Cargando carrito..." />
 
-  <div v-if="!isLoading" class="lg:px-12 px-6 lg:py-10 py-6 flex flex-col gap-8">
+  <div v-if="!isLoading" class="lg:px-32 px-6 lg:py-10 py-6 flex flex-col gap-8">
     <h1 class="text-4xl md:text-5xl font-bold text-sky-800">Carrito de compras</h1>
 
     <div
@@ -108,7 +108,7 @@ const {
 
           <div class="flex justify-between items-center text-slate-600 py-2">
             <span class="text-2xl font-bold">TOTAL</span>
-            <span class="text-4xl font-bold text-sky-800">${{ formatPrice(total) }} MXN</span>
+            <span class="md:text-4xl text-2xl font-bold text-sky-800">${{ formatPrice(total) }} MXN</span>
           </div>
 
           <Button

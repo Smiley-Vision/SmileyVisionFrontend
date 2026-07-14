@@ -35,7 +35,7 @@ function onSelectSupplier(supplierId: number | null) {
 <template>
   <button
     type="button"
-    class="mb-4 inline-flex items-center gap-2 self-start rounded-xl border-2 border-sky-600 px-4 py-2 font-semibold text-sky-800 lg:hidden"
+    class="inline-flex items-center gap-2 self-start rounded-xl border-2 border-sky-600 px-4 py-2 font-semibold text-sky-800 lg:hidden"
     @click="isMobileOpen = true"
   >
     <i class="pi pi-filter"></i>
@@ -44,7 +44,7 @@ function onSelectSupplier(supplierId: number | null) {
 
   <aside class="hidden w-64 shrink-0 flex-col gap-8 lg:flex">
     <div class="flex flex-col gap-3">
-      <div class="text-lg font-semibold text-sky-800">Categoría</div>
+      <div class="text-xl font-semibold text-sky-800">Categoría</div>
       <label class="flex cursor-pointer items-center gap-2 font-medium text-slate-600">
         <RadioButton
           :model-value="currentCategorySlug"
@@ -70,7 +70,7 @@ function onSelectSupplier(supplierId: number | null) {
     </div>
 
     <div v-if="suppliers.length > 0" class="flex flex-col gap-3">
-      <div class="text-lg font-semibold text-sky-800">Proveedor</div>
+      <div class="text-xl font-semibold text-sky-800">Proveedor</div>
       <label class="flex cursor-pointer items-center gap-2 font-medium text-slate-600">
         <RadioButton
           :model-value="selectedSupplierId"

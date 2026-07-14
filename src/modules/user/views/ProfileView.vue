@@ -54,8 +54,8 @@ function handleAddressActions(payload: { event: Event; address: Address }) {
   <Spinner :isLoading text="Cargando perfil..." />
 
   <!-- Profile information -->
-  <div v-if="!isLoading" class="lg:px-12 px-6 lg:py-10 py-6">
-    <h1 class="text-5xl font-bold text-sky-800 mb-8">Perfil</h1>
+  <div v-if="!isLoading" class="lg:px-32 px-6 lg:py-10 py-6">
+    <h1 class="md:text-5xl text-4xl font-bold text-sky-800 mb-8">Perfil</h1>
 
     <Card class="border border-slate-200 rounded-[20px] shadow-[0_8px_30px_rgba(14,88,128,0.1)]">
       <template #content>

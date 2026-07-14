@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import CatalogSidebar from '@/modules/catalog/components/CatalogSidebar.vue'
 import ProductGrid from '@/modules/catalog/components/ProductGrid.vue'
 import { useProductCatalog } from '@/modules/catalog/composables/useProductCatalog'
+import Spinner from '@/modules/core/components/Spinner.vue'
 
 const {
   categories,
@@ -34,7 +35,9 @@ function onPageChange(event: PageState) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-8 px-6 py-10 lg:flex-row lg:px-16 lg:py-14">
+  <Spinner :is-loading text="Cargando productos..." />
+
+  <div v-if="!isLoading" class="flex flex-col gap-8 px-6 py-10 lg:flex-row lg:px-12 lg:py-10">
     <CatalogSidebar
       :categories="categories"
       :current-category-slug="categorySlug"
@@ -47,7 +50,7 @@ function onPageChange(event: PageState) {
     <div class="flex flex-1 flex-col gap-6">
       <div class="flex flex-col gap-1">
         <div class="text-3xl font-semibold text-sky-800 md:text-4xl">{{ title }}</div>
-        <div v-if="!isLoading" class="text-sm font-medium text-slate-500">
+        <div class="text-sm font-medium text-slate-500">
           {{ pagination.total }} producto{{ pagination.total === 1 ? '' : 's' }}
         </div>
       </div>
