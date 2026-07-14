@@ -1,39 +1,25 @@
 <script setup>
-import { useToast } from 'primevue'
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 
+import { firstProblemMessage } from '@/modules/core/api/apiProblem'
 import api from '@/modules/core/api/smileyApi'
+import { useAppToast } from '@/modules/core/composables/useAppToast'
 import { useAuthStore } from '@/modules/core/stores/auth'
 
 import {
   buildAddressPayload,
-  buildUserPayload,
+  buildSignUpPayload,
   createRegistrationForm,
-  getRegistrationApiErrorMessage,
   getRegistrationFormError,
   registrationCityOptions,
 } from '../utils/registerUserForm'
 
 const auth = useAuthStore()
-const toast = useToast()
+const notify = useAppToast()
 const router = useRouter()
 
-const props = defineProps({
-  token: String,
-  email: String,
-})
-
-const form = reactive(createRegistrationForm(props.email))
-
-const showError = (detail) => {
-  toast.add({
-    severity: 'error',
-    summary: 'Error',
-    detail,
-    life: 4000,
-  })
-}
+const form = reactive(createRegistrationForm())
 
 // Submit the registration form
 const submitRegistration = async () => {
@@ -41,26 +27,26 @@ const submitRegistration = async () => {
     const validationMessage = getRegistrationFormError(form)
 
     if (validationMessage) {
-      showError(validationMessage)
+      notify('error', 'Error', validationMessage)
       return
     }
 
-    const registrationResponse = (await api.post('register', buildUserPayload(form))).data
-    const userId = registrationResponse?.user?.id
+    const signUpResponse = (await api.post('signup', buildSignUpPayload(form))).data
+    const { user, token } = signUpResponse.data
 
-    if (!userId) {
-      throw new Error('No se pudo obtener el usuario registrado')
+    // Sign the user in so the address can be created on their behalf
+    auth.setSession(token, user)
+
+    try {
+      await api.post('addresses', buildAddressPayload(form))
+    } catch (addressError) {
+      notify('error', 'Error', `No se pudo guardar tu dirección: ${firstProblemMessage(addressError)}`)
     }
 
-    await api.post('addresses', buildAddressPayload(form, userId))
-
-    // Registration successful. Mark the registration token as used
-    await api.post('mark-register-token', { token: props.token })
-
-    auth.justRegistered = true
-    router.push({ name: 'login', query: { justRegistered: 'true' } })
+    notify('success', 'Éxito', `Registro exitoso. Bienvenido, ${user.first_name}`)
+    router.push({ name: 'home' })
   } catch (error) {
-    showError(getRegistrationApiErrorMessage(error))
+    notify('error', 'Error', firstProblemMessage(error))
   }
 }
 </script>
@@ -74,8 +60,8 @@ const submitRegistration = async () => {
       <div class="px-6 py-8 sm:px-10">
         <h1 class="text-3xl font-bold text-sky-900">Registro en el sistema</h1>
         <p class="mt-3 text-base leading-7 text-slate-600">
-          Su solicitud de registro ha sido aceptada. Por favor, llene correctamente el siguiente
-          formulario para poder realizar acciones en el sistema.
+          Ingresa el token de registro que te enviamos por correo y llena correctamente el
+          siguiente formulario para poder realizar acciones en el sistema.
         </p>
       </div>
 
@@ -84,6 +70,21 @@ const submitRegistration = async () => {
         @submit.prevent="submitRegistration"
         class="flex flex-col gap-5 border-t border-slate-200 px-6 py-8 sm:px-10"
       >
+        <div class="flex flex-col gap-2">
+          <label for="registration_token" class="font-semibold text-slate-800"
+            >Token de registro</label
+          >
+          <input
+            v-model="form.registration_token"
+            type="text"
+            id="registration_token"
+            name="registration_token"
+            class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            placeholder="Ingrese el token enviado a su correo"
+            required
+          />
+        </div>
+
         <div class="flex flex-col gap-2">
           <label for="first_name" class="font-semibold text-slate-800">Nombres</label>
           <input
@@ -117,8 +118,8 @@ const submitRegistration = async () => {
             type="email"
             id="email"
             name="email"
-            readonly
-            class="w-full cursor-not-allowed rounded-md border border-slate-300 bg-slate-100 p-3 text-slate-600 focus:outline-none"
+            class="w-full rounded-md border border-slate-300 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            placeholder="Ingrese su correo electrónico"
             required
           />
         </div>
@@ -293,4 +294,6 @@ const submitRegistration = async () => {
       </form>
     </div>
   </div>
+
+  <Toast position="bottom-right" />
 </template>

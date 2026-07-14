@@ -7,7 +7,7 @@ import { useAuthStore } from '@/modules/core/stores/auth.ts'
 import BenefitsSection from '@/modules/marketing/components/home/BenefitsSection.vue'
 import BranchesSection from '@/modules/marketing/components/home/BranchesSection.vue'
 import HeroSection from '@/modules/marketing/components/home/HeroSection.vue'
-import RegistrationRequestSection from '@/modules/marketing/components/home/RegistrationRequestSection.vue'
+import RegistrationApplicationSection from '@/modules/marketing/components/home/RegistrationApplicationSection.vue'
 import StoreSection from '@/modules/marketing/components/home/StoreSection.vue'
 import WelcomeSection from '@/modules/marketing/components/home/WelcomeSection.vue'
 
@@ -62,7 +62,7 @@ function scrollToSection(sectionId) {
     <StoreSection />
     <BenefitsSection />
     <BranchesSection />
-    <RegistrationRequestSection />
+    <RegistrationApplicationSection />
   </div>
 
   <Toast position="top-right" />

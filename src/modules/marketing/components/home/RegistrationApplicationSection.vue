@@ -1,36 +1,28 @@
 <script setup>
-import { useRegistrationRequestForm } from '@/modules/registration/composables/useRegistrationRequestForm'
-import { useToast } from 'primevue'
 import { computed } from 'vue'
-import SectionHeading from './SectionHeading.vue'
+
+import { useAppToast } from '@/modules/core/composables/useAppToast'
+import { useRegistrationRequestForm } from '@/modules/registration/composables/useRegistrationRequestForm'
+
 import sendImage from '@/assets/images/landing/send.png'
+import SectionHeading from './SectionHeading.vue'
 
 const { apiError, clearFeedback, errors, form, isSubmitting, submit, successMessage } =
   useRegistrationRequestForm()
 
-const toast = useToast()
+const notify = useAppToast()
 const hasFeedback = computed(() => Boolean(apiError.value || successMessage.value))
 
 async function handleSubmit() {
   const wasSuccessful = await submit()
 
   if (wasSuccessful) {
-    toast.add({
-      severity: 'success',
-      summary: 'Éxito',
-      detail: 'Solicitud enviada correctamente',
-      life: 4000,
-    })
+    notify('success', 'Éxito', 'Solicitud enviada correctamente')
     return
   }
 
   if (apiError.value) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: apiError.value,
-      life: 4000,
-    })
+    notify('error', 'Error', apiError.value)
   }
 }
 </script>
@@ -73,7 +65,7 @@ async function handleSubmit() {
                   id="landing-message"
                   v-model="form.message"
                   rows="5"
-                  class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                  class="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
                   placeholder="Ingresa los detalles de tu óptica para la verificación del negocio."
                   @input="clearFeedback('message')"
                 ></textarea>

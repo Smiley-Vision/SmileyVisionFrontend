@@ -5,19 +5,12 @@ export const registrationCityOptions = [
   { label: 'Villahermosa', value: 3 },
 ]
 
-const fieldLabels = {
-  email: 'correo electronico',
-  first_name: 'nombres',
-  last_name: 'apellidos',
-  phone_number: 'telefono',
-  password: 'contrasena',
-}
-
-export function createRegistrationForm(email = '') {
+export function createRegistrationForm() {
   return {
+    registration_token: '',
     first_name: '',
     last_name: '',
-    email,
+    email: '',
     phone_number: '',
     password: '',
     password_confirmation: '',
@@ -35,21 +28,30 @@ export function createRegistrationForm(email = '') {
   }
 }
 
-export function buildUserPayload(form) {
-  return {
+// Maps the form onto the API's SignUpRequest schema
+export function buildSignUpPayload(form) {
+  const payload = {
+    registration_token: String(form.registration_token).trim(),
     first_name: String(form.first_name).trim(),
     last_name: String(form.last_name).trim(),
     email: String(form.email).trim(),
-    phone_number: String(form.phone_number).replace(/\D/g, ''),
     password: form.password,
   }
+
+  const phoneDigits = String(form.phone_number).replace(/\D/g, '')
+
+  if (phoneDigits) {
+    payload.phone_number = Number(phoneDigits)
+  }
+
+  return payload
 }
 
-export function buildAddressPayload(form, userId) {
+// Maps the form onto the API's StoreAddressRequest schema
+export function buildAddressPayload(form) {
   const address = form.address
 
   return {
-    user_id: Number(userId),
     city_id: Number(address.city_id),
     street: String(address.street).trim(),
     between_a: String(address.between_a).trim(),
@@ -59,95 +61,49 @@ export function buildAddressPayload(form, userId) {
     district: String(address.district).trim(),
     postal_code: String(address.postal_code).trim(),
     notes: String(address.notes).trim(),
-    is_default: true,
   }
 }
 
 export function getRegistrationFormError(form) {
-  const userPayload = buildUserPayload(form)
-  const address = form.address
-
-  if (!userPayload.first_name || !userPayload.last_name || !userPayload.email) {
-    return 'Llene todos los campos personales.'
+  if (!String(form.registration_token).trim()) {
+    return 'El token de registro es obligatorio.'
   }
 
-  if (userPayload.first_name.length > 20) {
-    return 'Los nombres no pueden superar 20 caracteres.'
+  const signUpPayload = buildSignUpPayload(form)
+
+  if (signUpPayload.first_name.length < 3 || signUpPayload.first_name.length > 25) {
+    return 'Los nombres deben tener entre 3 y 25 caracteres.'
   }
 
-  if (userPayload.last_name.length > 20) {
-    return 'Los apellidos no pueden superar 20 caracteres.'
+  if (signUpPayload.last_name.length < 3 || signUpPayload.last_name.length > 25) {
+    return 'Los apellidos deben tener entre 3 y 25 caracteres.'
   }
 
-  if (userPayload.email.length > 40) {
-    return 'El correo electronico no puede superar 40 caracteres.'
-  }
-
-  if (userPayload.phone_number.length !== 10) {
-    return 'El telefono debe tener 10 digitos.'
+  if (!signUpPayload.email || signUpPayload.email.length > 80) {
+    return 'Ingrese un correo electrónico válido de máximo 80 caracteres.'
   }
 
   if (!form.password || !form.password_confirmation) {
-    return 'Ingrese y confirme su contrasena.'
+    return 'Ingrese y confirme su contraseña.'
   }
 
   if (form.password !== form.password_confirmation) {
-    return 'Las contrasenas no coinciden.'
+    return 'Las contraseñas no coinciden.'
   }
 
   if (String(form.password).length < 6) {
-    return 'La contrasena debe tener al menos 6 caracteres.'
+    return 'La contraseña debe tener al menos 6 caracteres.'
   }
 
+  const address = form.address
+
   if (!address.city_id || !address.street || !address.between_a || !address.between_b) {
-    return 'Complete los datos de ubicacion.'
+    return 'Complete los datos de ubicación.'
   }
 
   if (!address.external_number || !address.district || !address.postal_code || !address.notes) {
-    return 'Complete los datos de ubicacion.'
+    return 'Complete los datos de ubicación.'
   }
 
   return ''
-}
-
-export function getRegistrationApiErrorMessage(error) {
-  const firstValidationError = getFirstValidationError(error?.errors)
-
-  if (firstValidationError) {
-    return firstValidationError
-  }
-
-  const rawMessage = String(error?.message || error?.error || error || '')
-
-  if (rawMessage.includes("Data too long for column 'email'")) {
-    return 'El correo electronico no puede superar 40 caracteres.'
-  }
-
-  const tooLongField = rawMessage.match(/Data too long for column '([^']+)'/)
-
-  if (tooLongField?.[1]) {
-    const label = fieldLabels[tooLongField[1]] ?? tooLongField[1]
-    return `El campo ${label} es demasiado largo.`
-  }
-
-  if (rawMessage && !rawMessage.includes('[object Object]')) {
-    return rawMessage
-  }
-
-  return 'No se pudo completar el registro.'
-}
-
-function getFirstValidationError(errors) {
-  if (!errors || typeof errors !== 'object') {
-    return ''
-  }
-
-  const firstField = Object.keys(errors)[0]
-  const firstError = errors[firstField]
-
-  if (Array.isArray(firstError)) {
-    return firstError[0] ?? ''
-  }
-
-  return String(firstError || '')
 }

@@ -104,7 +104,7 @@ const rejectRequest = async (id) => {
 // Retrieve the pending registration requests
 onMounted(async () => {
   try {
-    registrationRequests.value = (await api.get('register-requests')).data
+    registrationRequests.value = (await api.get('registration-applications')).data
     isLoading.value = false
   } catch (error) {
     throw error

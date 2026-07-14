@@ -55,7 +55,7 @@ const leftNavItems = computed(() => {
       { label: 'Tienda', routeName: 'shop' },
       { label: 'Productos', routeName: 'admin-products' },
       { label: 'Inventario', routeName: 'admin-products-availability' },
-      { label: 'Solicitudes', routeName: 'admin-register' },
+      { label: 'Solicitudes', routeName: 'admin-registration-applications' },
     ]
   }
 

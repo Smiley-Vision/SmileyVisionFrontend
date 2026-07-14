@@ -1,17 +1,27 @@
 import type { RouteRecordRaw } from 'vue-router'
+import { requireAdmin } from '../guards/requireAdmin'
 
-const UserRegisterView = () => import('@/modules/registration/pages/UserRegisterView.vue')
-const RegisterView = () => import('@/modules/registration/pages/RegisterView.vue')
+const RegistrationFormView = () => import('@/modules/registration/views/RegistrationFormView.vue')
+const RegistrationApplicationsView = () => import('@/modules/registration/views/RegistrationApplicationsView.vue')
+const RequestRegistrationView = () => import('@/modules/registration/views/RequestRegistrationView.vue')
 
 export const registrationRoutes: RouteRecordRaw[] = [
   {
-    path: '/register',
-    name: 'register',
-    component: UserRegisterView,
+    path: '/sign-up',
+    name: 'registration-form',
+    component: RegistrationFormView,
   },
   {
-    path: '/admin/register',
-    name: 'admin-register',
-    component: RegisterView,
+    path: '/register',
+    name: 'request-registration',
+    component: RequestRegistrationView,
+  },
+  {
+    path: '/admin/registration-applications',
+    name: 'admin-registration-applications',
+    component: RegistrationApplicationsView,
+    meta: {
+      requireAdmin
+    }
   },
 ]

@@ -1,12 +1,12 @@
 <script setup>
-import { useToast } from 'primevue'
 import { useRouter } from 'vue-router'
 
-import { useRegistrationRequestForm } from '@/modules/registration/composables/useRegistrationRequestForm'
+import { useAppToast } from '@/modules/core/composables/useAppToast'
 import { useAuthStore } from '@/modules/core/stores/auth'
+import { useRegistrationRequestForm } from '@/modules/registration/composables/useRegistrationRequestForm'
 
 const auth = useAuthStore()
-const toast = useToast()
+const notify = useAppToast()
 const router = useRouter()
 const { apiError, clearFeedback, errors, form, isSubmitting, submit } = useRegistrationRequestForm()
 
@@ -21,12 +21,7 @@ const submitRegistrationRequest = async () => {
   }
 
   if (apiError.value) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: apiError.value,
-      life: 4000,
-    })
+    notify('error', 'Error', apiError.value)
   }
 }
 </script>
@@ -68,7 +63,7 @@ const submitRegistrationRequest = async () => {
             id="message"
             name="message"
             rows="4"
-            class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+            class="w-full resize-none p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
             placeholder="Ingresa los detalles de su óptica para la verificación del negocio."
             @input="clearFeedback('message')"
           ></textarea>
