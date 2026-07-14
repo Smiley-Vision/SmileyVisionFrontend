@@ -48,9 +48,9 @@ const {
         <div class="flex items-center justify-end gap-2">
           <NavbarActionLink
             v-for="item in rightNavItems"
-            :key="item.routeName"
+            :key="item.label"
             :item="item"
-            :active="isRouteActive(item.routeName)"
+            :active="isRouteActive(item)"
           />
 
           <NavbarIconButtonLink

@@ -8,19 +8,19 @@ import SectionHeading from './SectionHeading.vue'
 const categories = [
   {
     title: 'Micas',
-    routeName: 'shop-Micas',
+    categorySlug: 'micas',
     image: MicasImg,
     alt: 'Ilustración de micas',
   },
   {
     title: 'Armazones',
-    routeName: 'shop-Armazones',
+    categorySlug: 'armazones',
     image: ArmazonesImg,
     alt: 'Ilustración de armazones',
   },
   {
     title: 'Equipos',
-    routeName: 'shop-Equipos',
+    categorySlug: 'equipos',
     image: EquiposImg,
     alt: 'Ilustración de equipos ópticos',
   },
@@ -39,7 +39,7 @@ const categories = [
         <RouterLink
           v-for="(category, index) in categories"
           :key="category.title"
-          :to="{ name: category.routeName }"
+          :to="{ name: 'shop', params: { categorySlug: category.categorySlug } }"
           v-reveal="{ origin: 'up', distance: 34, duration: 720, delay: index * 110 + 60 }"
           class="group overflow-hidden p-2 transition duration-300 hover:-translate-y-1"
         >

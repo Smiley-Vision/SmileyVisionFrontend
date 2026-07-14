@@ -12,7 +12,7 @@ defineProps<{
   userDisplayName: string
   roleLabel: string
   profileIcon: string
-  isRouteActive: (routeName: string) => boolean
+  isRouteActive: (item: NavItem) => boolean
 }>()
 </script>
 
@@ -37,9 +37,9 @@ defineProps<{
 
       <NavbarActionLink
         v-for="item in rightNavItems"
-        :key="item.routeName"
+        :key="item.label"
         :item="item"
-        :active="isRouteActive(item.routeName)"
+        :active="isRouteActive(item)"
         variant="row"
       />
     </div>

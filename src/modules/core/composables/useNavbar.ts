@@ -15,6 +15,7 @@ export interface NavItem {
   routeName: string
   icon?: string
   badge?: number
+  params?: Record<string, string>
 }
 
 const ADMIN_LEFT_NAV_ITEMS: NavItem[] = [
@@ -26,9 +27,9 @@ const ADMIN_LEFT_NAV_ITEMS: NavItem[] = [
 
 const SHOP_LEFT_NAV_ITEMS: NavItem[] = [
   { label: 'Tienda', routeName: 'shop' },
-  { label: 'Micas', routeName: 'shop-Micas' },
-  { label: 'Armazones', routeName: 'shop-Armazones' },
-  { label: 'Equipos', routeName: 'shop-Equipos' },
+  { label: 'Micas', routeName: 'shop', params: { categorySlug: 'micas' } },
+  { label: 'Armazones', routeName: 'shop', params: { categorySlug: 'armazones' } },
+  { label: 'Equipos', routeName: 'shop', params: { categorySlug: 'equipos' } },
 ]
 
 const DRIVER_LEFT_NAV_ITEMS: NavItem[] = [{ label: 'Perfil', routeName: 'profile' }]
@@ -106,8 +107,13 @@ export function useNavbar() {
     return [{ label: 'Ingresar', routeName: 'login', icon: 'pi pi-sign-in' }]
   })
 
-  function isRouteActive(routeName: string) {
-    return route.name === routeName
+  function isRouteActive(item: NavItem) {
+    if (route.name !== item.routeName) return false
+
+    const routeCategorySlug = typeof route.params.categorySlug === 'string' ? route.params.categorySlug : null
+    const itemCategorySlug = item.params?.categorySlug ?? null
+
+    return routeCategorySlug === itemCategorySlug
   }
 
   function handleClickOutside(event: MouseEvent) {

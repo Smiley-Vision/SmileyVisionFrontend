@@ -20,7 +20,7 @@ const badgeLabel = computed(() => {
 
 <template>
   <RouterLink
-    :to="{ name: item.routeName }"
+    :to="{ name: item.routeName, params: item.params }"
     :class="[
       active ? 'bg-sky-900 text-white' : 'text-slate-100 hover:bg-sky-700/70',
       variant === 'row'

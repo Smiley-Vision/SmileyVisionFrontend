@@ -4,7 +4,7 @@ import type { NavItem } from '../../composables/useNavbar'
 withDefaults(
   defineProps<{
     items: NavItem[]
-    isRouteActive: (routeName: string) => boolean
+    isRouteActive: (item: NavItem) => boolean
     variant?: 'bar' | 'row'
   }>(),
   { variant: 'bar' },
@@ -14,10 +14,10 @@ withDefaults(
 <template>
   <RouterLink
     v-for="item in items"
-    :key="item.routeName"
-    :to="{ name: item.routeName }"
+    :key="item.label"
+    :to="{ name: item.routeName, params: item.params }"
     :class="[
-      isRouteActive(item.routeName)
+      isRouteActive(item)
         ? 'bg-sky-900 text-white'
         : variant === 'row'
           ? 'text-slate-100 hover:bg-sky-700/70'
