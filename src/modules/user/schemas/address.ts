@@ -5,8 +5,8 @@ const digitsOnly = (message: string) => z.string().trim().regex(/^\d+$/, { error
 export const addressSchema = z.object({
   city_id: z.number({ error: 'Selecciona una ciudad.' }).int().positive(),
   street: z.string().trim().min(1, { error: 'La calle es obligatoria.' }).max(40),
-  between_a: z.string().trim().min(1, { error: 'La entre calle 1 es obligatoria.' }).max(40),
-  between_b: z.string().trim().min(1, { error: 'La entre calle 2 es obligatoria.' }).max(40),
+  between_a: z.string().trim().min(1, { error: 'La entre calle A es obligatoria.' }).max(40),
+  between_b: z.string().trim().min(1, { error: 'La entre calle B es obligatoria.' }).max(40),
   external_number: digitsOnly('El número exterior debe ser un número entero.').transform(Number),
   internal_number: z
     .string()

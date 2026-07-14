@@ -39,14 +39,14 @@ async function handleSubmit(event: FormSubmitEvent) {
 </script>
 
 <template>
-  <div class="mt-14 md:mb-0 mb-14 flex items-center justify-center bg-white px-4">
+  <div class="flex-1 flex items-center justify-center bg-slate-100 px-4 py-12">
     <div class="flex flex-col gap-y-8 p-10 rounded-2xl shadow-2xl bg-white w-full max-w-md">
       <!-- Title and subtitle -->
       <div class="flex flex-col gap-y-2 text-center">
         <h1 class="font-bold text-3xl text-sky-800">Inicio de sesión</h1>
         <p class="text-sky-700 text-lg">
           ¿No tienes una cuenta?
-          <RouterLink to="/register" class="text-sky-500 hover:underline">
+          <RouterLink :to="{ name: 'registration-application' }" class="text-sky-500 hover:underline">
             Solicita una
           </RouterLink>
         </p>

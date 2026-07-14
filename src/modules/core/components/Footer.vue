@@ -1,7 +1,7 @@
 <script setup></script>
 
 <template>
-  <footer class="mt-8 bg-sky-800 text-white shadow-[0_-18px_50px_rgba(12,94,137,0.18)]">
+  <footer class="bg-sky-800 text-white shadow-[0_-18px_50px_rgba(12,94,137,0.18)]">
     <div class="mx-auto max-w-7xl px-6 py-12 sm:px-8 lg:px-20">
       <div class="grid gap-10 lg:grid-cols-3">
         <div class="flex flex-col gap-4">
