@@ -1,5 +1,7 @@
 import { ref } from 'vue'
 
+import { type ApiProblemDetails, firstProblemMessage } from '@/modules/core/api/apiProblem'
+import { useAppToast } from '@/modules/core/composables/useAppToast'
 import { getCategorySlug } from '@/modules/core/utils/productApiAdapters'
 
 import type { ProductCategory } from '@/modules/admin-products/interfaces/ProductCategory'
@@ -14,6 +16,8 @@ import {
 export type ProductCategorySlug = 'equipos' | 'armazones' | 'micas'
 
 export function useProductCatalog() {
+  const notify = useAppToast()
+
   const categories = ref<ProductCategory[]>([])
   const suppliers = ref<Supplier[]>([])
   const frameVariations = ref<Variation[]>([])
@@ -21,13 +25,22 @@ export function useProductCatalog() {
   const isLoadingCategories = ref(true)
   const isLoadingSuppliers = ref(false)
   const isLoadingVariations = ref(false)
+  const hasError = ref(false)
 
   async function loadCategories() {
     isLoadingCategories.value = true
+    hasError.value = false
 
     try {
       const response = await getCategoriesService()
       categories.value = response.data
+    } catch (error) {
+      hasError.value = true
+      notify(
+        'error',
+        'No se pudieron cargar las categorías',
+        firstProblemMessage(error as ApiProblemDetails),
+      )
     } finally {
       isLoadingCategories.value = false
     }
@@ -68,6 +81,7 @@ export function useProductCatalog() {
     isLoadingCategories,
     isLoadingSuppliers,
     isLoadingVariations,
+    hasError,
     loadCategories,
     findCategoryBySlug,
     loadSuppliersForCategory,

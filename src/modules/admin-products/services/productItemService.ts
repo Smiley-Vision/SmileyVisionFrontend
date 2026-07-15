@@ -1,11 +1,26 @@
 import smileyApi from '@/modules/core/api/smileyApi'
 
 import type { Product } from '@/modules/admin-products/interfaces/Product'
+import type { ProductConfiguration } from '@/modules/admin-products/interfaces/ProductConfiguration'
 import type { ProductItem } from '@/modules/admin-products/interfaces/ProductItem'
 
 interface CreateProductItemResponse {
   message: string
   data: ProductItem
+}
+
+interface ApiListResponse<T> {
+  data: T[]
+}
+
+interface PaginatedProductItemsResponse {
+  data: ProductItem[]
+  meta: {
+    current_page: number
+    last_page: number
+    per_page: number
+    total: number
+  }
 }
 
 interface LensBatchPayload {
@@ -60,5 +75,21 @@ export async function createLensBatchService(payload: LensBatchPayload) {
 export async function updateItemImageService(itemId: number, formData: FormData) {
   return (
     await smileyApi.post<CreateProductItemResponse>(`/product-items/${itemId}/image`, formData)
+  ).data
+}
+
+export async function getProductItemsByProductService(productId: number, page = 1) {
+  return (
+    await smileyApi.get<PaginatedProductItemsResponse>('/product-items', {
+      params: { product_id: productId, page },
+    })
+  ).data
+}
+
+export async function getProductConfigurationsService(itemId: number) {
+  return (
+    await smileyApi.get<ApiListResponse<ProductConfiguration>>(
+      `/product-configurations/${itemId}`,
+    )
   ).data
 }

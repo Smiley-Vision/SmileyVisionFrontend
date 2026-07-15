@@ -13,9 +13,12 @@ declare module 'vue' {
   export interface GlobalComponents {
     Card: typeof import('primevue/card')['default']
     FormField: typeof import('@primevue/forms/formfield')['default']
+    InputText: typeof import('primevue/inputtext')['default']
+    Message: typeof import('primevue/message')['default']
     ProgressSpinner: typeof import('primevue/progressspinner')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    Textarea: typeof import('primevue/textarea')['default']
     Toast: typeof import('primevue/toast')['default']
   }
 }

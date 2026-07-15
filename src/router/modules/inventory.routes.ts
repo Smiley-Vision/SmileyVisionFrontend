@@ -1,18 +1,22 @@
 import type { RouteRecordRaw } from 'vue-router'
 
-const ManageProductAvailabilityView = () =>
-  import('@/modules/inventory/pages/ManageProductAvailabilityView.vue')
+const AdminProductSearchView = () =>
+  import('@/modules/admin-products/views/AdminProductSearchView.vue')
 const ManageProductAvailabilityForm = () =>
-  import('@/modules/inventory/pages/ManageProductAvailabilityForm.vue')
+  import('@/modules/inventory/views/ManageProductAvailabilityForm.vue')
 
 export const inventoryRoutes: RouteRecordRaw[] = [
   {
     path: '/admin/products/availability',
     name: 'admin-products-availability',
-    component: ManageProductAvailabilityView,
+    component: AdminProductSearchView,
+    props: {
+      targetRouteName: 'admin-products-availability-form',
+      title: 'Busque un producto para disponibilidad',
+    },
   },
   {
-    path: '/admin/products/availability/:code',
+    path: '/admin/products/availability/:id',
     name: 'admin-products-availability-form',
     component: ManageProductAvailabilityForm,
   },

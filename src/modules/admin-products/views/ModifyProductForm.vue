@@ -1,256 +1,132 @@
-<script setup>
-import api from '@/modules/core/api/smileyApi'
-import {
-  buildProductItemsByProductId,
-  enrichProduct,
-} from '@/modules/core/utils/productApiAdapters'
-import { useToast } from 'primevue'
-import { computed, onMounted, reactive, ref } from 'vue'
+<script setup lang="ts">
+import { Form, FormField, type FormSubmitEvent } from '@primevue/forms'
+import { zodResolver } from '@primevue/forms/resolvers/zod'
+import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
+import InputText from 'primevue/inputtext'
+import Message from 'primevue/message'
+import Textarea from 'primevue/textarea'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+
+import Spinner from '@/modules/core/components/Spinner.vue'
+
+import { useModifyProductForm } from '@/modules/admin-products/composables/useModifyProductForm'
+import {
+  type UpdateProductFormValues,
+  updateProductSchema,
+} from '@/modules/admin-products/schemas/updateProductSchema'
 
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 const route = useRoute()
-const toast = useToast()
+const productId = Number(route.params.id)
 
-const isLoading = ref(true)
+const { product, isLoading, isSubmitting, isDeleting, hasError, loadProduct, submitUpdate, deleteProduct } =
+  useModifyProductForm(productId)
+
+const resolver = zodResolver(updateProductSchema)
 const showDeleteModal = ref(false)
-const imagePreview = ref(null)
-const code = ref('')
-const initialState = ref({})
 
-const productCode = route.params.code
+const initialValues = computed(() => ({
+  name: product.value?.name ?? '',
+  description: product.value?.description ?? '',
+}))
 
-// Form object; request body
-const form = reactive({
-  name: '',
-  description: '',
-})
+function handleSubmit(event: FormSubmitEvent) {
+  if (!event.valid) return
 
-// Checks if the form has been changed
-const isFormModified = computed(() => {
-  return (
-    form.name !== initialState.value.name || form.description !== initialState.value.description
-  )
-})
-
-const submitForm = async () => {
-  try {
-    const body = {
-      name: form.name,
-      description: form.description,
-    }
-
-    const response = (await api.patch(`products/${productCode}`, body)).data
-
-    if (response.message === 'Product updated successfully') {
-      await retrieveProductState()
-
-      toast.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Producto editado correctamente',
-        life: 4000,
-      })
-    }
-  } catch (error) {
-    const message = error?.errors
-      ? error.errors[Object.keys(error.errors)[0]][0]
-      : 'No se pudo actualizar el producto'
-
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: message,
-      life: 4000,
-    })
-  }
-}
-
-const deleteProduct = async () => {
-  try {
-    await api.delete(`products/${productCode}`)
-
-    toast.add({
-      severity: 'success',
-      summary: 'Eliminado',
-      detail: 'Producto eliminado correctamente',
-      life: 4000,
-    })
-
-    // Redirigir o recargar
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'No se pudo eliminar el producto',
-      life: 4000,
-    })
-  }
-
-  showDeleteModal.value = false
-}
-
-// Retrieve the current product's state
-const retrieveProductState = async () => {
-  const [productResponse, productItemsResponse] = await Promise.all([
-    api.get(`products/${productCode}`),
-    api.get('product-items'),
-  ])
-  const productItemsByProductId = buildProductItemsByProductId(productItemsResponse.data)
-  const response = enrichProduct(productResponse.data, productItemsByProductId)
-
-  // Fill the form with the product state
-  form.image_url = response.image_url
-  form.name = response.name
-  form.description = response.description
-  imagePreview.value = `${backendUrl}/storage/${form.image_url}`
-
-  code.value = response.code
-
-  // Save initial state for comparison
-  initialState.value = {
-    image: response.image,
-    name: response.name,
-    description: response.description,
-    image_url: response.image_url,
-  }
+  void submitUpdate(event.values as UpdateProductFormValues)
 }
 
 onMounted(async () => {
-  try {
-    await retrieveProductState()
-
-    isLoading.value = false
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'No se pudo obtener el estado del producto',
-      life: 4000,
-    })
-  }
+  await loadProduct()
 })
 </script>
 
 <template>
-  <!-- Loading screen -->
-  <div v-if="isLoading" class="flex flex-col mx-auto my-auto items-center gap-y-8 mt-24">
-    <div
-      class="text-sky-600 pi pi-spinner-dotted animate-spin slow-spin"
-      style="font-size: 8rem"
-    ></div>
-    <div class="lg:text-5xl text-4xl text-sky-700 font-bold">Cargando...</div>
+  <Spinner :is-loading="isLoading" text="Cargando..." />
+
+  <div
+    v-if="!isLoading && hasError"
+    class="flex flex-col items-center gap-y-3 py-24 text-center"
+  >
+    <div class="flex size-20 items-center justify-center rounded-full bg-red-50 text-red-500">
+      <i class="pi pi-exclamation-triangle" style="font-size: 2.5rem"></i>
+    </div>
+    <div class="text-2xl font-semibold text-sky-800">No se pudo cargar el producto</div>
   </div>
 
-  <!-- Form content -->
-  <form
-    v-else
-    @submit.prevent="submitForm"
+  <Form
+    v-else-if="!isLoading"
+    :key="product?.id"
     class="flex flex-col items-center max-w-2xl mx-auto mt-12 md:mb-0 mb-12 md:px-10 md:py-10 px-8 gap-10 md:bg-white md:rounded-3xl md:shadow-2xl"
+    :resolver="resolver"
+    :initial-values="initialValues"
+    @submit="handleSubmit"
   >
-    <!-- Title -->
-    <h2 class="text-3xl font-bold text-sky-800 text-center">Editar {{ form.name }}</h2>
+    <h2 class="text-3xl font-bold text-sky-800 text-center">Editar {{ product?.name }}</h2>
 
-    <!-- Image preview -->
     <div class="w-48 h-48 relative group">
       <div
         class="w-full h-full flex items-center justify-center bg-slate-100 border-2 border-solid border-sky-400 rounded-2xl transition hover:bg-sky-50"
       >
         <img
-          v-if="imagePreview"
-          :src="imagePreview"
+          v-if="product?.image_path"
+          :src="`${backendUrl}/storage/${product.image_path}`"
           alt="Vista previa"
           class="object-contain object-center w-full h-full rounded-2xl bg-white"
         />
       </div>
     </div>
 
-    <!-- Code -->
-    <div class="w-full">
-      <label for="code" class="block text-sky-700 font-medium mb-1">Código del producto</label>
-      <input
-        v-model="code"
-        id="code"
-        type="text"
-        disabled
-        class="w-full text-slate-500 p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300"
-        required
-      />
-    </div>
+    <FormField v-slot="$field" name="name" class="flex w-full flex-col gap-1">
+      <label for="name" class="font-medium text-sky-700">Nombre del producto</label>
+      <InputText id="name" fluid />
+      <Message v-if="$field.invalid" severity="error" size="small">{{
+        $field.error?.message
+      }}</Message>
+    </FormField>
 
-    <!-- Name -->
-    <div class="w-full">
-      <label for="name" class="block text-sky-700 font-medium mb-1">Nombre del producto</label>
-      <input
-        v-model="form.name"
-        id="name"
-        type="text"
-        class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300"
-        required
-      />
-    </div>
+    <FormField v-slot="$field" name="description" class="flex w-full flex-col gap-1">
+      <label for="description" class="font-medium text-sky-700">Descripción</label>
+      <Textarea id="description" rows="3" fluid />
+      <Message v-if="$field.invalid" severity="error" size="small">{{
+        $field.error?.message
+      }}</Message>
+    </FormField>
 
-    <!-- Description -->
-    <div class="w-full">
-      <label for="description" class="block text-sky-700 font-medium mb-1">Descripción</label>
-      <input
-        v-model="form.description"
-        id="description"
-        type="text"
-        class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sky-300"
-        required
-      />
-    </div>
-
-    <!-- Submit and delete buttons -->
     <div class="flex flex-row justify-around md:w-2/3 w-full">
-      <button
-        type="submit"
-        :disabled="!isFormModified"
-        :class="[
-          isFormModified ? 'bg-sky-500 hover:bg-sky-600' : 'bg-slate-400',
-          'text-white font-semibold px-8 py-3 rounded-xl',
-        ]"
-      >
-        ACEPTAR
-      </button>
-      <button
+      <Button type="submit" label="ACEPTAR" :loading="isSubmitting" />
+      <Button
         type="button"
+        label="ELIMINAR"
+        severity="danger"
         @click="showDeleteModal = true"
-        class="bg-red-500 text-white font-semibold px-8 py-3 rounded-xl hover:bg-red-600 transition"
-      >
-        ELIMINAR
-      </button>
+      />
     </div>
-  </form>
+  </Form>
 
-  <!-- Delete modal -->
-  <div
-    v-if="showDeleteModal"
-    class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
-  >
-    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center space-y-6">
-      <p class="text-xl text-slate-700 font-semibold">
-        ¿Estás seguro de que quieres eliminar este producto?
-      </p>
-      <div class="flex justify-center gap-x-4">
-        <button
-          class="bg-slate-300 hover:bg-slate-400 px-5 py-2 rounded-xl"
-          @click="showDeleteModal = false"
-        >
-          Cancelar
-        </button>
-        <button
-          class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl"
+  <Dialog v-model:visible="showDeleteModal" modal :style="{ width: '28rem' }">
+    <template #header>
+      <div class="font-semibold text-[#075985]">Eliminar producto</div>
+    </template>
+    <div class="text-slate-700 leading-relaxed">
+      ¿Estás seguro de que quieres eliminar <strong>{{ product?.name }}</strong>? Esta acción no
+      se puede deshacer.
+    </div>
+    <template #footer>
+      <div class="flex justify-end gap-3">
+        <Button label="Cancelar" severity="secondary" text @click="showDeleteModal = false" />
+        <Button
+          label="Sí, eliminar"
+          severity="danger"
+          :loading="isDeleting"
           @click="deleteProduct"
-        >
-          Sí, eliminar
-        </button>
+        />
       </div>
-    </div>
-  </div>
+    </template>
+  </Dialog>
 
-  <!-- Toast (Optional, depending on your library) -->
   <Toast position="bottom-right" />
 </template>
