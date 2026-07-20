@@ -1,5 +1,4 @@
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 
 import { type ApiProblemDetails, firstProblemMessage } from '@/modules/core/api/apiProblem'
 import { useAppToast } from '@/modules/core/composables/useAppToast'
@@ -14,7 +13,6 @@ import {
 
 export function useModifyProductForm(productId: number) {
   const notify = useAppToast()
-  const router = useRouter()
 
   const product = ref<Product | null>(null)
   const isLoading = ref(true)
@@ -59,19 +57,20 @@ export function useModifyProductForm(productId: number) {
     }
   }
 
-  async function deleteProduct() {
+  async function deleteProduct(): Promise<boolean> {
     isDeleting.value = true
 
     try {
       await deleteProductService(productId)
       notify('success', 'Eliminado', 'Producto eliminado correctamente')
-      router.push({ name: 'admin-products-modify' })
+      return true
     } catch (error) {
       notify(
         'error',
         'No se pudo eliminar el producto',
         firstProblemMessage(error as ApiProblemDetails),
       )
+      return false
     } finally {
       isDeleting.value = false
     }

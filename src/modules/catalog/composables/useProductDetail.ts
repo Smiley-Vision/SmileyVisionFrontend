@@ -443,8 +443,8 @@ export function useProductDetail(productId: number) {
 
   function editProduct() {
     router.push({
-      name: 'admin-products-modify-form',
-      params: { code: product.value?.id ?? productId },
+      name: 'admin-products-modify',
+      query: { edit: String(product.value?.id ?? productId) },
     })
   }
 

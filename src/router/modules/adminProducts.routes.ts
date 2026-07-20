@@ -5,7 +5,6 @@ const CreateProductForm = () => import('@/modules/admin-products/views/CreatePro
 const CreateLensBatchForm = () => import('@/modules/admin-products/views/CreateLensBatchForm.vue')
 const AdminProductSearchView = () =>
   import('@/modules/admin-products/views/AdminProductSearchView.vue')
-const ModifyProductForm = () => import('@/modules/admin-products/views/ModifyProductForm.vue')
 
 export const adminProductsRoutes: RouteRecordRaw[] = [
   {
@@ -30,11 +29,7 @@ export const adminProductsRoutes: RouteRecordRaw[] = [
     props: {
       targetRouteName: 'admin-products-modify-form',
       title: 'Busque un producto para editar',
+      openModalOnClick: true,
     },
-  },
-  {
-    path: '/admin/products/modify/:id',
-    name: 'admin-products-modify-form',
-    component: ModifyProductForm,
   },
 ]

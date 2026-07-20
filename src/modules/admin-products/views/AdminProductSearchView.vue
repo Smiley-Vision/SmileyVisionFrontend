@@ -1,18 +1,30 @@
 <script setup lang="ts">
+import Dialog from 'primevue/dialog'
 import Paginator, { type PageState } from 'primevue/paginator'
 import Select from 'primevue/select'
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import Spinner from '@/modules/core/components/Spinner.vue'
 
+import ModifyProductFormContent from '@/modules/admin-products/components/ModifyProductFormContent.vue'
 import { useAdminProductSearch } from '@/modules/admin-products/composables/useAdminProductSearch'
 
-const props = defineProps<{
-  targetRouteName: string
-  title: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    targetRouteName: string
+    title: string
+    openModalOnClick?: boolean
+  }>(),
+  {
+    openModalOnClick: false,
+  },
+)
 
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
+
+const route = useRoute()
+const router = useRouter()
 
 const {
   query,
@@ -35,12 +47,41 @@ const categoryOptions = computed(() => [
 
 const first = computed(() => (pagination.value.current_page - 1) * pagination.value.per_page)
 
+const selectedProductId = ref<number | null>(null)
+const showEditModal = ref(false)
+
 function onPageChange(event: PageState) {
   setPage(event.page + 1)
 }
 
-onMounted(() => {
-  void init()
+function openEditModal(productId: number) {
+  selectedProductId.value = productId
+  showEditModal.value = true
+}
+
+function handleProductDeleted() {
+  showEditModal.value = false
+  void setPage(pagination.value.current_page)
+}
+
+watch(showEditModal, (visible) => {
+  if (visible) return
+
+  selectedProductId.value = null
+
+  if (route.query.edit) {
+    const { edit: _edit, ...rest } = route.query
+    void router.replace({ query: rest })
+  }
+})
+
+onMounted(async () => {
+  await init()
+
+  if (props.openModalOnClick && typeof route.query.edit === 'string') {
+    const editId = Number(route.query.edit)
+    if (Number.isFinite(editId)) openEditModal(editId)
+  }
 })
 </script>
 
@@ -97,7 +138,13 @@ onMounted(() => {
           class="flex flex-col items-center gap-y-4 font-semibold text-xl text-sky-700"
         >
           <div class="text-lg text-sky-700 font-semibold">{{ product.name }}</div>
-          <RouterLink :to="{ name: targetRouteName, params: { id: product.id } }">
+          <button v-if="openModalOnClick" type="button" @click="openEditModal(product.id)">
+            <img
+              :src="`${backendUrl}/storage/${product.image_path}`"
+              class="lg:size-60 size-40 object-contain object-center bg-white border-solid border-2 border-sky-600 rounded-xl shadow-lg hover:shadow-2xl transform transition duration-200 hover:scale-105"
+            />
+          </button>
+          <RouterLink v-else :to="{ name: targetRouteName, params: { id: product.id } }">
             <img
               :src="`${backendUrl}/storage/${product.image_path}`"
               class="lg:size-60 size-40 object-contain object-center bg-white border-solid border-2 border-sky-600 rounded-xl shadow-lg hover:shadow-2xl transform transition duration-200 hover:scale-105"
@@ -115,6 +162,14 @@ onMounted(() => {
       />
     </template>
   </div>
+
+  <Dialog v-model:visible="showEditModal" modal :style="{ width: '48rem' }">
+    <ModifyProductFormContent
+      v-if="selectedProductId"
+      :product-id="selectedProductId"
+      @deleted="handleProductDeleted"
+    />
+  </Dialog>
 
   <Toast position="bottom-right" />
 </template>

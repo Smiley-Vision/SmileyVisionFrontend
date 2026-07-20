@@ -7,7 +7,6 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Textarea from 'primevue/textarea'
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
 
 import ModifyProductItemPanel from '@/modules/admin-products/components/ModifyProductItemPanel.vue'
 import { useModifyProductForm } from '@/modules/admin-products/composables/useModifyProductForm'
@@ -17,10 +16,15 @@ import {
 } from '@/modules/admin-products/schemas/updateProductSchema'
 import Spinner from '@/modules/core/components/Spinner.vue'
 
-const backendUrl = import.meta.env.VITE_BACKEND_BASE
+const props = defineProps<{
+  productId: number
+}>()
 
-const route = useRoute()
-const productId = Number(route.params.id)
+const emit = defineEmits<{
+  deleted: []
+}>()
+
+const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 const {
   product,
@@ -31,10 +35,11 @@ const {
   loadProduct,
   submitUpdate,
   deleteProduct,
-} = useModifyProductForm(productId)
+} = useModifyProductForm(props.productId)
 
 const resolver = zodResolver(updateProductSchema)
 const showDeleteModal = ref(false)
+const showItemsModal = ref(false)
 
 const initialValues = computed(() => ({
   name: product.value?.name ?? '',
@@ -45,6 +50,14 @@ function handleSubmit(event: FormSubmitEvent) {
   if (!event.valid) return
 
   void submitUpdate(event.values as UpdateProductFormValues)
+}
+
+async function handleDelete() {
+  const success = await deleteProduct()
+  if (!success) return
+
+  showDeleteModal.value = false
+  emit('deleted')
 }
 
 onMounted(async () => {
@@ -65,7 +78,7 @@ onMounted(async () => {
   <Form
     v-else-if="!isLoading"
     :key="product?.id"
-    class="flex flex-col items-center max-w-2xl mx-auto mt-12 md:mb-0 mb-12 md:px-10 md:py-10 px-8 gap-10 md:bg-white md:rounded-3xl md:shadow-2xl"
+    class="flex flex-col items-center w-full max-w-2xl mx-auto gap-8 px-2 py-4"
     :resolver="resolver"
     :initial-values="initialValues"
     @submit="handleSubmit"
@@ -101,16 +114,19 @@ onMounted(async () => {
       }}</Message>
     </FormField>
 
+    <button
+      type="button"
+      class="text-sm font-semibold text-sky-700 underline hover:text-sky-900"
+      @click="showItemsModal = true"
+    >
+      Editar variantes/ítems de este producto
+    </button>
+
     <div class="flex flex-row justify-around md:w-2/3 w-full">
       <Button type="submit" label="ACEPTAR" :loading="isSubmitting" />
       <Button type="button" label="ELIMINAR" severity="danger" @click="showDeleteModal = true" />
     </div>
   </Form>
-
-  <div v-if="!isLoading && !hasError" class="mx-auto mt-10 mb-12 max-w-5xl px-8">
-    <h2 class="mb-6 text-2xl font-bold text-sky-800">Editar variantes del producto</h2>
-    <ModifyProductItemPanel :product-id="productId" />
-  </div>
 
   <Dialog v-model:visible="showDeleteModal" modal :style="{ width: '28rem' }">
     <template #header>
@@ -127,11 +143,16 @@ onMounted(async () => {
           label="Sí, eliminar"
           severity="danger"
           :loading="isDeleting"
-          @click="deleteProduct"
+          @click="handleDelete"
         />
       </div>
     </template>
   </Dialog>
 
-  <Toast position="bottom-right" />
+  <Dialog v-model:visible="showItemsModal" modal :style="{ width: '64rem' }">
+    <template #header>
+      <div class="font-semibold text-[#075985]">Editar variantes de {{ product?.name }}</div>
+    </template>
+    <ModifyProductItemPanel :product-id="productId" />
+  </Dialog>
 </template>
