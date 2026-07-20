@@ -2,9 +2,9 @@ import { useToast } from 'primevue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import type { ProductConfiguration } from '@/modules/catalog/interfaces/ProductConfiguration'
 import type { Product } from '@/modules/catalog/interfaces/Product'
 import type { ProductCategory } from '@/modules/catalog/interfaces/ProductCategory'
+import type { ProductConfiguration } from '@/modules/catalog/interfaces/ProductConfiguration'
 import type { ProductItem } from '@/modules/catalog/interfaces/ProductItem'
 import {
   getCategories,
@@ -13,10 +13,10 @@ import {
   getProductItemsByProductId,
 } from '@/modules/catalog/services/catalogService'
 import {
-  buildFrameVariantData,
-  findMatchingFrameItem,
-  isFrameOptionAvailable as checkFrameOptionAvailable,
   type FrameVariantData,
+  buildFrameVariantData,
+  isFrameOptionAvailable as checkFrameOptionAvailable,
+  findMatchingFrameItem,
 } from '@/modules/catalog/utils/frameVariants'
 import {
   buildLensSeries,
@@ -52,7 +52,9 @@ export function useProductDetail(productId: number) {
     if (!product.value) return null
     return categories.value.find((category) => category.id === product.value?.category_id) ?? null
   })
-  const categorySlug = computed(() => (currentCategory.value ? slugify(currentCategory.value.name) : null))
+  const categorySlug = computed(() =>
+    currentCategory.value ? slugify(currentCategory.value.name) : null,
+  )
   const isLensProduct = computed(() => categorySlug.value === 'micas')
   const isFrameProduct = computed(() => categorySlug.value === 'armazones')
 
@@ -128,7 +130,14 @@ export function useProductDetail(productId: number) {
     if (!series) return
 
     const item = findLensItemBySphereCylinder(series.items, sphere, cylinder)
-    if (item) selectedLensItemsBySeries[seriesKey] = item.id
+    if (!item) return
+
+    selectedLensItemsBySeries[seriesKey] = item.id
+
+    const stock = Number(item.stock ?? 0)
+    if (Number(selectedLensSeriesQuantities[seriesKey] ?? 0) > stock) {
+      setLensSeriesQuantity(seriesKey, stock)
+    }
   }
 
   function initializeLensSelectors() {
@@ -153,8 +162,13 @@ export function useProductDetail(productId: number) {
         return { series, item, quantity }
       })
       .filter(
-        (entry): entry is { series: (typeof lensSeries.value)[number]; item: ProductItem; quantity: number } =>
-          entry !== null,
+        (
+          entry,
+        ): entry is {
+          series: (typeof lensSeries.value)[number]
+          item: ProductItem
+          quantity: number
+        } => entry !== null,
       )
   })
 
@@ -171,10 +185,18 @@ export function useProductDetail(productId: number) {
   const purchaseAvailability = computed(() => {
     if (isLensProduct.value) {
       const selectedSeries = selectedLensSeriesCartItems.value
-      const stock = selectedSeries.reduce((total, entry) => total + Number(entry.item.stock ?? 0), 0)
+      const stock = selectedSeries.reduce(
+        (total, entry) => total + Number(entry.item.stock ?? 0),
+        0,
+      )
 
       if (!hasLensSeries.value) {
-        return { isAvailable: false, stock: 0, label: 'No disponible', detail: 'Esta mica no tiene series disponibles.' }
+        return {
+          isAvailable: false,
+          stock: 0,
+          label: 'No disponible',
+          detail: 'Esta mica no tiene series disponibles.',
+        }
       }
       if (selectedSeries.length === 0) {
         return {
@@ -209,13 +231,16 @@ export function useProductDetail(productId: number) {
       isAvailable: stock > 0,
       stock,
       label: stock > 0 ? 'Disponible' : 'No disponible',
-      detail: stock > 0 ? `${stock} unidades en inventario.` : 'Sin unidades disponibles en inventario.',
+      detail:
+        stock > 0 ? `${stock} unidades en inventario.` : 'Sin unidades disponibles en inventario.',
     }
   })
 
   const isAddToCartDisabled = computed(() => {
     if (isLensProduct.value) {
-      return selectedLensSeriesCartItems.value.length === 0 || !purchaseAvailability.value.isAvailable
+      return (
+        selectedLensSeriesCartItems.value.length === 0 || !purchaseAvailability.value.isAvailable
+      )
     }
     return !selectedItem.value?.id || !purchaseAvailability.value.isAvailable
   })
@@ -231,14 +256,21 @@ export function useProductDetail(productId: number) {
   }
 
   function selectFrameOption(variationName: string, optionValue: string) {
-    const variation = frameVariantData.value.variations.find((entry) => entry.name === variationName)
+    const variation = frameVariantData.value.variations.find(
+      (entry) => entry.name === variationName,
+    )
     if (variation && variation.options.length === 1) return
 
     selectedFrameOptions[variationName] = optionValue
   }
 
   function isFrameOptionAvailable(variationName: string, optionValue: string): boolean {
-    return checkFrameOptionAvailable(frameVariantData.value, selectedFrameOptions, variationName, optionValue)
+    return checkFrameOptionAvailable(
+      frameVariantData.value,
+      selectedFrameOptions,
+      variationName,
+      optionValue,
+    )
   }
 
   function setLensSeriesQuantity(seriesKey: string, quantity: number) {
@@ -276,12 +308,10 @@ export function useProductDetail(productId: number) {
 
       if (isFrame && itemsResult.length > 0) {
         const entries = await Promise.all(
-          itemsResult.map(
-            async (item): Promise<[number, ProductConfiguration[]]> => [
-              item.id,
-              await getProductConfigurationsByItem(item.id).catch(() => []),
-            ],
-          ),
+          itemsResult.map(async (item): Promise<[number, ProductConfiguration[]]> => [
+            item.id,
+            await getProductConfigurationsByItem(item.id).catch(() => []),
+          ]),
         )
         configurationsByItemId.value = new Map(entries)
       }
@@ -392,12 +422,18 @@ export function useProductDetail(productId: number) {
         1,
       )
 
-      toast.add({ severity: 'success', summary: 'Agregado', detail: 'Producto agregado al carrito.', life: 3000 })
+      toast.add({
+        severity: 'success',
+        summary: 'Agregado',
+        detail: 'Producto agregado al carrito.',
+        life: 3000,
+      })
     } catch (error) {
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: error instanceof Error ? error.message : 'No se pudo agregar el producto al carrito.',
+        detail:
+          error instanceof Error ? error.message : 'No se pudo agregar el producto al carrito.',
         life: 4500,
       })
     } finally {
@@ -406,7 +442,10 @@ export function useProductDetail(productId: number) {
   }
 
   function editProduct() {
-    router.push({ name: 'admin-products-modify-form', params: { code: product.value?.id ?? productId } })
+    router.push({
+      name: 'admin-products-modify-form',
+      params: { code: product.value?.id ?? productId },
+    })
   }
 
   onMounted(async () => {
