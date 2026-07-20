@@ -1,9 +1,8 @@
-import smileyApi from '@/modules/core/api/smileyApi'
-
 import type { Product } from '@/modules/admin-products/interfaces/Product'
 import type { ProductCategory } from '@/modules/admin-products/interfaces/ProductCategory'
 import type { Supplier } from '@/modules/admin-products/interfaces/Supplier'
 import type { Variation } from '@/modules/admin-products/interfaces/Variation'
+import smileyApi from '@/modules/core/api/smileyApi'
 
 interface ApiListResponse<T> {
   data: T[]
@@ -29,15 +28,14 @@ export async function getSuppliersByCategoryService(categoryId: number) {
 }
 
 export async function getVariationsByCategoryService(categoryId: number) {
-  return (
-    await smileyApi.get<ApiListResponse<Variation>>(`/variations/category/${categoryId}`)
-  ).data
+  return (await smileyApi.get<ApiListResponse<Variation>>(`/variations/category/${categoryId}`))
+    .data
 }
 
-export async function getProductsByCategoryService(categoryId: number, query = '') {
+export async function getProductsByCategoryService(categoryId: number, query = '', page = 1) {
   return (
     await smileyApi.get<PaginatedResponse<Product>>(`/categories/${categoryId}/products`, {
-      params: query ? { query } : undefined,
+      params: { page, ...(query ? { query } : undefined) },
     })
   ).data
 }

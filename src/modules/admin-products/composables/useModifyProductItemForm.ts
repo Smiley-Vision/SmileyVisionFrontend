@@ -7,17 +7,13 @@ import type { ProductItem } from '@/modules/admin-products/interfaces/ProductIte
 import {
   fetchAllProductItemsService,
   getProductConfigurationsService,
+  updateItemImageService,
+  updateItemPriceService,
 } from '@/modules/admin-products/services/productItemService'
 import { getProductService } from '@/modules/admin-products/services/productService'
 import { type ApiProblemDetails, firstProblemMessage } from '@/modules/core/api/apiProblem'
 import { useAppToast } from '@/modules/core/composables/useAppToast'
 import { buildLensSeries, getCategorySlug } from '@/modules/core/utils/productApiAdapters'
-import type { BranchOffice } from '@/modules/inventory/interfaces/BranchOffice'
-import { getBranchOfficesService } from '@/modules/inventory/services/branchOfficeService'
-import {
-  getInventoryByOfficeService,
-  updateInventoryService,
-} from '@/modules/inventory/services/inventoryService'
 
 function normalizeVariationName(value: string): string {
   return value
@@ -27,7 +23,7 @@ function normalizeVariationName(value: string): string {
     .trim()
 }
 
-export function useProductAvailabilityForm(productId: number) {
+export function useModifyProductItemForm(productId: number) {
   const notify = useAppToast()
   const catalog = useProductCatalog()
 
@@ -38,15 +34,14 @@ export function useProductAvailabilityForm(productId: number) {
   const product = ref<Product | null>(null)
   const productItems = ref<ProductItem[]>([])
   const productConfigurations = reactive<Record<number, ProductConfiguration[]>>({})
-  const branchOffices = ref<BranchOffice[]>([])
 
   const selectedProductItemId = ref<number | null>(null)
   const selectedLensSeriesKey = ref<string | null>(null)
-  const selectedOfficeId = ref<number | null>(null)
-  const inventoryByItemId = reactive<Record<number, number>>({})
 
-  const productStock = ref(0)
-  const initialStock = ref(0)
+  const itemPrice = ref(0)
+  const initialPrice = ref(0)
+  const selectedImageFile = ref<File | null>(null)
+  const selectedImagePreviewUrl = ref<string | null>(null)
 
   const categorySlug = computed(() => {
     const category = catalog.categories.value.find(
@@ -69,28 +64,13 @@ export function useProductAvailabilityForm(productId: number) {
     () => productItems.value.find((item) => item.id === selectedProductItemId.value) ?? null,
   )
 
-  const selectedOfficeName = computed(
-    () => branchOffices.value.find((office) => office.id === selectedOfficeId.value)?.name ?? '',
-  )
+  const isPriceModified = computed(() => itemPrice.value !== initialPrice.value)
+  const isImageModified = computed(() => selectedImageFile.value !== null)
+  const isFormModified = computed(() => isPriceModified.value || isImageModified.value)
 
-  const totalStock = computed(() => {
-    if (isLensProduct.value) {
-      return lensSeries.value.reduce((total, series) => total + series.totalStock, 0)
-    }
+  const currentImageSrc = computed(() => {
+    if (selectedImagePreviewUrl.value) return selectedImagePreviewUrl.value
 
-    return productItems.value.reduce((total, item) => total + item.stock, 0)
-  })
-
-  const selectedItemTotalStock = computed(() => {
-    if (isLensProduct.value) return selectedLensSeries.value?.totalStock ?? 0
-
-    return selectedProductItem.value?.stock ?? 0
-  })
-
-  const isStockModified = computed(() => productStock.value !== initialStock.value)
-  const stockDelta = computed(() => productStock.value - initialStock.value)
-
-  const selectedItemImageSrc = computed(() => {
     if (isLensProduct.value) {
       return selectedLensSeries.value?.image_url || product.value?.image_path || ''
     }
@@ -119,54 +99,40 @@ export function useProductAvailabilityForm(productId: number) {
     return 'Producto base'
   }
 
-  function refreshStockFromSelection() {
-    const itemId = isLensProduct.value
-      ? selectedLensSeries.value?.representativeItem?.id
-      : selectedProductItem.value?.id
-    const currentStock = itemId != null ? (inventoryByItemId[itemId] ?? 0) : 0
+  function refreshFieldsFromSelection() {
+    const price = Number(
+      (isLensProduct.value
+        ? selectedLensSeries.value?.price
+        : selectedProductItem.value?.price) ?? 0,
+    )
 
-    productStock.value = currentStock
-    initialStock.value = currentStock
-  }
-
-  async function selectOffice(officeId: number) {
-    selectedOfficeId.value = officeId
-
-    try {
-      const response = await getInventoryByOfficeService(officeId)
-
-      Object.keys(inventoryByItemId).forEach((key) => delete inventoryByItemId[Number(key)])
-      response.data.forEach((entry) => {
-        inventoryByItemId[entry.item_id] = entry.stock
-      })
-    } catch (error) {
-      notify(
-        'error',
-        'No se pudo obtener el inventario',
-        firstProblemMessage(error as ApiProblemDetails),
-      )
-    }
-
-    refreshStockFromSelection()
+    itemPrice.value = price
+    initialPrice.value = price
+    selectedImageFile.value = null
+    selectedImagePreviewUrl.value = null
   }
 
   function selectProductItem(itemId: number) {
     selectedProductItemId.value = itemId
-    refreshStockFromSelection()
+    refreshFieldsFromSelection()
   }
 
   function selectLensSeries(seriesKey: string) {
     selectedLensSeriesKey.value = seriesKey
-    refreshStockFromSelection()
+    refreshFieldsFromSelection()
+  }
+
+  function onImageSelected(file: File) {
+    selectedImageFile.value = file
+    selectedImagePreviewUrl.value = URL.createObjectURL(file)
   }
 
   async function submitForm() {
     if (
-      selectedOfficeId.value === null ||
       (!isLensProduct.value && selectedProductItemId.value === null) ||
       (isLensProduct.value && !selectedLensSeries.value)
     ) {
-      notify('warn', 'Datos incompletos', 'Selecciona una variante/serie y una sucursal.')
+      notify('warn', 'Datos incompletos', 'Selecciona una variante/serie.')
       return
     }
 
@@ -175,30 +141,40 @@ export function useProductAvailabilityForm(productId: number) {
     const targetItems = isLensProduct.value
       ? (selectedLensSeries.value?.items ?? [])
       : [selectedProductItem.value].filter((item): item is ProductItem => item !== null)
-    const officeId = selectedOfficeId.value
-    const delta = stockDelta.value
 
     try {
-      for (const item of targetItems) {
-        await updateInventoryService(item.id, officeId, productStock.value)
-
-        inventoryByItemId[item.id] = productStock.value
-        item.stock += delta
+      if (isPriceModified.value) {
+        for (const item of targetItems) {
+          await updateItemPriceService(item.id, itemPrice.value)
+          item.price = itemPrice.value
+        }
       }
 
-      initialStock.value = productStock.value
+      if (isImageModified.value && selectedImageFile.value) {
+        for (const item of targetItems) {
+          const formData = new FormData()
+          formData.append('image', selectedImageFile.value)
+
+          const response = await updateItemImageService(item.id, formData)
+          item.image_path = response.data.image_path
+        }
+      }
+
+      initialPrice.value = itemPrice.value
+      selectedImageFile.value = null
+      selectedImagePreviewUrl.value = null
 
       notify(
         'success',
-        'Disponibilidad actualizada',
+        'Ítem actualizado',
         isLensProduct.value
-          ? 'El stock de la serie se actualizó correctamente.'
-          : 'El stock de la variante se actualizó correctamente.',
+          ? 'La serie se actualizó correctamente.'
+          : 'La variante se actualizó correctamente.',
       )
     } catch (error) {
       notify(
         'error',
-        'No se pudo actualizar el inventario',
+        'No se pudo actualizar el ítem',
         firstProblemMessage(error as ApiProblemDetails),
       )
     } finally {
@@ -225,32 +201,26 @@ export function useProductAvailabilityForm(productId: number) {
     try {
       await catalog.loadCategories()
 
-      const [productResponse, items, officesResponse] = await Promise.all([
+      const [productResponse, items] = await Promise.all([
         getProductService(productId),
         fetchAllProductItemsService(productId),
-        getBranchOfficesService(),
       ])
 
       product.value = productResponse.data
       productItems.value = items
-      branchOffices.value = officesResponse.data
 
       await loadFrameConfigurations()
 
       selectedProductItemId.value = productItems.value[0]?.id ?? null
       selectedLensSeriesKey.value = lensSeries.value[0]?.key ?? null
 
-      const defaultOffice = branchOffices.value[0]?.id
-
-      if (defaultOffice != null) {
-        await selectOffice(defaultOffice)
-      }
+      refreshFieldsFromSelection()
 
       if (!hasProductItems.value) {
         notify(
           'warn',
           'Atención',
-          'Este producto no tiene variantes/SKU asociados. No se puede editar inventario.',
+          'Este producto no tiene variantes/SKU asociados. No se puede editar ítems.',
         )
       }
     } catch (error) {
@@ -271,7 +241,6 @@ export function useProductAvailabilityForm(productId: number) {
     hasError,
     product,
     productItems,
-    branchOffices,
     hasProductItems,
     isLensProduct,
     lensSeries,
@@ -279,19 +248,13 @@ export function useProductAvailabilityForm(productId: number) {
     selectedProductItem,
     selectedProductItemId,
     selectedLensSeriesKey,
-    selectedOfficeId,
-    selectedOfficeName,
-    totalStock,
-    selectedItemTotalStock,
-    productStock,
-    initialStock,
-    isStockModified,
-    stockDelta,
-    selectedItemImageSrc,
+    itemPrice,
+    isFormModified,
+    currentImageSrc,
     getItemSubtitle,
-    selectOffice,
     selectProductItem,
     selectLensSeries,
+    onImageSelected,
     submitForm,
     loadData,
   }

@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import InputNumber from 'primevue/inputnumber'
+import Select from 'primevue/select'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 
 import Spinner from '@/modules/core/components/Spinner.vue'
 import { formatLensValue } from '@/modules/core/utils/productApiAdapters'
-
 import { useProductAvailabilityForm } from '@/modules/inventory/composables/useProductAvailabilityForm'
 
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
@@ -39,8 +40,6 @@ const {
   selectOffice,
   selectProductItem,
   selectLensSeries,
-  decrease,
-  increase,
   submitForm,
   loadData,
 } = useProductAvailabilityForm(productId)
@@ -53,10 +52,7 @@ onMounted(async () => {
 <template>
   <Spinner :is-loading="isLoading" text="Cargando..." />
 
-  <div
-    v-if="!isLoading && hasError"
-    class="flex flex-col items-center gap-y-3 py-24 text-center"
-  >
+  <div v-if="!isLoading && hasError" class="flex flex-col items-center gap-y-3 py-24 text-center">
     <div class="flex size-20 items-center justify-center rounded-full bg-red-50 text-red-500">
       <i class="pi pi-exclamation-triangle" style="font-size: 2.5rem"></i>
     </div>
@@ -203,16 +199,15 @@ onMounted(async () => {
 
         <div>
           <label for="office" class="mb-2 block font-semibold text-sky-800">Sucursal</label>
-          <select
+          <Select
             id="office"
-            :value="selectedOfficeId"
-            @change="selectOffice(Number(($event.target as HTMLSelectElement).value))"
-            class="w-full rounded-xl border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-sky-500"
-          >
-            <option v-for="office in branchOffices" :key="office.id" :value="office.id">
-              {{ office.name }}
-            </option>
-          </select>
+            :model-value="selectedOfficeId"
+            :options="branchOffices"
+            option-label="name"
+            option-value="id"
+            fluid
+            @update:model-value="selectOffice"
+          />
         </div>
 
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -228,29 +223,22 @@ onMounted(async () => {
 
         <div>
           <label for="stock" class="mb-2 block font-semibold text-sky-800">Nuevo stock</label>
-          <div class="grid grid-cols-[44px_1fr_44px] gap-2">
-            <button
-              type="button"
-              @click="decrease"
-              class="rounded-xl bg-sky-700 text-xl font-bold text-white transition hover:bg-sky-800"
-            >
-              -
-            </button>
-            <input
-              id="stock"
-              v-model.number="productStock"
-              type="number"
-              min="0"
-              class="min-w-0 rounded-xl border border-gray-300 p-3 text-center text-xl font-bold text-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
-            />
-            <button
-              type="button"
-              @click="increase"
-              class="rounded-xl bg-sky-700 text-xl font-bold text-white transition hover:bg-sky-800"
-            >
-              +
-            </button>
-          </div>
+          <InputNumber
+            id="stock"
+            v-model="productStock"
+            show-buttons
+            button-layout="horizontal"
+            :min="0"
+            :step="1"
+            fluid
+          >
+            <template #incrementbuttonicon>
+              <i class="pi pi-plus" />
+            </template>
+            <template #decrementbuttonicon>
+              <i class="pi pi-minus" />
+            </template>
+          </InputNumber>
         </div>
 
         <div

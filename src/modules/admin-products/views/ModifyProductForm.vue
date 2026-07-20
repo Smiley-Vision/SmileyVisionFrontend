@@ -9,21 +9,29 @@ import Textarea from 'primevue/textarea'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-import Spinner from '@/modules/core/components/Spinner.vue'
-
+import ModifyProductItemPanel from '@/modules/admin-products/components/ModifyProductItemPanel.vue'
 import { useModifyProductForm } from '@/modules/admin-products/composables/useModifyProductForm'
 import {
   type UpdateProductFormValues,
   updateProductSchema,
 } from '@/modules/admin-products/schemas/updateProductSchema'
+import Spinner from '@/modules/core/components/Spinner.vue'
 
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
 
 const route = useRoute()
 const productId = Number(route.params.id)
 
-const { product, isLoading, isSubmitting, isDeleting, hasError, loadProduct, submitUpdate, deleteProduct } =
-  useModifyProductForm(productId)
+const {
+  product,
+  isLoading,
+  isSubmitting,
+  isDeleting,
+  hasError,
+  loadProduct,
+  submitUpdate,
+  deleteProduct,
+} = useModifyProductForm(productId)
 
 const resolver = zodResolver(updateProductSchema)
 const showDeleteModal = ref(false)
@@ -47,10 +55,7 @@ onMounted(async () => {
 <template>
   <Spinner :is-loading="isLoading" text="Cargando..." />
 
-  <div
-    v-if="!isLoading && hasError"
-    class="flex flex-col items-center gap-y-3 py-24 text-center"
-  >
+  <div v-if="!isLoading && hasError" class="flex flex-col items-center gap-y-3 py-24 text-center">
     <div class="flex size-20 items-center justify-center rounded-full bg-red-50 text-red-500">
       <i class="pi pi-exclamation-triangle" style="font-size: 2.5rem"></i>
     </div>
@@ -98,22 +103,22 @@ onMounted(async () => {
 
     <div class="flex flex-row justify-around md:w-2/3 w-full">
       <Button type="submit" label="ACEPTAR" :loading="isSubmitting" />
-      <Button
-        type="button"
-        label="ELIMINAR"
-        severity="danger"
-        @click="showDeleteModal = true"
-      />
+      <Button type="button" label="ELIMINAR" severity="danger" @click="showDeleteModal = true" />
     </div>
   </Form>
+
+  <div v-if="!isLoading && !hasError" class="mx-auto mt-10 mb-12 max-w-5xl px-8">
+    <h2 class="mb-6 text-2xl font-bold text-sky-800">Editar variantes del producto</h2>
+    <ModifyProductItemPanel :product-id="productId" />
+  </div>
 
   <Dialog v-model:visible="showDeleteModal" modal :style="{ width: '28rem' }">
     <template #header>
       <div class="font-semibold text-[#075985]">Eliminar producto</div>
     </template>
     <div class="text-slate-700 leading-relaxed">
-      ¿Estás seguro de que quieres eliminar <strong>{{ product?.name }}</strong>? Esta acción no
-      se puede deshacer.
+      ¿Estás seguro de que quieres eliminar <strong>{{ product?.name }}</strong
+      >? Esta acción no se puede deshacer.
     </div>
     <template #footer>
       <div class="flex justify-end gap-3">

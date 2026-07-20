@@ -1,8 +1,7 @@
-import smileyApi from '@/modules/core/api/smileyApi'
-
 import type { Product } from '@/modules/admin-products/interfaces/Product'
 import type { ProductConfiguration } from '@/modules/admin-products/interfaces/ProductConfiguration'
 import type { ProductItem } from '@/modules/admin-products/interfaces/ProductItem'
+import smileyApi from '@/modules/core/api/smileyApi'
 
 interface CreateProductItemResponse {
   message: string
@@ -46,9 +45,8 @@ interface LensBatchResponse {
 }
 
 export async function createEquipmentItemService(formData: FormData) {
-  return (
-    await smileyApi.post<CreateProductItemResponse>('/product-items/equipments', formData)
-  ).data
+  return (await smileyApi.post<CreateProductItemResponse>('/product-items/equipments', formData))
+    .data
 }
 
 export async function createFrameItemService(formData: FormData) {
@@ -86,10 +84,31 @@ export async function getProductItemsByProductService(productId: number, page = 
   ).data
 }
 
+export async function fetchAllProductItemsService(productId: number): Promise<ProductItem[]> {
+  const items: ProductItem[] = []
+  let page = 1
+  let lastPage = 1
+
+  do {
+    const response = await getProductItemsByProductService(productId, page)
+    items.push(...response.data)
+    lastPage = response.meta.last_page
+    page += 1
+  } while (page <= lastPage)
+
+  return items
+}
+
+export async function updateItemPriceService(itemId: number, price: number) {
+  return (
+    await smileyApi.patch<CreateProductItemResponse>(`/product-items/${itemId}`, {
+      price: price.toFixed(2),
+    })
+  ).data
+}
+
 export async function getProductConfigurationsService(itemId: number) {
   return (
-    await smileyApi.get<ApiListResponse<ProductConfiguration>>(
-      `/product-configurations/${itemId}`,
-    )
+    await smileyApi.get<ApiListResponse<ProductConfiguration>>(`/product-configurations/${itemId}`)
   ).data
 }

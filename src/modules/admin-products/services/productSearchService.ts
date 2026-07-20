@@ -1,6 +1,5 @@
-import smileyApi from '@/modules/core/api/smileyApi'
-
 import type { Product } from '@/modules/admin-products/interfaces/Product'
+import smileyApi from '@/modules/core/api/smileyApi'
 
 interface PaginatedResponse<T> {
   data: T[]
@@ -12,10 +11,10 @@ interface PaginatedResponse<T> {
   }
 }
 
-export async function getAllProductsService(page = 1) {
+export async function getAllProductsService(page = 1, query = '') {
   return (
     await smileyApi.get<PaginatedResponse<Product>>('/products', {
-      params: { page },
+      params: { page, ...(query ? { query } : undefined) },
     })
   ).data
 }

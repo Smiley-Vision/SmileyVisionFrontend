@@ -6,9 +6,6 @@ import Message from 'primevue/message'
 import { computed, onMounted, ref } from 'vue'
 import { z } from 'zod'
 
-import { useAppToast } from '@/modules/core/composables/useAppToast'
-import { getCategorySlug } from '@/modules/core/utils/productApiAdapters'
-
 import CreateEquipmentItemFields from '@/modules/admin-products/components/CreateEquipmentItemFields.vue'
 import CreateFrameItemFields from '@/modules/admin-products/components/CreateFrameItemFields.vue'
 import CreateLensSeriesFields from '@/modules/admin-products/components/CreateLensSeriesFields.vue'
@@ -21,6 +18,8 @@ import { useProductCatalog } from '@/modules/admin-products/composables/useProdu
 import { equipmentItemSchema } from '@/modules/admin-products/schemas/equipmentItemSchema'
 import { frameItemSchema } from '@/modules/admin-products/schemas/frameItemSchema'
 import { productBaseSchema } from '@/modules/admin-products/schemas/productBaseSchema'
+import { useAppToast } from '@/modules/core/composables/useAppToast'
+import { getCategorySlug } from '@/modules/core/utils/productApiAdapters'
 
 const notify = useAppToast()
 const catalog = useProductCatalog()
@@ -48,16 +47,19 @@ const categoryCards = computed(() => {
 
       return category ? { id: category.id, slug, label: categoryLabels[slug] } : null
     })
-    .filter((card): card is { id: number; slug: ProductCategorySlug; label: string } => card !== null)
+    .filter(
+      (card): card is { id: number; slug: ProductCategorySlug; label: string } => card !== null,
+    )
 })
 
-const selectedCategory = computed(() => catalog.findCategoryBySlug(selectedTypeSlug.value || 'equipos'))
+const selectedCategory = computed(() =>
+  catalog.findCategoryBySlug(selectedTypeSlug.value || 'equipos'),
+)
 
 const currentSchema = computed(() => {
   if (selectedTypeSlug.value === 'equipos')
     return productBaseSchema.extend(equipmentItemSchema.shape)
-  if (selectedTypeSlug.value === 'armazones')
-    return productBaseSchema.extend(frameItemSchema.shape)
+  if (selectedTypeSlug.value === 'armazones') return productBaseSchema.extend(frameItemSchema.shape)
 
   return productBaseSchema
 })
@@ -155,99 +157,101 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div
-    class="flex flex-col max-w-4xl mx-auto mt-12 md:mb-0 mb-12 md:px-10 md:py-10 px-8 gap-8 md:bg-white md:rounded-3xl md:shadow-2xl"
-  >
-    <h2 class="text-3xl font-bold text-sky-800 text-center">Añadir producto</h2>
-
-    <div v-if="catalog.isLoadingCategories.value" class="flex flex-col items-center gap-y-6 py-8">
-      <div class="text-sky-600 pi pi-spinner-dotted animate-spin" style="font-size: 5rem"></div>
-      <div class="text-xl font-semibold text-sky-700">Cargando formulario...</div>
-    </div>
-
+  <div class="bg-slate-100 py-10">
     <div
-      v-else-if="catalog.hasError.value"
-      class="flex flex-col items-center gap-y-3 py-24 text-center"
+      class="flex flex-col bg-white max-w-4xl mx-auto md:px-10 md:py-10 px-8 gap-8 rounded-2xl md:shadow-2xl"
     >
-      <div class="flex size-20 items-center justify-center rounded-full bg-red-50 text-red-500">
-        <i class="pi pi-exclamation-triangle" style="font-size: 2.5rem"></i>
-      </div>
-      <div class="text-2xl font-semibold text-sky-800">No se pudieron cargar las categorías</div>
-      <div class="max-w-md text-slate-500">
-        Verifica tu conexión o que el servidor esté disponible e intenta de nuevo.
-      </div>
-      <Button label="Reintentar" @click="catalog.loadCategories()" />
-    </div>
+      <h2 class="text-3xl font-bold text-sky-800 text-center">Añadir producto</h2>
 
-    <template v-else>
-      <section class="flex flex-col gap-4">
-        <h3 class="text-xl font-bold text-sky-800">Tipo de producto</h3>
-        <CreateProductCategoryPicker
-          :cards="categoryCards"
-          :selected="selectedTypeSlug"
-          @select="selectProductType"
-        />
-      </section>
+      <div v-if="catalog.isLoadingCategories.value" class="flex flex-col items-center gap-y-6 py-8">
+        <div class="text-sky-600 pi pi-spinner-dotted animate-spin" style="font-size: 5rem"></div>
+        <div class="text-xl font-semibold text-sky-700">Cargando formulario...</div>
+      </div>
 
-      <Form
-        v-if="selectedTypeSlug"
-        :key="selectedTypeSlug"
-        class="flex flex-col gap-8"
-        :resolver="resolver"
-        :initial-values="initialValues"
-        @submit="handleSubmit"
+      <div
+        v-else-if="catalog.hasError.value"
+        class="flex flex-col items-center gap-y-3 py-24 text-center"
       >
-        <FormField name="category_id" as-child />
+        <div class="flex size-20 items-center justify-center rounded-full bg-red-50 text-red-500">
+          <i class="pi pi-exclamation-triangle" style="font-size: 2.5rem"></i>
+        </div>
+        <div class="text-2xl font-semibold text-sky-800">No se pudieron cargar las categorías</div>
+        <div class="max-w-md text-slate-500">
+          Verifica tu conexión o que el servidor esté disponible e intenta de nuevo.
+        </div>
+        <Button label="Reintentar" @click="catalog.loadCategories()" />
+      </div>
 
-        <CreateProductBaseFields
-          ref="baseFieldsRef"
-          :suppliers="catalog.suppliers.value"
-          :is-suppliers-loading="catalog.isLoadingSuppliers.value"
-        />
-
-        <CreateEquipmentItemFields v-if="selectedTypeSlug === 'equipos'" />
-
-        <CreateFrameItemFields
-          v-if="selectedTypeSlug === 'armazones'"
-          ref="frameFieldsRef"
-          :frame-variations="catalog.frameVariations.value"
-          :base-image-preview-url="baseFieldsRef?.previewUrl ?? null"
-        />
-
-        <section v-if="selectedTypeSlug === 'micas'" class="flex flex-col gap-5">
-          <CreateLensSeriesFields
-            v-for="(series, index) in lensSeries.series"
-            :key="series.id"
-            :series="series"
-            :label="`Serie ${index + 1}`"
-            :errors="lensSeries.rowErrors.value[index]"
-            :base-image-preview-url="baseFieldsRef?.previewUrl ?? null"
-            :removable="lensSeries.series.length > 1"
-            @remove="lensSeries.removeSeries(index)"
-            @select-image="(file) => lensSeries.setSeriesImage(index, file)"
-            @clear-image="lensSeries.clearSeriesImage(index)"
+      <template v-else>
+        <section class="flex flex-col gap-4">
+          <h3 class="text-xl font-bold text-sky-800">Tipo de producto</h3>
+          <CreateProductCategoryPicker
+            :cards="categoryCards"
+            :selected="selectedTypeSlug"
+            @select="selectProductType"
           />
-
-          <button
-            type="button"
-            class="rounded-xl border border-dashed border-sky-300 bg-sky-50 px-5 py-3 text-sm font-bold text-sky-700 transition hover:bg-sky-100"
-            @click="lensSeries.addSeries()"
-          >
-            Añadir serie
-          </button>
-
-          <Message
-            v-for="warning in lensSeries.overlapWarnings.value"
-            :key="warning"
-            severity="warn"
-            size="small"
-            >{{ warning }}</Message
-          >
         </section>
 
-        <Button type="submit" label="Crear producto" :loading="isSubmitting" size="large" />
-      </Form>
-    </template>
+        <Form
+          v-if="selectedTypeSlug"
+          :key="selectedTypeSlug"
+          class="flex flex-col gap-8"
+          :resolver="resolver"
+          :initial-values="initialValues"
+          @submit="handleSubmit"
+        >
+          <FormField name="category_id" as-child />
+
+          <CreateProductBaseFields
+            ref="baseFieldsRef"
+            :suppliers="catalog.suppliers.value"
+            :is-suppliers-loading="catalog.isLoadingSuppliers.value"
+          />
+
+          <CreateEquipmentItemFields v-if="selectedTypeSlug === 'equipos'" />
+
+          <CreateFrameItemFields
+            v-if="selectedTypeSlug === 'armazones'"
+            ref="frameFieldsRef"
+            :frame-variations="catalog.frameVariations.value"
+            :base-image-preview-url="baseFieldsRef?.previewUrl ?? null"
+          />
+
+          <section v-if="selectedTypeSlug === 'micas'" class="flex flex-col gap-5">
+            <CreateLensSeriesFields
+              v-for="(series, index) in lensSeries.series"
+              :key="series.id"
+              :series="series"
+              :label="`Serie ${index + 1}`"
+              :errors="lensSeries.rowErrors.value[index]"
+              :base-image-preview-url="baseFieldsRef?.previewUrl ?? null"
+              :removable="lensSeries.series.length > 1"
+              @remove="lensSeries.removeSeries(index)"
+              @select-image="(file) => lensSeries.setSeriesImage(index, file)"
+              @clear-image="lensSeries.clearSeriesImage(index)"
+            />
+
+            <button
+              type="button"
+              class="rounded-xl border border-dashed border-sky-300 bg-sky-50 px-5 py-3 text-sm font-bold text-sky-700 transition hover:bg-sky-100"
+              @click="lensSeries.addSeries()"
+            >
+              Añadir serie
+            </button>
+
+            <Message
+              v-for="warning in lensSeries.overlapWarnings.value"
+              :key="warning"
+              severity="warn"
+              size="small"
+              >{{ warning }}</Message
+            >
+          </section>
+
+          <Button type="submit" label="Crear producto" :loading="isSubmitting" size="large" />
+        </Form>
+      </template>
+    </div>
   </div>
 
   <Toast position="bottom-right" />

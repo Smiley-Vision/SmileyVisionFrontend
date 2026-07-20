@@ -1,12 +1,11 @@
 import { ref } from 'vue'
 
-import { type ApiProblemDetails, firstProblemMessage } from '@/modules/core/api/apiProblem'
-import { useAppToast } from '@/modules/core/composables/useAppToast'
-
-import type { Product } from '@/modules/admin-products/interfaces/Product'
 import { useProductCatalog } from '@/modules/admin-products/composables/useProductCatalog'
+import type { Product } from '@/modules/admin-products/interfaces/Product'
 import { getProductsByCategoryService } from '@/modules/admin-products/services/productCatalogService'
 import { getAllProductsService } from '@/modules/admin-products/services/productSearchService'
+import { type ApiProblemDetails, firstProblemMessage } from '@/modules/core/api/apiProblem'
+import { useAppToast } from '@/modules/core/composables/useAppToast'
 
 interface PaginationState {
   current_page: number
@@ -39,40 +38,13 @@ export function useAdminProductSearch() {
     hasError.value = false
 
     try {
-      if (selectedCategoryId.value !== ALL_CATEGORIES) {
-        const response = await getProductsByCategoryService(
-          selectedCategoryId.value,
-          query.value,
-        )
-        products.value = response.data
-        pagination.value = response.meta
-        return
-      }
+      const response =
+        selectedCategoryId.value !== ALL_CATEGORIES
+          ? await getProductsByCategoryService(selectedCategoryId.value, query.value, page)
+          : await getAllProductsService(page, query.value)
 
-      if (!query.value) {
-        const response = await getAllProductsService(page)
-        products.value = response.data
-        pagination.value = response.meta
-        return
-      }
-
-      // No existe un endpoint de búsqueda global: se consulta cada categoría
-      // en paralelo y se mezclan los resultados.
-      const responses = await Promise.all(
-        catalog.categories.value.map((category) =>
-          getProductsByCategoryService(category.id, query.value),
-        ),
-      )
-      const merged = responses.flatMap((response) => response.data)
-      merged.sort((left, right) => left.name.localeCompare(right.name, 'es'))
-
-      products.value = merged
-      pagination.value = {
-        current_page: 1,
-        last_page: 1,
-        per_page: merged.length || 1,
-        total: merged.length,
-      }
+      products.value = response.data
+      pagination.value = response.meta
     } catch (error) {
       products.value = []
       hasError.value = true
