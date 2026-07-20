@@ -18,7 +18,13 @@ import {
   isFrameOptionAvailable as checkFrameOptionAvailable,
   type FrameVariantData,
 } from '@/modules/catalog/utils/frameVariants'
-import { buildLensSeries } from '@/modules/catalog/utils/lensSeries'
+import {
+  buildLensSeries,
+  findLensItemBySphereCylinder,
+  formatLensValue,
+  getDistinctLensValues,
+  parseLensSku,
+} from '@/modules/catalog/utils/lensSeries'
 import { slugify } from '@/modules/catalog/utils/slug'
 import { useAuthStore } from '@/modules/core/stores/auth'
 import { useCartStore } from '@/modules/user/stores/cart'
@@ -39,6 +45,7 @@ export function useProductDetail(productId: number) {
   const configurationsByItemId = ref<Map<number, ProductConfiguration[]>>(new Map())
 
   const selectedLensSeriesQuantities = reactive<Record<string, number>>({})
+  const selectedLensItemsBySeries = reactive<Record<string, number>>({})
   const selectedFrameOptions = reactive<Record<string, string>>({})
 
   const currentCategory = computed<ProductCategory | null>(() => {
@@ -89,16 +96,66 @@ export function useProductDetail(productId: number) {
     return selectedStandardItem.value ? Number(selectedStandardItem.value.price ?? 0) : null
   })
 
+  function getSelectedLensItem(series: (typeof lensSeries.value)[number]): ProductItem | null {
+    const selectedItemId = selectedLensItemsBySeries[series.key]
+    return series.items.find((item) => item.id === selectedItemId) ?? series.representativeItem
+  }
+
+  function getLensSphereOptions(series: (typeof lensSeries.value)[number]) {
+    return getDistinctLensValues(series.items).spheres.map((value) => ({
+      label: formatLensValue(value),
+      value,
+    }))
+  }
+
+  function getLensCylinderOptions(series: (typeof lensSeries.value)[number]) {
+    return getDistinctLensValues(series.items).cylinders.map((value) => ({
+      label: formatLensValue(value),
+      value,
+    }))
+  }
+
+  function getSelectedLensSphere(series: (typeof lensSeries.value)[number]): number | null {
+    return parseLensSku(getSelectedLensItem(series)?.SKU)?.sphere ?? null
+  }
+
+  function getSelectedLensCylinder(series: (typeof lensSeries.value)[number]): number | null {
+    return parseLensSku(getSelectedLensItem(series)?.SKU)?.cylinder ?? null
+  }
+
+  function selectLensItem(seriesKey: string, sphere: number, cylinder: number) {
+    const series = lensSeries.value.find((entry) => entry.key === seriesKey)
+    if (!series) return
+
+    const item = findLensItemBySphereCylinder(series.items, sphere, cylinder)
+    if (item) selectedLensItemsBySeries[seriesKey] = item.id
+  }
+
+  function initializeLensSelectors() {
+    for (const series of lensSeries.value) {
+      const selectedItemId = selectedLensItemsBySeries[series.key]
+      const stillValid = series.items.some((item) => item.id === selectedItemId)
+
+      if (!stillValid && series.representativeItem) {
+        selectedLensItemsBySeries[series.key] = series.representativeItem.id
+      }
+    }
+  }
+
   const selectedLensSeriesCartItems = computed(() => {
     if (!isLensProduct.value) return []
 
     return lensSeries.value
       .map((series) => {
         const quantity = Math.max(0, Number(selectedLensSeriesQuantities[series.key] ?? 0))
-        if (quantity <= 0 || !series.representativeItem?.id) return null
-        return { series, quantity }
+        const item = getSelectedLensItem(series)
+        if (quantity <= 0 || !item?.id) return null
+        return { series, item, quantity }
       })
-      .filter((entry): entry is { series: (typeof lensSeries.value)[number]; quantity: number } => entry !== null)
+      .filter(
+        (entry): entry is { series: (typeof lensSeries.value)[number]; item: ProductItem; quantity: number } =>
+          entry !== null,
+      )
   })
 
   const selectedLensSeriesTotalQuantity = computed(() =>
@@ -114,7 +171,7 @@ export function useProductDetail(productId: number) {
   const purchaseAvailability = computed(() => {
     if (isLensProduct.value) {
       const selectedSeries = selectedLensSeriesCartItems.value
-      const stock = selectedSeries.reduce((total, entry) => total + entry.series.totalStock, 0)
+      const stock = selectedSeries.reduce((total, entry) => total + Number(entry.item.stock ?? 0), 0)
 
       if (!hasLensSeries.value) {
         return { isAvailable: false, stock: 0, label: 'No disponible', detail: 'Esta mica no tiene series disponibles.' }
@@ -123,18 +180,18 @@ export function useProductDetail(productId: number) {
         return {
           isAvailable: false,
           stock: 0,
-          label: 'Selecciona una serie',
-          detail: 'Elige la cantidad de al menos una serie para comprar.',
+          label: 'Selecciona una mica',
+          detail: 'Elige la cantidad de al menos una mica para comprar.',
         }
       }
 
-      const unavailableSeries = selectedSeries.filter((entry) => entry.series.totalStock <= 0)
+      const unavailableSeries = selectedSeries.filter((entry) => Number(entry.item.stock ?? 0) <= 0)
       if (unavailableSeries.length > 0) {
         return {
           isAvailable: false,
           stock,
           label: 'No disponible',
-          detail: `${unavailableSeries.length} series seleccionadas no tienen inventario.`,
+          detail: `${unavailableSeries.length} micas seleccionadas no tienen inventario.`,
         }
       }
 
@@ -142,7 +199,7 @@ export function useProductDetail(productId: number) {
         isAvailable: true,
         stock,
         label: 'Disponible',
-        detail: `${selectedLensSeriesTotalQuantity.value} series seleccionadas.`,
+        detail: `${selectedLensSeriesTotalQuantity.value} micas seleccionadas.`,
       }
     }
 
@@ -197,6 +254,7 @@ export function useProductDetail(productId: number) {
   }
 
   watch(frameVariantData, () => initializeFrameSelectors(), { immediate: true })
+  watch(lensSeries, () => initializeLensSelectors(), { immediate: true })
 
   async function load() {
     isLoading.value = true
@@ -271,8 +329,7 @@ export function useProductDetail(productId: number) {
 
       if (isLensProduct.value) {
         for (const entry of selectedLensSeriesCartItems.value) {
-          const item = entry.series.representativeItem
-          if (!item) continue
+          const item = entry.item
 
           await cart.addProduct(
             {
@@ -285,7 +342,7 @@ export function useProductDetail(productId: number) {
               description: product.value.description,
               price: entry.series.price,
               image_path: entry.series.image_path || product.value.image_path,
-              stock: entry.series.totalStock,
+              stock: item.stock,
             },
             entry.quantity,
           )
@@ -387,6 +444,12 @@ export function useProductDetail(productId: number) {
     increaseLensSeriesQuantity,
     decreaseLensSeriesQuantity,
     setLensSeriesQuantity,
+    getSelectedLensItem,
+    getLensSphereOptions,
+    getLensCylinderOptions,
+    getSelectedLensSphere,
+    getSelectedLensCylinder,
+    selectLensItem,
     addToCart,
     editProduct,
     auth,

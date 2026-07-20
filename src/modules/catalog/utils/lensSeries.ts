@@ -53,6 +53,40 @@ export function formatLensValue(value: number | null | undefined): string {
   return numericValue === 0 || Object.is(numericValue, -0) ? '0.00' : numericValue.toFixed(2)
 }
 
+export function getDistinctLensValues(items: ProductItem[]): {
+  spheres: number[]
+  cylinders: number[]
+} {
+  const spheres = new Set<number>()
+  const cylinders = new Set<number>()
+
+  for (const item of items) {
+    const parsedLens = parseLensSku(item.SKU)
+    if (!parsedLens) continue
+
+    spheres.add(parsedLens.sphere)
+    cylinders.add(parsedLens.cylinder)
+  }
+
+  return {
+    spheres: [...spheres].sort((left, right) => left - right),
+    cylinders: [...cylinders].sort((left, right) => left - right),
+  }
+}
+
+export function findLensItemBySphereCylinder(
+  items: ProductItem[],
+  sphere: number,
+  cylinder: number,
+): ProductItem | null {
+  return (
+    items.find((item) => {
+      const parsedLens = parseLensSku(item.SKU)
+      return parsedLens !== null && parsedLens.sphere === sphere && parsedLens.cylinder === cylinder
+    }) ?? null
+  )
+}
+
 function chooseRepresentativeItem(items: ProductItem[]): ProductItem | null {
   if (items.length === 0) return null
   return items.find((item) => Number(item.stock) > 0) ?? items[0]

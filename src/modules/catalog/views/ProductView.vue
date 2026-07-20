@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
 import InputNumber from 'primevue/inputnumber'
+import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -36,6 +37,12 @@ const {
   selectFrameOption,
   isFrameOptionAvailable,
   setLensSeriesQuantity,
+  getSelectedLensItem,
+  getLensSphereOptions,
+  getLensCylinderOptions,
+  getSelectedLensSphere,
+  getSelectedLensCylinder,
+  selectLensItem,
   addToCart,
   editProduct,
   auth,
@@ -137,7 +144,7 @@ const categoryHref = computed(() =>
         >
           <div class="flex flex-col gap-1">
             <div class="text-lg font-semibold text-sky-800">Series disponibles</div>
-            <div class="text-sm text-slate-600">Selecciona las series que quieres agregar a tu pedido.</div>
+            <div class="text-sm text-slate-600">Selecciona las micas que quieres agregar a tu pedido.</div>
           </div>
 
           <div class="grid gap-3">
@@ -181,12 +188,45 @@ const categoryHref = computed(() =>
                   <template #decrementicon><i class="pi pi-minus"></i></template>
                 </InputNumber>
               </div>
+
+              <div v-if="series.items.length > 1" class="mt-3 flex flex-wrap items-end gap-3 border-t border-slate-100 pt-3">
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-semibold text-slate-500">Esfera</label>
+                  <Select
+                    :model-value="getSelectedLensSphere(series)"
+                    :options="getLensSphereOptions(series)"
+                    option-label="label"
+                    option-value="value"
+                    class="w-28"
+                    @update:model-value="
+                      (sphere) => selectLensItem(series.key, sphere, getSelectedLensCylinder(series) ?? 0)
+                    "
+                  />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-semibold text-slate-500">Cilindro</label>
+                  <Select
+                    :model-value="getSelectedLensCylinder(series)"
+                    :options="getLensCylinderOptions(series)"
+                    option-label="label"
+                    option-value="value"
+                    class="w-28"
+                    @update:model-value="
+                      (cylinder) => selectLensItem(series.key, getSelectedLensSphere(series) ?? 0, cylinder)
+                    "
+                  />
+                </div>
+                <Tag
+                  :severity="Number(getSelectedLensItem(series)?.stock ?? 0) > 0 ? 'success' : 'danger'"
+                  :value="`Disponible: ${Number(getSelectedLensItem(series)?.stock ?? 0)}`"
+                />
+              </div>
             </div>
           </div>
 
           <div class="rounded-xl border-2 border-slate-500 bg-white px-5 py-4">
             <div class="flex items-center justify-between gap-4 text-lg text-slate-600">
-              <span>Series seleccionadas:</span>
+              <span>Micas seleccionadas:</span>
               <span class="font-semibold">{{ selectedLensSeriesTotalQuantity }}</span>
             </div>
             <div class="mt-2 flex items-center justify-between gap-4 text-xl text-slate-600">

@@ -27,6 +27,11 @@ const {
   selectedProductItem,
   selectedProductItemId,
   selectedLensSeriesKey,
+  lensSelectionMode,
+  selectedLensItem,
+  selectedLensItemValues,
+  lensSphereOptions,
+  lensCylinderOptions,
   selectedOfficeId,
   selectedOfficeName,
   totalStock,
@@ -40,6 +45,8 @@ const {
   selectOffice,
   selectProductItem,
   selectLensSeries,
+  setLensSelectionMode,
+  selectLensItemBySphereCylinder,
   submitForm,
   loadData,
 } = useProductAvailabilityForm(productId)
@@ -69,7 +76,7 @@ onMounted(async () => {
       <p class="max-w-3xl text-sm font-medium text-slate-600">
         {{
           isLensProduct
-            ? 'Selecciona una serie y una sucursal. El valor que captures se aplicará a todas las combinaciones de esa serie.'
+            ? 'Selecciona una serie y una sucursal. Por defecto, el valor que captures se aplicará a todas las combinaciones de esa serie; también puedes elegir un ítem específico.'
             : 'Selecciona una variante y una sucursal. El valor que captures reemplaza el stock actual de esa variante en esa sucursal.'
         }}
       </p>
@@ -194,6 +201,67 @@ onMounted(async () => {
                   : getItemSubtitle(selectedProductItem)
               }}
             </div>
+            <div v-if="isLensProduct && lensSelectionMode === 'item'" class="text-xs font-medium text-slate-500">
+              SKU: {{ selectedLensItem?.SKU ?? '—' }}
+            </div>
+          </div>
+        </div>
+
+        <div v-if="isLensProduct && selectedLensSeries" class="flex flex-col gap-3">
+          <div class="flex gap-2">
+            <button
+              type="button"
+              @click="setLensSelectionMode('series')"
+              :class="[
+                lensSelectionMode === 'series'
+                  ? 'bg-sky-600 text-white'
+                  : 'border border-slate-300 text-slate-600 hover:border-sky-400',
+                'rounded-lg px-3 py-1.5 text-sm font-semibold transition',
+              ]"
+            >
+              Toda la serie
+            </button>
+            <button
+              type="button"
+              @click="setLensSelectionMode('item')"
+              :class="[
+                lensSelectionMode === 'item'
+                  ? 'bg-sky-600 text-white'
+                  : 'border border-slate-300 text-slate-600 hover:border-sky-400',
+                'rounded-lg px-3 py-1.5 text-sm font-semibold transition',
+              ]"
+            >
+              Ítem específico
+            </button>
+          </div>
+
+          <div v-if="lensSelectionMode === 'item'" class="flex flex-wrap gap-3">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-slate-500">Esfera</label>
+              <Select
+                :model-value="selectedLensItemValues?.sphere ?? null"
+                :options="lensSphereOptions"
+                option-label="label"
+                option-value="value"
+                class="w-28"
+                @update:model-value="
+                  (sphere) => selectLensItemBySphereCylinder(sphere, selectedLensItemValues?.cylinder ?? 0)
+                "
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-slate-500">Cilindro</label>
+              <Select
+                :model-value="selectedLensItemValues?.cylinder ?? null"
+                :options="lensCylinderOptions"
+                option-label="label"
+                option-value="value"
+                class="w-28"
+                @update:model-value="
+                  (cylinder) => selectLensItemBySphereCylinder(selectedLensItemValues?.sphere ?? 0, cylinder)
+                "
+              />
+            </div>
           </div>
         </div>
 
@@ -216,8 +284,13 @@ onMounted(async () => {
           </div>
           <div class="mt-1 text-3xl font-bold text-sky-800">{{ initialStock }}</div>
           <div class="mt-1 text-sm font-medium text-slate-500">
-            Stock total {{ isLensProduct ? 'de la serie' : 'de la variante' }}:
-            {{ selectedItemTotalStock }}
+            {{
+              isLensProduct
+                ? lensSelectionMode === 'item'
+                  ? 'Stock de este ítem'
+                  : 'Stock total de la serie'
+                : 'Stock total de la variante'
+            }}: {{ selectedItemTotalStock }}
           </div>
         </div>
 

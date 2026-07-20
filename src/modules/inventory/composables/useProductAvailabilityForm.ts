@@ -11,12 +11,19 @@ import {
 import { getProductService } from '@/modules/admin-products/services/productService'
 import { type ApiProblemDetails, firstProblemMessage } from '@/modules/core/api/apiProblem'
 import { useAppToast } from '@/modules/core/composables/useAppToast'
-import { buildLensSeries, getCategorySlug } from '@/modules/core/utils/productApiAdapters'
+import {
+  buildLensSeries,
+  findLensItemBySphereCylinder,
+  formatLensValue,
+  getCategorySlug,
+  getDistinctLensValues,
+  parseLensSku,
+} from '@/modules/core/utils/productApiAdapters'
 import type { BranchOffice } from '@/modules/inventory/interfaces/BranchOffice'
 import { getBranchOfficesService } from '@/modules/inventory/services/branchOfficeService'
 import {
   getInventoryByOfficeService,
-  updateInventoryService,
+  updateInventoryBatchService,
 } from '@/modules/inventory/services/inventoryService'
 
 function normalizeVariationName(value: string): string {
@@ -42,6 +49,8 @@ export function useProductAvailabilityForm(productId: number) {
 
   const selectedProductItemId = ref<number | null>(null)
   const selectedLensSeriesKey = ref<string | null>(null)
+  const lensSelectionMode = ref<'series' | 'item'>('series')
+  const selectedLensItemId = ref<number | null>(null)
   const selectedOfficeId = ref<number | null>(null)
   const inventoryByItemId = reactive<Record<number, number>>({})
 
@@ -68,6 +77,25 @@ export function useProductAvailabilityForm(productId: number) {
   const selectedProductItem = computed(
     () => productItems.value.find((item) => item.id === selectedProductItemId.value) ?? null,
   )
+  const selectedLensItem = computed(
+    () =>
+      selectedLensSeries.value?.items.find(
+        (item: ProductItem) => item.id === selectedLensItemId.value,
+      ) ?? null,
+  )
+  const lensSphereOptions = computed(() =>
+    getDistinctLensValues(selectedLensSeries.value?.items ?? []).spheres.map((value) => ({
+      label: formatLensValue(value),
+      value,
+    })),
+  )
+  const lensCylinderOptions = computed(() =>
+    getDistinctLensValues(selectedLensSeries.value?.items ?? []).cylinders.map((value) => ({
+      label: formatLensValue(value),
+      value,
+    })),
+  )
+  const selectedLensItemValues = computed(() => parseLensSku(selectedLensItem.value?.SKU))
 
   const selectedOfficeName = computed(
     () => branchOffices.value.find((office) => office.id === selectedOfficeId.value)?.name ?? '',
@@ -82,7 +110,11 @@ export function useProductAvailabilityForm(productId: number) {
   })
 
   const selectedItemTotalStock = computed(() => {
-    if (isLensProduct.value) return selectedLensSeries.value?.totalStock ?? 0
+    if (isLensProduct.value) {
+      return lensSelectionMode.value === 'item'
+        ? (selectedLensItem.value?.stock ?? 0)
+        : (selectedLensSeries.value?.totalStock ?? 0)
+    }
 
     return selectedProductItem.value?.stock ?? 0
   })
@@ -121,7 +153,9 @@ export function useProductAvailabilityForm(productId: number) {
 
   function refreshStockFromSelection() {
     const itemId = isLensProduct.value
-      ? selectedLensSeries.value?.representativeItem?.id
+      ? lensSelectionMode.value === 'item'
+        ? selectedLensItemId.value
+        : selectedLensSeries.value?.representativeItem?.id
       : selectedProductItem.value?.id
     const currentStock = itemId != null ? (inventoryByItemId[itemId] ?? 0) : 0
 
@@ -157,6 +191,25 @@ export function useProductAvailabilityForm(productId: number) {
 
   function selectLensSeries(seriesKey: string) {
     selectedLensSeriesKey.value = seriesKey
+    selectedLensItemId.value = selectedLensSeries.value?.representativeItem?.id ?? null
+    refreshStockFromSelection()
+  }
+
+  function setLensSelectionMode(mode: 'series' | 'item') {
+    lensSelectionMode.value = mode
+
+    if (mode === 'item' && selectedLensItemId.value == null) {
+      selectedLensItemId.value = selectedLensSeries.value?.representativeItem?.id ?? null
+    }
+
+    refreshStockFromSelection()
+  }
+
+  function selectLensItemBySphereCylinder(sphere: number, cylinder: number) {
+    const item = findLensItemBySphereCylinder(selectedLensSeries.value?.items ?? [], sphere, cylinder)
+    if (!item) return
+
+    selectedLensItemId.value = item.id
     refreshStockFromSelection()
   }
 
@@ -164,7 +217,8 @@ export function useProductAvailabilityForm(productId: number) {
     if (
       selectedOfficeId.value === null ||
       (!isLensProduct.value && selectedProductItemId.value === null) ||
-      (isLensProduct.value && !selectedLensSeries.value)
+      (isLensProduct.value && !selectedLensSeries.value) ||
+      (isLensProduct.value && lensSelectionMode.value === 'item' && !selectedLensItem.value)
     ) {
       notify('warn', 'Datos incompletos', 'Selecciona una variante/serie y una sucursal.')
       return
@@ -172,16 +226,22 @@ export function useProductAvailabilityForm(productId: number) {
 
     isSubmitting.value = true
 
-    const targetItems = isLensProduct.value
-      ? (selectedLensSeries.value?.items ?? [])
+    const targetItems: ProductItem[] = isLensProduct.value
+      ? lensSelectionMode.value === 'item'
+        ? [selectedLensItem.value].filter((item): item is ProductItem => item !== null)
+        : ((selectedLensSeries.value?.items ?? []) as ProductItem[])
       : [selectedProductItem.value].filter((item): item is ProductItem => item !== null)
     const officeId = selectedOfficeId.value
     const delta = stockDelta.value
 
     try {
-      for (const item of targetItems) {
-        await updateInventoryService(item.id, officeId, productStock.value)
+      await updateInventoryBatchService(
+        targetItems.map((item) => item.id),
+        officeId,
+        productStock.value,
+      )
 
+      for (const item of targetItems) {
         inventoryByItemId[item.id] = productStock.value
         item.stock += delta
       }
@@ -239,6 +299,7 @@ export function useProductAvailabilityForm(productId: number) {
 
       selectedProductItemId.value = productItems.value[0]?.id ?? null
       selectedLensSeriesKey.value = lensSeries.value[0]?.key ?? null
+      selectedLensItemId.value = lensSeries.value[0]?.representativeItem?.id ?? null
 
       const defaultOffice = branchOffices.value[0]?.id
 
@@ -279,6 +340,12 @@ export function useProductAvailabilityForm(productId: number) {
     selectedProductItem,
     selectedProductItemId,
     selectedLensSeriesKey,
+    lensSelectionMode,
+    selectedLensItem,
+    selectedLensItemId,
+    selectedLensItemValues,
+    lensSphereOptions,
+    lensCylinderOptions,
     selectedOfficeId,
     selectedOfficeName,
     totalStock,
@@ -292,6 +359,8 @@ export function useProductAvailabilityForm(productId: number) {
     selectOffice,
     selectProductItem,
     selectLensSeries,
+    setLensSelectionMode,
+    selectLensItemBySphereCylinder,
     submitForm,
     loadData,
   }

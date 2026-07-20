@@ -168,6 +168,33 @@ export function formatLensValue(value) {
   return numericValue === 0 || Object.is(numericValue, -0) ? '0.00' : numericValue.toFixed(2)
 }
 
+export function getDistinctLensValues(items) {
+  const spheres = new Set()
+  const cylinders = new Set()
+
+  for (const item of Array.isArray(items) ? items : []) {
+    const parsedLens = parseLensSku(item?.SKU)
+    if (!parsedLens) continue
+
+    spheres.add(parsedLens.sphere)
+    cylinders.add(parsedLens.cylinder)
+  }
+
+  return {
+    spheres: [...spheres].sort((left, right) => left - right),
+    cylinders: [...cylinders].sort((left, right) => left - right),
+  }
+}
+
+export function findLensItemBySphereCylinder(items, sphere, cylinder) {
+  return (
+    (Array.isArray(items) ? items : []).find((item) => {
+      const parsedLens = parseLensSku(item?.SKU)
+      return parsedLens !== null && parsedLens.sphere === sphere && parsedLens.cylinder === cylinder
+    }) ?? null
+  )
+}
+
 export function buildLensSeries(productItems, productImage = '') {
   const groups = new Map()
 
