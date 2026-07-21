@@ -23,6 +23,7 @@ const ADMIN_LEFT_NAV_ITEMS: NavItem[] = [
   { label: 'Productos', routeName: 'admin-products' },
   { label: 'Inventario', routeName: 'admin-products-availability' },
   { label: 'Solicitudes', routeName: 'admin-registration-applications' },
+  { label: 'Pedidos', routeName: 'admin-orders' },
 ]
 
 const SHOP_LEFT_NAV_ITEMS: NavItem[] = [
@@ -30,9 +31,13 @@ const SHOP_LEFT_NAV_ITEMS: NavItem[] = [
   { label: 'Micas', routeName: 'shop', params: { categorySlug: 'micas' } },
   { label: 'Armazones', routeName: 'shop', params: { categorySlug: 'armazones' } },
   { label: 'Equipos', routeName: 'shop', params: { categorySlug: 'equipos' } },
+  { label: 'Mis pedidos', routeName: 'my-orders' },
 ]
 
-const DRIVER_LEFT_NAV_ITEMS: NavItem[] = [{ label: 'Perfil', routeName: 'profile' }]
+const DRIVER_LEFT_NAV_ITEMS: NavItem[] = [
+  { label: 'Pedidos', routeName: 'driver-orders' },
+  { label: 'Perfil', routeName: 'profile' },
+]
 
 export function useNavbar() {
   const auth = useAuthStore()
@@ -100,7 +105,12 @@ export function useNavbar() {
 
     if (isBuyer.value) {
       return [
-        { label: 'Carrito', routeName: 'cart', icon: 'pi pi-shopping-cart', badge: cartCount.value },
+        {
+          label: 'Carrito',
+          routeName: 'cart',
+          icon: 'pi pi-shopping-cart',
+          badge: cartCount.value,
+        },
       ]
     }
 
@@ -110,7 +120,8 @@ export function useNavbar() {
   function isRouteActive(item: NavItem) {
     if (route.name !== item.routeName) return false
 
-    const routeCategorySlug = typeof route.params.categorySlug === 'string' ? route.params.categorySlug : null
+    const routeCategorySlug =
+      typeof route.params.categorySlug === 'string' ? route.params.categorySlug : null
     const itemCategorySlug = item.params?.categorySlug ?? null
 
     return routeCategorySlug === itemCategorySlug

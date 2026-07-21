@@ -3,6 +3,7 @@ import Button from 'primevue/button'
 
 import Spinner from '@/modules/core/components/Spinner.vue'
 import { formatPrice } from '@/modules/core/utils/formatPrice'
+import { useCheckout } from '@/modules/orders/composables/useCheckout'
 import CartItemCard from '@/modules/user/components/CartItemCard.vue'
 import { useCartView } from '@/modules/user/composables/useCartView'
 
@@ -23,6 +24,8 @@ const {
   goToProfile,
   goToShop,
 } = useCartView()
+
+const { isSubmitting, stockIssues, submit } = useCheckout()
 </script>
 
 <template>
@@ -101,19 +104,31 @@ const {
           </div>
           <div class="flex justify-between text-slate-600 py-2">
             <span>Envío</span>
-            <span class="font-semibold">Gratis</span>
+            <span class="font-semibold">Se calcula al procesar tu pedido</span>
           </div>
 
           <div class="border-t border-slate-300 my-3"></div>
 
           <div class="flex justify-between items-center text-slate-600 py-2">
             <span class="text-2xl font-bold">TOTAL</span>
-            <span class="md:text-4xl text-2xl font-bold text-sky-800">${{ formatPrice(total) }} MXN</span>
+            <span class="md:text-4xl text-2xl font-bold text-sky-800"
+              >${{ formatPrice(total) }} MXN</span
+            >
+          </div>
+
+          <div
+            v-if="stockIssues.length"
+            class="mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700"
+          >
+            <p v-for="(issue, index) in stockIssues" :key="index">{{ issue }}</p>
           </div>
 
           <Button
-            label="Pagar ahora"
+            label="Generar pedido"
             class="w-full mt-4 !bg-sky-700 !border-sky-700 hover:!bg-sky-800 hover:!border-sky-800 !text-xl !font-semibold"
+            :loading="isSubmitting"
+            :disabled="!hasItems || isSyncing"
+            @click="submit"
           />
         </section>
       </aside>
