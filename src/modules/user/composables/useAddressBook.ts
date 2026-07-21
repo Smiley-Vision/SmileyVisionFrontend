@@ -1,9 +1,9 @@
-import { useToast } from 'primevue'
 import type { MenuItem } from 'primevue/menuitem'
 import { computed, reactive, ref } from 'vue'
 
 import type { ApiProblemDetails } from '@/modules/core/api/apiProblem'
 import { firstProblemMessage } from '@/modules/core/api/apiProblem'
+import { useAppToast } from '@/modules/core/composables/useAppToast'
 import type { Address, AddressFormData } from '@/modules/user/interfaces/Address'
 import type { AddressFormValues } from '@/modules/user/schemas/address'
 import {
@@ -32,7 +32,7 @@ export function useAddressBook(
   cityCatalog: ReturnType<typeof useCityCatalog>,
   mapThumbnails: ReturnType<typeof useAddressMapThumbnails>,
 ) {
-  const toast = useToast()
+  const notify = useAppToast()
 
   const addresses = ref<Address[]>([])
   const isSavingAddress = ref(false)
@@ -113,12 +113,11 @@ export function useAddressBook(
 
   function openDeleteAddressModal(address: Address) {
     if (address.is_default) {
-      toast.add({
-        severity: 'warn',
-        summary: 'No permitido',
-        detail: 'No puedes eliminar tu dirección principal. Marca otra como principal primero.',
-        life: 4000,
-      })
+      notify(
+        'warn',
+        'No permitido',
+        'No puedes eliminar tu dirección principal. Marca otra como principal primero.',
+      )
       return
     }
 
@@ -143,19 +142,9 @@ export function useAddressBook(
       await loadAddresses()
       showAddAddressModal.value = false
 
-      toast.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Dirección registrada correctamente.',
-        life: 3500,
-      })
+      notify('success', 'Éxito', 'Dirección registrada correctamente.', 3500)
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: firstProblemMessage(error as ApiProblemDetails),
-        life: 4500,
-      })
+      notify('error', 'Error', firstProblemMessage(error as ApiProblemDetails), 4500)
     } finally {
       isSavingAddress.value = false
     }
@@ -182,19 +171,9 @@ export function useAddressBook(
       await loadAddresses()
       showEditAddressModal.value = false
 
-      toast.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Dirección actualizada correctamente.',
-        life: 3500,
-      })
+      notify('success', 'Éxito', 'Dirección actualizada correctamente.', 3500)
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: firstProblemMessage(error as ApiProblemDetails),
-        life: 4500,
-      })
+      notify('error', 'Error', firstProblemMessage(error as ApiProblemDetails), 4500)
     } finally {
       isSavingAddress.value = false
     }
@@ -212,19 +191,9 @@ export function useAddressBook(
       showDeleteAddressModal.value = false
       addressToDelete.value = null
 
-      toast.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Dirección eliminada correctamente.',
-        life: 3500,
-      })
+      notify('success', 'Éxito', 'Dirección eliminada correctamente.', 3500)
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: firstProblemMessage(error as ApiProblemDetails),
-        life: 4000,
-      })
+      notify('error', 'Error', firstProblemMessage(error as ApiProblemDetails))
     } finally {
       isDeletingAddress.value = false
     }

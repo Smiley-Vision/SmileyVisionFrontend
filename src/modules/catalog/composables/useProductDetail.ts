@@ -1,4 +1,3 @@
-import { useToast } from 'primevue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -26,12 +25,13 @@ import {
   parseLensSku,
 } from '@/modules/catalog/utils/lensSeries'
 import { slugify } from '@/modules/catalog/utils/slug'
+import { useAppToast } from '@/modules/core/composables/useAppToast'
 import { useAuthStore } from '@/modules/core/stores/auth'
 import { useCartStore } from '@/modules/user/stores/cart'
 
 export function useProductDetail(productId: number) {
   const router = useRouter()
-  const toast = useToast()
+  const notify = useAppToast()
   const auth = useAuthStore()
   const cart = useCartStore()
 
@@ -317,12 +317,7 @@ export function useProductDetail(productId: number) {
       }
     } catch {
       hasError.value = true
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo obtener el producto',
-        life: 4000,
-      })
+      notify('error', 'Error', 'No se pudo obtener el producto')
     } finally {
       isLoading.value = false
     }
@@ -330,25 +325,24 @@ export function useProductDetail(productId: number) {
 
   async function addToCart() {
     if (!auth.isAuthenticated || !cart.canUseCart) {
-      toast.add({
-        severity: 'warn',
-        summary: 'Inicia sesión',
-        detail: auth.isAdmin
+      notify(
+        'warn',
+        'Inicia sesión',
+        auth.isAdmin
           ? 'El carrito solo esta disponible para usuarios compradores.'
           : 'Debes iniciar sesión para agregar productos al carrito.',
-        life: 4000,
-      })
+      )
       if (!auth.isAuthenticated) router.push({ name: 'login' })
       return
     }
 
     if (!purchaseAvailability.value.isAvailable) {
-      toast.add({
-        severity: 'warn',
-        summary: 'No disponible',
-        detail: 'Este producto no tiene disponibilidad suficiente para comprar.',
-        life: 4500,
-      })
+      notify(
+        'warn',
+        'No disponible',
+        'Este producto no tiene disponibilidad suficiente para comprar.',
+        4500,
+      )
       return
     }
 
@@ -378,23 +372,23 @@ export function useProductDetail(productId: number) {
           )
         }
 
-        toast.add({
-          severity: 'success',
-          summary: 'Agregado',
-          detail: `${selectedLensSeriesTotalQuantity.value} series agregadas al carrito.`,
-          life: 3000,
-        })
+        notify(
+          'success',
+          'Agregado',
+          `${selectedLensSeriesTotalQuantity.value} series agregadas al carrito.`,
+          3000,
+        )
         return
       }
 
       const item = selectedItem.value
       if (!item?.id) {
-        toast.add({
-          severity: 'error',
-          summary: 'No disponible',
-          detail: 'Este producto no tiene ítem de inventario asociado para carrito.',
-          life: 4500,
-        })
+        notify(
+          'error',
+          'No disponible',
+          'Este producto no tiene ítem de inventario asociado para carrito.',
+          4500,
+        )
         return
       }
 
@@ -422,20 +416,14 @@ export function useProductDetail(productId: number) {
         1,
       )
 
-      toast.add({
-        severity: 'success',
-        summary: 'Agregado',
-        detail: 'Producto agregado al carrito.',
-        life: 3000,
-      })
+      notify('success', 'Agregado', 'Producto agregado al carrito.', 3000)
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail:
-          error instanceof Error ? error.message : 'No se pudo agregar el producto al carrito.',
-        life: 4500,
-      })
+      notify(
+        'error',
+        'Error',
+        error instanceof Error ? error.message : 'No se pudo agregar el producto al carrito.',
+        4500,
+      )
     } finally {
       isAddingToCart.value = false
     }

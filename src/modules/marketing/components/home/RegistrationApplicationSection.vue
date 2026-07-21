@@ -1,11 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 
+import sendImage from '@/assets/images/landing/send.png'
 import { useAppToast } from '@/modules/core/composables/useAppToast'
 import { useAuthStore } from '@/modules/core/stores/auth'
 import { useRegistrationRequestForm } from '@/modules/registration/composables/useRegistrationRequestForm'
 
-import sendImage from '@/assets/images/landing/send.png'
 import SectionHeading from './SectionHeading.vue'
 
 const auth = useAuthStore()
@@ -30,7 +30,11 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <section v-if="!auth.isAuthenticated" id="registration" class="scroll-mt-32 px-6 py-16 sm:px-8 lg:px-20">
+  <section
+    v-if="!auth.isAuthenticated"
+    id="registration"
+    class="scroll-mt-32 px-6 py-16 sm:px-8 lg:px-20"
+  >
     <div class="mx-auto max-w-7xl px-0 py-0">
       <SectionHeading
         title="Regístrate ya"

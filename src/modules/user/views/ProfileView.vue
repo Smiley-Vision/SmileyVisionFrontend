@@ -118,6 +118,4 @@ function handleAddressActions(payload: { event: Event; address: Address }) {
       @confirm="confirmDeleteAddress"
     />
   </div>
-
-  <Toast position="bottom-right" />
 </template>

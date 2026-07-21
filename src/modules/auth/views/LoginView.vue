@@ -7,11 +7,11 @@ import Message from 'primevue/message'
 import Password from 'primevue/password'
 import { RouterLink, useRouter } from 'vue-router'
 
-import { firstProblemMessage, type ApiProblemDetails } from '@/modules/core/api/apiProblem'
+import { type ApiProblemDetails, firstProblemMessage } from '@/modules/core/api/apiProblem'
 import { useAppToast } from '@/modules/core/composables/useAppToast'
 import { useAuthStore } from '@/modules/core/stores/auth'
 
-import { loginSchema, type LoginFormValues } from '../schemas/login'
+import { type LoginFormValues, loginSchema } from '../schemas/login'
 
 const notify = useAppToast()
 const auth = useAuthStore()
@@ -46,7 +46,10 @@ async function handleSubmit(event: FormSubmitEvent) {
         <h1 class="font-bold text-3xl text-sky-800">Inicio de sesión</h1>
         <p class="text-sky-700 text-lg">
           ¿No tienes una cuenta?
-          <RouterLink :to="{ name: 'registration-application' }" class="text-sky-500 hover:underline">
+          <RouterLink
+            :to="{ name: 'registration-application' }"
+            class="text-sky-500 hover:underline"
+          >
             Solicita una
           </RouterLink>
         </p>
@@ -87,6 +90,4 @@ async function handleSubmit(event: FormSubmitEvent) {
       </Form>
     </div>
   </div>
-
-  <Toast position="bottom-right" />
 </template>

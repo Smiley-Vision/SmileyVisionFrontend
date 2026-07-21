@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import opticalEquipmentImage from '@/assets/images/landing/lensometro.webp'
 
 defineEmits(['scroll-to'])

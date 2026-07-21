@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 import { useAuthStore } from '@/modules/core/stores/auth'
+import router from '@/router'
 
 import { toApiProblem } from './apiProblem'
 
@@ -33,6 +34,10 @@ smileyApi.interceptors.response.use(
 
     if (problem.status === 401) {
       useAuthStore().clearSession()
+
+      if (router.currentRoute.value.name !== 'login') {
+        router.push({ name: 'login' })
+      }
     }
 
     return Promise.reject(problem)

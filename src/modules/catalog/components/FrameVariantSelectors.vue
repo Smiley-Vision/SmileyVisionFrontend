@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { formatPrice } from '@/modules/catalog/utils/formatPrice'
 import type { FrameVariantData } from '@/modules/catalog/utils/frameVariants'
+import { formatPrice } from '@/modules/core/utils/formatPrice'
 
 defineProps<{
   frameVariantData: FrameVariantData

@@ -18,13 +18,13 @@ withDefaults(
     :to="{ name: item.routeName, params: item.params }"
     :class="[
       isRouteActive(item)
-        ? 'bg-sky-900 text-white'
+        ? 'text-white'
         : variant === 'row'
-          ? 'text-slate-100 hover:bg-sky-700/70'
-          : 'text-slate-200 hover:bg-sky-700/70 hover:text-white',
+          ? 'text-slate-100'
+          : 'text-slate-200 hover:text-white',
       variant === 'row'
-        ? 'rounded-xl px-4 py-3 font-bold'
-        : 'rounded-xl px-3 py-2 text-[0.98rem] font-medium transition',
+        ? 'rounded-xl pr-5 py-3 font-bold'
+        : 'rounded-xl pr-5 py-2 text-[0.98rem] font-medium transition',
     ]"
   >
     {{ item.label }}

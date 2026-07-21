@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import ArmazonesImg from '@/assets/images/landing/armazones.jpg'
 import EquiposImg from '@/assets/images/landing/equipos.jpg'
 import MicasImg from '@/assets/images/landing/micas.jpg'

@@ -3,15 +3,14 @@ import Button from 'primevue/button'
 import Select from 'primevue/select'
 import { computed, onMounted, ref } from 'vue'
 
-import { type ApiProblemDetails, firstProblemMessage } from '@/modules/core/api/apiProblem'
-import { useAppToast } from '@/modules/core/composables/useAppToast'
-
 import CreateLensSeriesFields from '@/modules/admin-products/components/CreateLensSeriesFields.vue'
 import { useLensSeries } from '@/modules/admin-products/composables/useLensSeries'
 import { useProductCatalog } from '@/modules/admin-products/composables/useProductCatalog'
 import type { Product } from '@/modules/admin-products/interfaces/Product'
 import { getProductsByCategoryService } from '@/modules/admin-products/services/productCatalogService'
 import { createLensBatchService } from '@/modules/admin-products/services/productItemService'
+import { type ApiProblemDetails, firstProblemMessage } from '@/modules/core/api/apiProblem'
+import { useAppToast } from '@/modules/core/composables/useAppToast'
 
 const notify = useAppToast()
 const catalog = useProductCatalog()
@@ -105,8 +104,8 @@ onMounted(async () => {
     <div class="flex flex-col gap-2">
       <h2 class="text-3xl font-bold text-sky-800 text-center">Agregar serie de lentes</h2>
       <p class="text-sm text-slate-600 text-center">
-        Selecciona un producto de mica existente y define el rango de esfera y cilindro de la
-        nueva serie.
+        Selecciona un producto de mica existente y define el rango de esfera y cilindro de la nueva
+        serie.
       </p>
     </div>
 
@@ -155,11 +154,7 @@ onMounted(async () => {
       <div class="font-semibold text-emerald-800">Resultado de la creación</div>
       <div class="text-sm text-emerald-800">Ítems creados: {{ batchResult.created }}</div>
       <div class="text-sm text-emerald-800">Ítems ya existentes: {{ batchResult.skipped }}</div>
-      <div class="text-sm text-emerald-800">
-        Combinaciones procesadas: {{ batchResult.total }}
-      </div>
+      <div class="text-sm text-emerald-800">Combinaciones procesadas: {{ batchResult.total }}</div>
     </div>
   </div>
-
-  <Toast position="bottom-right" />
 </template>

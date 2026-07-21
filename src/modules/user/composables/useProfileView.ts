@@ -1,7 +1,7 @@
-import { useToast } from 'primevue'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import { useAppToast } from '@/modules/core/composables/useAppToast'
 import type { AuthUser } from '@/modules/core/interfaces/AuthUser'
 import { useAuthStore } from '@/modules/core/stores/auth'
 import { USER_ROLE_LABELS, UserRole } from '@/modules/user/enums/UserRole'
@@ -12,7 +12,7 @@ import { useCityCatalog } from './useCityCatalog'
 import { useProfileForm } from './useProfileForm'
 
 export function useProfileView() {
-  const toast = useToast()
+  const notify = useAppToast()
   const auth = useAuthStore()
   const router = useRouter()
 
@@ -52,19 +52,9 @@ export function useProfileView() {
       await auth.logout()
       await router.push({ name: 'home' })
 
-      toast.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Sesión cerrada',
-        life: 3500,
-      })
+      notify('success', 'Éxito', 'Sesión cerrada', 3500)
     } catch {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo cerrar la sesión.',
-        life: 4000,
-      })
+      notify('error', 'Error', 'No se pudo cerrar la sesión.')
     } finally {
       isLoggingOut.value = false
     }
@@ -74,12 +64,7 @@ export function useProfileView() {
     try {
       await loadProfileData()
     } catch {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo cargar la información del perfil.',
-        life: 4500,
-      })
+      notify('error', 'Error', 'No se pudo cargar la información del perfil.', 4500)
     } finally {
       isLoading.value = false
     }

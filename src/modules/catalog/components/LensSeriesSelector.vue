@@ -4,8 +4,8 @@ import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 
 import type { ProductItem } from '@/modules/catalog/interfaces/ProductItem'
-import { formatPrice } from '@/modules/catalog/utils/formatPrice'
 import { type LensSeries, formatLensValue } from '@/modules/catalog/utils/lensSeries'
+import { formatPrice } from '@/modules/core/utils/formatPrice'
 
 defineProps<{
   lensSeries: LensSeries[]

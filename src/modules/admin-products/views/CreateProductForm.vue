@@ -253,6 +253,4 @@ onMounted(async () => {
       </template>
     </div>
   </div>
-
-  <Toast position="bottom-right" />
 </template>

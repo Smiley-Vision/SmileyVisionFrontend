@@ -1,15 +1,15 @@
-<script setup>
+<script setup lang="ts">
 import L from 'leaflet'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-const branches = [
+const branches: { name: string; coordinates: L.LatLngTuple }[] = [
   { name: 'Ciudad de México', coordinates: [19.4326, -99.1332] },
   { name: 'Mérida', coordinates: [20.9674, -89.5926] },
   { name: 'Campeche', coordinates: [19.8301, -90.5349] },
 ]
 
-const mapElement = ref(null)
-let map = null
+const mapElement = ref<HTMLElement | null>(null)
+let map: L.Map | null = null
 
 const markerIcon = L.divIcon({
   className: 'sv-branch-marker',
@@ -22,27 +22,28 @@ const markerIcon = L.divIcon({
 onMounted(() => {
   if (!mapElement.value) return
 
-  map = L.map(mapElement.value, {
+  const currentMap = L.map(mapElement.value, {
     zoomControl: true,
     scrollWheelZoom: false,
   })
+  map = currentMap
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18,
     attribution: '&copy; OpenStreetMap contributors',
-  }).addTo(map)
+  }).addTo(currentMap)
 
-  const bounds = []
+  const bounds: L.LatLngTuple[] = []
 
   branches.forEach((branch) => {
     L.marker(branch.coordinates, { icon: markerIcon })
-      .addTo(map)
+      .addTo(currentMap)
       .bindPopup(branch.name, { closeButton: false })
 
     bounds.push(branch.coordinates)
   })
 
-  map.fitBounds(bounds, {
+  currentMap.fitBounds(bounds, {
     padding: [30, 30],
   })
 

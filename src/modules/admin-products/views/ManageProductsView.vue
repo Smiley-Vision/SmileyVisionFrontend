@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import AdminProductActionIcon from '../components/AdminProductActionIcon.vue'
 
 const actions = [
@@ -9,9 +9,7 @@ const actions = [
 </script>
 
 <template>
-  <div
-    class="flex flex-col lg:px-32 px-6 lg:py-10 py-6 lg:gap-y-10 gap-y-6"
-  >
+  <div class="flex flex-col lg:px-32 px-6 lg:py-10 py-6 lg:gap-y-10 gap-y-6">
     <!-- Title and description -->
     <div class="flex flex-col gap-y-12">
       <h1 class="md:text-5xl text-4xl lg:text-start text-center font-bold text-sky-800 -mb-4">

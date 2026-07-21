@@ -5,10 +5,9 @@ import Select from 'primevue/select'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import Spinner from '@/modules/core/components/Spinner.vue'
-
 import ModifyProductFormContent from '@/modules/admin-products/components/ModifyProductFormContent.vue'
 import { useAdminProductSearch } from '@/modules/admin-products/composables/useAdminProductSearch'
+import Spinner from '@/modules/core/components/Spinner.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -170,6 +169,4 @@ onMounted(async () => {
       @deleted="handleProductDeleted"
     />
   </Dialog>
-
-  <Toast position="bottom-right" />
 </template>

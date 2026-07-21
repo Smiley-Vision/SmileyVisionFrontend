@@ -1,4 +1,37 @@
-function normalizeText(value) {
+interface LensSourceItem {
+  SKU?: unknown
+  price?: unknown
+  product_image?: unknown
+  stock?: unknown
+  total_stock?: unknown
+  available_stock?: unknown
+  availability?: unknown
+  existence?: unknown
+  inventory?: unknown
+  inventories?: unknown
+  inventory_items?: unknown
+}
+
+interface LensValues {
+  sphere: number
+  cylinder: number
+}
+
+export interface LensSeries<T extends LensSourceItem = LensSourceItem> {
+  key: string
+  label: string
+  price: number
+  image_url: string
+  items: T[]
+  sphereMin: number | null
+  sphereMax: number | null
+  cylinderMin: number | null
+  cylinderMax: number | null
+  representativeItem: T | null
+  totalStock: number
+}
+
+function normalizeText(value: unknown): string {
   return String(value ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -6,7 +39,7 @@ function normalizeText(value) {
     .trim()
 }
 
-export function getCategorySlug(categoryName) {
+export function getCategorySlug(categoryName: unknown): string {
   const normalized = normalizeText(categoryName)
 
   if (normalized.includes('mica')) return 'micas'
@@ -16,67 +49,7 @@ export function getCategorySlug(categoryName) {
   return normalized.replace(/\s+/g, '-')
 }
 
-export function getShopRouteNameByCategory(categoryName) {
-  const slug = getCategorySlug(categoryName)
-
-  if (slug === 'micas') return 'shop-Micas'
-  if (slug === 'armazones') return 'shop-Armazones'
-  if (slug === 'equipos') return 'shop-Equipos'
-
-  return 'shop'
-}
-
-export function findCategoryIdByName(categories, categoryName) {
-  const targetSlug = getCategorySlug(categoryName)
-  const match = categories.find((category) => getCategorySlug(category?.name) === targetSlug)
-
-  return match?.id ?? null
-}
-
-export function normalizeCategoriesPayload(payload) {
-  if (Array.isArray(payload)) return payload
-  if (Array.isArray(payload?.categories)) return payload.categories
-
-  return []
-}
-
-export function normalizeProductListPayload(payload) {
-  if (Array.isArray(payload)) return payload
-  if (Array.isArray(payload?.data)) return payload.data
-  if (Array.isArray(payload?.products)) return payload.products
-
-  return []
-}
-
-export function buildProductItemsByProductId(payload) {
-  const items = Array.isArray(payload)
-    ? payload
-    : Array.isArray(payload?.data)
-      ? payload.data
-      : Array.isArray(payload?.product_items)
-        ? payload.product_items
-        : []
-
-  const itemsByProductId = items.reduce((map, item) => {
-    if (item?.product_id != null) {
-      if (!Array.isArray(map[item.product_id])) {
-        map[item.product_id] = []
-      }
-
-      map[item.product_id].push(item)
-    }
-
-    return map
-  }, {})
-
-  return Object.entries(itemsByProductId).reduce((map, [productId, productItems]) => {
-    map[productId] = chooseRepresentativeProductItem(productItems)
-
-    return map
-  }, {})
-}
-
-export function getProductItemStock(item) {
+function getProductItemStock(item: LensSourceItem | null | undefined): number {
   const directStock = [
     item?.stock,
     item?.total_stock,
@@ -101,41 +74,20 @@ export function getProductItemStock(item) {
         ? item.inventory_items
         : []
 
-  return inventoryRows.reduce((total, inventoryRow) => {
+  return inventoryRows.reduce((total: number, inventoryRow: LensSourceItem) => {
     const stock = Number(inventoryRow?.stock)
 
     return total + Math.max(0, Number.isFinite(stock) ? stock : 0)
   }, 0)
 }
 
-export function chooseRepresentativeProductItem(items) {
+function chooseRepresentativeProductItem<T extends LensSourceItem>(items: T[]): T | null {
   if (!Array.isArray(items) || items.length === 0) return null
 
   return items.find((item) => getProductItemStock(item) > 0) ?? items[0]
 }
 
-export function enrichProduct(product, productItemsByProductId = {}) {
-  if (!product || typeof product !== 'object') return product
-
-  const productId = product.id ?? product.product_id ?? null
-  const item = productId != null ? productItemsByProductId[productId] : null
-  const productImage = product.image_url ?? product.product_image ?? ''
-
-  return {
-    ...product,
-    product_item_id: product.product_item_id ?? item?.id ?? null,
-    code: product.code ?? product.SKU ?? item?.SKU ?? String(productId ?? ''),
-    price: product.price ?? item?.price ?? null,
-    image_url: productImage,
-    stock: getProductItemStock(item),
-  }
-}
-
-export function enrichProducts(products, productItemsByProductId = {}) {
-  return products.map((product) => enrichProduct(product, productItemsByProductId))
-}
-
-export function parseLensSku(sku) {
+export function parseLensSku(sku: unknown): LensValues | null {
   const normalizedSku = String(sku ?? '')
     .trim()
     .toUpperCase()
@@ -162,15 +114,18 @@ export function parseLensSku(sku) {
   }
 }
 
-export function formatLensValue(value) {
+export function formatLensValue(value: unknown): string {
   const numericValue = Number(value ?? 0)
 
   return numericValue === 0 || Object.is(numericValue, -0) ? '0.00' : numericValue.toFixed(2)
 }
 
-export function getDistinctLensValues(items) {
-  const spheres = new Set()
-  const cylinders = new Set()
+export function getDistinctLensValues(items: LensSourceItem[] | null | undefined): {
+  spheres: number[]
+  cylinders: number[]
+} {
+  const spheres = new Set<number>()
+  const cylinders = new Set<number>()
 
   for (const item of Array.isArray(items) ? items : []) {
     const parsedLens = parseLensSku(item?.SKU)
@@ -186,7 +141,11 @@ export function getDistinctLensValues(items) {
   }
 }
 
-export function findLensItemBySphereCylinder(items, sphere, cylinder) {
+export function findLensItemBySphereCylinder<T extends LensSourceItem>(
+  items: T[] | null | undefined,
+  sphere: number,
+  cylinder: number,
+): T | null {
   return (
     (Array.isArray(items) ? items : []).find((item) => {
       const parsedLens = parseLensSku(item?.SKU)
@@ -195,8 +154,11 @@ export function findLensItemBySphereCylinder(items, sphere, cylinder) {
   )
 }
 
-export function buildLensSeries(productItems, productImage = '') {
-  const groups = new Map()
+export function buildLensSeries<T extends LensSourceItem>(
+  productItems: T[] | null | undefined,
+  productImage: unknown = '',
+): LensSeries<T>[] {
+  const groups = new Map<string, LensSeries<T>>()
 
   for (const item of Array.isArray(productItems) ? productItems : []) {
     const parsedLens = parseLensSku(item?.SKU)
@@ -215,15 +177,13 @@ export function buildLensSeries(productItems, productImage = '') {
         sphereMax: parsedLens?.sphere ?? null,
         cylinderMin: parsedLens?.cylinder ?? null,
         cylinderMax: parsedLens?.cylinder ?? null,
+        representativeItem: null,
+        totalStock: 0,
       })
     }
 
-    const group = groups.get(key)
-    group.items.push({
-      ...item,
-      sphere: parsedLens?.sphere ?? null,
-      cylinder: parsedLens?.cylinder ?? null,
-    })
+    const group = groups.get(key)!
+    group.items.push(item)
 
     if (parsedLens) {
       group.sphereMin =
@@ -244,7 +204,6 @@ export function buildLensSeries(productItems, productImage = '') {
   return [...groups.values()]
     .map((series, index) => ({
       ...series,
-      id: series.key,
       label: `Serie ${index + 1}`,
       representativeItem: chooseRepresentativeProductItem(series.items),
       totalStock: series.items.reduce((total, item) => total + getProductItemStock(item), 0),

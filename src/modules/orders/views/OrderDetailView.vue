@@ -33,6 +33,4 @@ const { order, isLoading, hasError } = useOrderDetail(orderId.value)
       <OrderDetailPanel :order="order" />
     </div>
   </div>
-
-  <Toast position="bottom-right" />
 </template>

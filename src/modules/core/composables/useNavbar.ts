@@ -21,7 +21,6 @@ export interface NavItem {
 const ADMIN_LEFT_NAV_ITEMS: NavItem[] = [
   { label: 'Tienda', routeName: 'shop' },
   { label: 'Productos', routeName: 'admin-products' },
-  { label: 'Inventario', routeName: 'admin-products-availability' },
   { label: 'Solicitudes', routeName: 'admin-registration-applications' },
   { label: 'Pedidos', routeName: 'admin-orders' },
 ]
@@ -121,7 +120,9 @@ export function useNavbar() {
     if (route.name !== item.routeName) return false
 
     const routeCategorySlug =
-      typeof route.params.categorySlug === 'string' ? route.params.categorySlug : null
+      typeof route.params.categorySlug === 'string' && route.params.categorySlug !== ''
+        ? route.params.categorySlug
+        : null
     const itemCategorySlug = item.params?.categorySlug ?? null
 
     return routeCategorySlug === itemCategorySlug

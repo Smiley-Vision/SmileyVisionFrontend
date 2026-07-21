@@ -143,6 +143,4 @@ async function submit() {
       </section>
     </div>
   </div>
-
-  <Toast position="bottom-right" />
 </template>

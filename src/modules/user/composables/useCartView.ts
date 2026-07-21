@@ -1,7 +1,7 @@
-import { useToast } from 'primevue'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import { useAppToast } from '@/modules/core/composables/useAppToast'
 import type { Address } from '@/modules/user/interfaces/Address'
 import type { CartItem } from '@/modules/user/interfaces/Cart'
 import { getUserAddressesService } from '@/modules/user/services/profileService'
@@ -12,7 +12,7 @@ import { mapFallbackThumbnail, useAddressMapThumbnails } from './useAddressMapTh
 import { useCityCatalog } from './useCityCatalog'
 
 export function useCartView() {
-  const toast = useToast()
+  const notify = useAppToast()
   const router = useRouter()
   const cart = useCartStore()
 
@@ -51,12 +51,7 @@ export function useCartView() {
         await mapThumbnails.loadAddressMapThumbnails([defaultAddress.value])
       }
     } catch {
-      toast.add({
-        severity: 'warn',
-        summary: 'Dirección',
-        detail: 'No se pudieron cargar las direcciones de entrega.',
-        life: 3500,
-      })
+      notify('warn', 'Dirección', 'No se pudieron cargar las direcciones de entrega.', 3500)
     }
   }
 
@@ -64,12 +59,11 @@ export function useCartView() {
     try {
       await cart.setItemQuantity(item.product_item_id, item.quantity + 1)
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: error instanceof Error ? error.message : 'No se pudo aumentar la cantidad.',
-        life: 4000,
-      })
+      notify(
+        'error',
+        'Error',
+        error instanceof Error ? error.message : 'No se pudo aumentar la cantidad.',
+      )
     }
   }
 
@@ -77,31 +71,24 @@ export function useCartView() {
     try {
       await cart.setItemQuantity(item.product_item_id, item.quantity - 1)
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: error instanceof Error ? error.message : 'No se pudo reducir la cantidad.',
-        life: 4000,
-      })
+      notify(
+        'error',
+        'Error',
+        error instanceof Error ? error.message : 'No se pudo reducir la cantidad.',
+      )
     }
   }
 
   async function removeItem(item: CartItem) {
     try {
       await cart.removeItem(item.product_item_id)
-      toast.add({
-        severity: 'success',
-        summary: 'Eliminado',
-        detail: 'Producto removido del carrito.',
-        life: 2800,
-      })
+      notify('success', 'Eliminado', 'Producto removido del carrito.', 2800)
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: error instanceof Error ? error.message : 'No se pudo eliminar el producto.',
-        life: 4000,
-      })
+      notify(
+        'error',
+        'Error',
+        error instanceof Error ? error.message : 'No se pudo eliminar el producto.',
+      )
     }
   }
 
@@ -113,12 +100,7 @@ export function useCartView() {
       await cart.initializeForSession({ forceRemote: true })
       await loadDefaultAddress()
     } catch {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo cargar el carrito.',
-        life: 4000,
-      })
+      notify('error', 'Error', 'No se pudo cargar el carrito.')
     } finally {
       isLoading.value = false
     }

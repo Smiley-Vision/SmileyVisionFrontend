@@ -22,7 +22,7 @@ const badgeLabel = computed(() => {
   <RouterLink
     :to="{ name: item.routeName, params: item.params }"
     :class="[
-      active ? 'bg-sky-900 text-white' : 'text-slate-100 hover:bg-sky-700/70',
+      active ? 'text-white' : 'text-slate-100 hover:bg-sky-700/70',
       variant === 'row'
         ? 'flex items-center justify-between rounded-xl px-4 py-3 font-bold'
         : 'flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition',

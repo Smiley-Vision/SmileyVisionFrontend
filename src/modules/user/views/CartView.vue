@@ -134,6 +134,4 @@ const { isSubmitting, stockIssues, submit } = useCheckout()
       </aside>
     </div>
   </div>
-
-  <Toast position="bottom-right" />
 </template>

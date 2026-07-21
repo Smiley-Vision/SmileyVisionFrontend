@@ -1,4 +1,26 @@
-const DEFAULT_OPTIONS = {
+import type { Directive, DirectiveBinding } from 'vue'
+
+type RevealOrigin = 'up' | 'down' | 'left' | 'right' | 'zoom'
+
+interface RevealOptions {
+  origin: RevealOrigin
+  distance: number
+  duration: number
+  delay: number
+  threshold: number
+  once: boolean
+  rootMargin: string
+  blur: number
+  scale: number
+}
+
+type RevealBindingValue = RevealOrigin | Partial<RevealOptions>
+
+interface RevealElement extends HTMLElement {
+  __svRevealObserver?: IntersectionObserver
+}
+
+const DEFAULT_OPTIONS: RevealOptions = {
   origin: 'up',
   distance: 34,
   duration: 760,
@@ -10,7 +32,7 @@ const DEFAULT_OPTIONS = {
   scale: 1,
 }
 
-function normalizeOptions(value) {
+function normalizeOptions(value: RevealBindingValue | undefined): RevealOptions {
   if (typeof value === 'string') {
     return { ...DEFAULT_OPTIONS, origin: value }
   }
@@ -21,7 +43,7 @@ function normalizeOptions(value) {
   }
 }
 
-function applyMotionStyles(el, options) {
+function applyMotionStyles(el: RevealElement, options: RevealOptions) {
   let x = '0px'
   let y = '0px'
 
@@ -41,7 +63,7 @@ function applyMotionStyles(el, options) {
   )
 }
 
-function setupReveal(el, binding) {
+function setupReveal(el: RevealElement, binding: DirectiveBinding<RevealBindingValue>) {
   const options = normalizeOptions(binding?.value)
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -77,7 +99,7 @@ function setupReveal(el, binding) {
   el.__svRevealObserver = observer
 }
 
-export const revealOnScroll = {
+export const revealOnScroll: Directive<RevealElement, RevealBindingValue> = {
   mounted(el, binding) {
     setupReveal(el, binding)
   },

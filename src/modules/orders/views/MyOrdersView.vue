@@ -70,6 +70,4 @@ function onPageChange(event: PageState) {
       />
     </div>
   </div>
-
-  <Toast position="bottom-right" />
 </template>

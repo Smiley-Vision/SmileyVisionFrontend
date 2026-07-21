@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import BranchesMap from './BranchesMap.vue'
 import SectionHeading from './SectionHeading.vue'
 </script>

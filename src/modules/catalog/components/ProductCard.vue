@@ -11,7 +11,7 @@ const backendUrl = import.meta.env.VITE_BACKEND_BASE
 <template>
   <RouterLink
     :to="{ name: 'product', params: { code: product.id } }"
-    class="group flex flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-sky-200"
+    class="group flex flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-lg"
   >
     <div class="flex aspect-square items-center justify-center bg-white p-4">
       <img

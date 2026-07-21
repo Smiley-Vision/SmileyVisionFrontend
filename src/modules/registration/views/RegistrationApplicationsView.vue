@@ -32,11 +32,13 @@ function onPageChange(event: PageState) {
 <template>
   <Spinner :is-loading text="Cargando solicitudes..." />
 
-  <div
-    v-if="!isLoading"
-    class="flex flex-col lg:px-32 px-6 lg:py-10 py-6 lg:gap-y-10 gap-y-6"
-  >
-    <h1 v-if="applications.length > 0" class="lg:text-4xl sm:text-3xl text-3xl font-bold text-sky-800">Solicitudes de registro</h1>
+  <div v-if="!isLoading" class="flex flex-col lg:px-32 px-6 lg:py-10 py-6 lg:gap-y-10 gap-y-6">
+    <h1
+      v-if="applications.length > 0"
+      class="lg:text-4xl sm:text-3xl text-3xl font-bold text-sky-800"
+    >
+      Solicitudes de registro
+    </h1>
 
     <div v-if="applications.length > 0" class="flex flex-col gap-6 max-w-3xl mx-auto w-full">
       <div class="grid gap-4">
@@ -59,7 +61,10 @@ function onPageChange(event: PageState) {
       />
     </div>
 
-    <div v-else class="flex flex-col items-center gap-y-3 max-w-2xl mx-auto w-full py-24 text-center">
+    <div
+      v-else
+      class="flex flex-col items-center gap-y-3 max-w-2xl mx-auto w-full py-24 text-center"
+    >
       <div class="flex size-20 items-center justify-center rounded-full bg-sky-50 text-sky-500">
         <i class="pi pi-inbox" style="font-size: 2.5rem"></i>
       </div>
@@ -78,6 +83,4 @@ function onPageChange(event: PageState) {
     @update:visible="(value) => !value && closeRejectDialog()"
     @confirm="confirmReject"
   />
-
-  <Toast position="bottom-right" />
 </template>

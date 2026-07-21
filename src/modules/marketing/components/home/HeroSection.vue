@@ -1,7 +1,8 @@
-<script setup>
-import glassesModel from '@/assets/models/glasses.glb'
-import logoImage from '@/assets/images/smiley_logo.png'
+<script setup lang="ts">
 import { onMounted, ref } from 'vue'
+
+import logoImage from '@/assets/images/smiley_logo.png'
+import glassesModel from '@/assets/models/glasses.glb'
 
 defineEmits(['scroll-to'])
 

@@ -1,9 +1,9 @@
-<script setup>
-import { useToast } from 'primevue'
-import { computed, nextTick, onMounted } from 'vue'
+<script setup lang="ts">
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { useAuthStore } from '@/modules/core/stores/auth.ts'
+import { useAppToast } from '@/modules/core/composables/useAppToast'
+import { useAuthStore } from '@/modules/core/stores/auth'
 import BenefitsSection from '@/modules/marketing/components/home/BenefitsSection.vue'
 import BranchesSection from '@/modules/marketing/components/home/BranchesSection.vue'
 import HeroSection from '@/modules/marketing/components/home/HeroSection.vue'
@@ -13,41 +13,27 @@ import WelcomeSection from '@/modules/marketing/components/home/WelcomeSection.v
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const notify = useAppToast()
 const auth = useAuthStore()
 const welcomeName = computed(() => {
-  const currentUser = auth.user || {}
+  const currentUser = auth.user
+  if (!currentUser) return 'usuario'
+
   const fullName = [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ').trim()
-  return fullName || currentUser.name || currentUser.email || 'usuario'
+  return fullName || currentUser.email || 'usuario'
 })
 
 onMounted(async () => {
-  await nextTick() // Let Toast render first
-
   if (route.query.justLoggedIn === 'true') {
-    toast.add({
-      severity: 'success',
-      summary: 'Éxito',
-      detail: `Bienvenido, ${welcomeName.value}`,
-      life: 4000,
-    })
-
-    auth.justLoggedIn = false
+    notify('success', 'Éxito', `Bienvenido, ${welcomeName.value}`)
     await router.replace({ query: { ...route.query, justLoggedIn: undefined } })
   } else if (route.query.justSubmittedRequest === 'true') {
-    toast.add({
-      severity: 'success',
-      summary: 'Éxito',
-      detail: 'Solicitud enviada correctamente',
-      life: 4000,
-    })
-
-    auth.justSubmittedRequest = false
+    notify('success', 'Éxito', 'Solicitud enviada correctamente')
     await router.replace({ query: { ...route.query, justSubmittedRequest: undefined } })
   }
 })
 
-function scrollToSection(sectionId) {
+function scrollToSection(sectionId: string) {
   document.getElementById(sectionId)?.scrollIntoView({
     behavior: 'smooth',
     block: 'start',
@@ -64,6 +50,4 @@ function scrollToSection(sectionId) {
     <BranchesSection />
     <RegistrationApplicationSection />
   </div>
-
-  <Toast position="top-right" />
 </template>

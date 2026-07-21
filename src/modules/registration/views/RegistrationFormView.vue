@@ -9,7 +9,7 @@ import { useCityCatalog } from '@/modules/user/composables/useCityCatalog'
 
 import RegistrationAccountFields from '../components/RegistrationAccountFields.vue'
 import { useSignUpSubmit } from '../composables/useSignUpSubmit'
-import { registrationFormSchema, type RegistrationFormValues } from '../schemas/registrationForm'
+import { type RegistrationFormValues, registrationFormSchema } from '../schemas/registrationForm'
 import { createRegistrationInitialValues } from '../utils/registrationUserForm'
 
 const route = useRoute()
@@ -43,8 +43,8 @@ function handleSubmit(event: FormSubmitEvent) {
       <div class="px-6 py-8 sm:px-10">
         <h1 class="text-3xl font-bold text-sky-900">Registro en el sistema</h1>
         <p class="mt-3 text-base leading-7 text-slate-600">
-          Ingresa el token de registro que te enviamos por correo y llena correctamente el
-          siguiente formulario para poder realizar acciones en el sistema.
+          Ingresa el token de registro que te enviamos por correo y llena correctamente el siguiente
+          formulario para poder realizar acciones en el sistema.
         </p>
       </div>
 
@@ -79,6 +79,4 @@ function handleSubmit(event: FormSubmitEvent) {
       </Form>
     </div>
   </div>
-
-  <Toast position="bottom-right" />
 </template>

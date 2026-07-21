@@ -7,13 +7,13 @@ import Message from 'primevue/message'
 import Textarea from 'primevue/textarea'
 import { RouterLink, useRouter } from 'vue-router'
 
-import { firstProblemMessage, type ApiProblemDetails } from '@/modules/core/api/apiProblem'
+import { type ApiProblemDetails, firstProblemMessage } from '@/modules/core/api/apiProblem'
 import smileyApi from '@/modules/core/api/smileyApi'
 import { useAppToast } from '@/modules/core/composables/useAppToast'
 
 import {
-  registrationRequestSchema,
   type RegistrationRequestFormValues,
+  registrationRequestSchema,
 } from '../schemas/registrationRequest'
 
 const notify = useAppToast()
@@ -91,6 +91,4 @@ async function handleSubmit(event: FormSubmitEvent) {
       </Form>
     </div>
   </div>
-
-  <Toast position="bottom-right" />
 </template>

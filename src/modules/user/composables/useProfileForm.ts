@@ -1,14 +1,14 @@
-import { useToast } from 'primevue'
 import { reactive, ref } from 'vue'
 import type { Ref } from 'vue'
 
+import { useAppToast } from '@/modules/core/composables/useAppToast'
 import type { AuthUser } from '@/modules/core/interfaces/AuthUser'
 import { useAuthStore } from '@/modules/core/stores/auth'
 import type { ProfileFormData } from '@/modules/user/interfaces/ProfileForm'
 import { normalizePhoneDigits } from '@/modules/user/utils/phone'
 
 export function useProfileForm(user: Ref<AuthUser | null>) {
-  const toast = useToast()
+  const notify = useAppToast()
   const auth = useAuthStore()
 
   const isSavingProfile = ref(false)
@@ -46,20 +46,14 @@ export function useProfileForm(user: Ref<AuthUser | null>) {
       auth.setSession(auth.token as string, updatedUser)
       showEditProfileModal.value = false
 
-      toast.add({
-        severity: 'warn',
-        summary: 'Atención',
-        detail:
-          'La API actual no expone endpoint para actualizar usuario. Cambio aplicado localmente.',
-        life: 5000,
-      })
+      notify(
+        'warn',
+        'Atención',
+        'La API actual no expone endpoint para actualizar usuario. Cambio aplicado localmente.',
+        5000,
+      )
     } catch {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo actualizar la información del usuario.',
-        life: 4000,
-      })
+      notify('error', 'Error', 'No se pudo actualizar la información del usuario.')
     } finally {
       isSavingProfile.value = false
     }

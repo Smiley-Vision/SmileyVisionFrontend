@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import SectionHeading from './SectionHeading.vue'
 
 const benefits = [

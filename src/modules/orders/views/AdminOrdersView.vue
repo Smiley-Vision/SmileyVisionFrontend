@@ -161,6 +161,4 @@ function downloadThisWeekReport() {
       <div class="text-2xl font-semibold text-sky-800">No hay pedidos con estos filtros</div>
     </div>
   </div>
-
-  <Toast position="bottom-right" />
 </template>

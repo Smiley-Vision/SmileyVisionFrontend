@@ -201,7 +201,10 @@ onMounted(async () => {
                   : getItemSubtitle(selectedProductItem)
               }}
             </div>
-            <div v-if="isLensProduct && lensSelectionMode === 'item'" class="text-xs font-medium text-slate-500">
+            <div
+              v-if="isLensProduct && lensSelectionMode === 'item'"
+              class="text-xs font-medium text-slate-500"
+            >
               SKU: {{ selectedLensItem?.SKU ?? '—' }}
             </div>
           </div>
@@ -245,7 +248,8 @@ onMounted(async () => {
                 option-value="value"
                 class="w-28"
                 @update:model-value="
-                  (sphere) => selectLensItemBySphereCylinder(sphere, selectedLensItemValues?.cylinder ?? 0)
+                  (sphere) =>
+                    selectLensItemBySphereCylinder(sphere, selectedLensItemValues?.cylinder ?? 0)
                 "
               />
             </div>
@@ -258,7 +262,8 @@ onMounted(async () => {
                 option-value="value"
                 class="w-28"
                 @update:model-value="
-                  (cylinder) => selectLensItemBySphereCylinder(selectedLensItemValues?.sphere ?? 0, cylinder)
+                  (cylinder) =>
+                    selectLensItemBySphereCylinder(selectedLensItemValues?.sphere ?? 0, cylinder)
                 "
               />
             </div>
@@ -344,6 +349,4 @@ onMounted(async () => {
       </section>
     </div>
   </form>
-
-  <Toast position="bottom-right" />
 </template>

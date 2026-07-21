@@ -7,9 +7,9 @@ import { useRoute } from 'vue-router'
 import FrameVariantSelectors from '@/modules/catalog/components/FrameVariantSelectors.vue'
 import LensSeriesSelector from '@/modules/catalog/components/LensSeriesSelector.vue'
 import { useProductDetail } from '@/modules/catalog/composables/useProductDetail'
-import { formatPrice } from '@/modules/catalog/utils/formatPrice'
 import { slugify } from '@/modules/catalog/utils/slug'
 import Spinner from '@/modules/core/components/Spinner.vue'
+import { formatPrice } from '@/modules/core/utils/formatPrice'
 
 const backendUrl = import.meta.env.VITE_BACKEND_BASE
 const route = useRoute()
@@ -174,6 +174,4 @@ const categoryHref = computed(() =>
       </div>
     </div>
   </div>
-
-  <Toast position="bottom-right" />
 </template>

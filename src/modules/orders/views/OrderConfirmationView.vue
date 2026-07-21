@@ -69,6 +69,4 @@ const { order, isLoading, hasError } = useOrderDetail(orderId.value)
       />
     </div>
   </div>
-
-  <Toast position="bottom-right" />
 </template>
