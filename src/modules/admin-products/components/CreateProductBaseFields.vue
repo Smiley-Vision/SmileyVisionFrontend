@@ -4,7 +4,7 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
-import { inject, ref } from 'vue'
+import { inject, ref, watch } from 'vue'
 
 import ImagePickerButton from '@/modules/admin-products/components/ImagePickerButton.vue'
 import type { Supplier } from '@/modules/admin-products/interfaces/Supplier'
@@ -13,12 +13,22 @@ interface PrimeVueFormInstance {
   setFieldValue: (field: string, value: unknown) => void
 }
 
-defineProps<{
+const props = defineProps<{
   suppliers: Supplier[]
   isSuppliersLoading: boolean
+  isLensCategory: boolean
 }>()
 
 const pcForm = inject<PrimeVueFormInstance>('$pcForm')
+
+watch(
+  () => props.suppliers,
+  (suppliers) => {
+    if (props.isLensCategory && suppliers.length > 0) {
+      pcForm?.setFieldValue('supplier_id', suppliers[0].id)
+    }
+  },
+)
 
 const previewUrl = ref<string | null>(null)
 

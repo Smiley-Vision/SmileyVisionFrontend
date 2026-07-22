@@ -206,6 +206,7 @@ onMounted(async () => {
             ref="baseFieldsRef"
             :suppliers="catalog.suppliers.value"
             :is-suppliers-loading="catalog.isLoadingSuppliers.value"
+            :is-lens-category="selectedTypeSlug === 'micas'"
           />
 
           <CreateEquipmentItemFields v-if="selectedTypeSlug === 'equipos'" />
