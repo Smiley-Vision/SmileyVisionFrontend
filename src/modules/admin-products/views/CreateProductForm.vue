@@ -161,7 +161,7 @@ onMounted(async () => {
     <div
       class="flex flex-col bg-white max-w-4xl mx-auto md:px-10 md:py-10 px-8 gap-8 rounded-2xl md:shadow-2xl"
     >
-      <h2 class="text-3xl font-bold text-sky-800 text-center">Añadir producto</h2>
+      <h2 class="text-3xl font-bold text-sky-800 text-center">Crear producto</h2>
 
       <div v-if="catalog.isLoadingCategories.value" class="flex flex-col items-center gap-y-6 py-8">
         <div class="text-sky-600 pi pi-spinner-dotted animate-spin" style="font-size: 5rem"></div>

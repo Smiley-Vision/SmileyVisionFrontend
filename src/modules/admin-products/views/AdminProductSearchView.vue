@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import Dialog from 'primevue/dialog'
+import IconField from 'primevue/iconfield'
+import InputIcon from 'primevue/inputicon'
 import Paginator, { type PageState } from 'primevue/paginator'
 import Select from 'primevue/select'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -8,6 +10,7 @@ import { useRoute, useRouter } from 'vue-router'
 import ModifyProductFormContent from '@/modules/admin-products/components/ModifyProductFormContent.vue'
 import { useAdminProductSearch } from '@/modules/admin-products/composables/useAdminProductSearch'
 import Spinner from '@/modules/core/components/Spinner.vue'
+import { InputText } from 'primevue'
 
 const props = withDefaults(
   defineProps<{
@@ -86,23 +89,33 @@ onMounted(async () => {
 
 <template>
   <div
-    class="flex flex-col lg:px-20 md:px-12 px-8 lg:mt-14 lg:py-0 md:py-10 py-8 lg:gap-y-10 gap-y-6"
+    class="flex flex-col lg:px-32 px-6 lg:py-10 py-6 lg:gap-y-8 gap-y-6"
   >
-    <div class="text-3xl font-semibold text-sky-800">{{ props.title }}</div>
+    <div class="text-4xl font-semibold text-sky-800">{{ props.title }}</div>
 
-    <div class="flex lg:flex-row flex-col lg:gap-x-12 lg:gap-y-0 gap-y-8">
-      <input
-        v-model="query"
-        placeholder="Buscar por nombre..."
-        class="lg:w-2/3 w-full p-2 border border-2 border-solid border-slate-300 rounded-xl"
-        @input="onQueryChange"
-      />
+    <div
+      class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-md sm:flex-row sm:items-center"
+    >
+      <IconField class="w-full sm:w-2/3">
+        <InputIcon class="pi pi-search" />
+        <InputText
+          v-model="query"
+          placeholder="Buscar por nombre..."
+          class="h-12 w-full text-base"
+          fluid
+          @input="onQueryChange"
+        />
+      </IconField>
+
+      <div class="hidden h-10 w-px shrink-0 bg-slate-200 sm:block"></div>
+
       <Select
         v-model="selectedCategoryId"
         :options="categoryOptions"
         option-label="name"
         option-value="id"
-        class="lg:w-1/3 w-full"
+        placeholder="Selecciona una categoría"
+        class="h-12 w-full sm:w-1/3"
         @update:model-value="onCategoryChange"
       />
     </div>
@@ -128,26 +141,41 @@ onMounted(async () => {
     </div>
 
     <template v-else-if="!isLoading">
-      <div
-        class="flex mx-auto items-center xl:grid xl:grid-cols-4 lg:grid lg:grid-cols-3 sm:grid sm:grid-cols-2 text-center flex-col gap-x-20 gap-y-12 pt-4"
-      >
-        <div
-          v-for="product in products"
-          :key="product.id"
-          class="flex flex-col items-center gap-y-4 font-semibold text-xl text-sky-700"
-        >
-          <div class="text-lg text-sky-700 font-semibold">{{ product.name }}</div>
-          <button v-if="openModalOnClick" type="button" @click="openEditModal(product.id)">
-            <img
-              :src="`${backendUrl}/storage/${product.image_path}`"
-              class="lg:size-60 size-40 object-contain object-center bg-white border-solid border-2 border-sky-600 rounded-xl shadow-lg hover:shadow-2xl transform transition duration-200 hover:scale-105"
-            />
+      <div class="grid grid-cols-2 gap-4 pt-4 sm:grid-cols-3 lg:grid-cols-4 xl:gap-6">
+        <div v-for="product in products" :key="product.id">
+          <button
+            v-if="openModalOnClick"
+            type="button"
+            class="group flex w-full flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-lg"
+            @click="openEditModal(product.id)"
+          >
+            <div class="flex aspect-square min-h-0 items-center justify-center overflow-hidden bg-white p-4">
+              <img
+                :src="`${backendUrl}/storage/${product.image_path}`"
+                :alt="product.name"
+                class="size-full object-contain object-center transition duration-200"
+              />
+            </div>
+            <div class="border-t border-slate-100 px-4 py-3">
+              <div class="line-clamp-1 font-semibold text-sky-800">{{ product.name }}</div>
+            </div>
           </button>
-          <RouterLink v-else :to="{ name: targetRouteName, params: { id: product.id } }">
-            <img
-              :src="`${backendUrl}/storage/${product.image_path}`"
-              class="lg:size-60 size-40 object-contain object-center bg-white border-solid border-2 border-sky-600 rounded-xl shadow-lg hover:shadow-2xl transform transition duration-200 hover:scale-105"
-            />
+
+          <RouterLink
+            v-else
+            :to="{ name: targetRouteName, params: { id: product.id } }"
+            class="group flex flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-lg"
+          >
+            <div class="flex aspect-square min-h-0 items-center justify-center overflow-hidden bg-white p-4">
+              <img
+                :src="`${backendUrl}/storage/${product.image_path}`"
+                :alt="product.name"
+                class="size-full object-contain object-center transition duration-200"
+              />
+            </div>
+            <div class="border-t border-slate-100 px-4 py-3">
+              <div class="line-clamp-1 font-semibold text-sky-800">{{ product.name }}</div>
+            </div>
           </RouterLink>
         </div>
       </div>
@@ -162,7 +190,7 @@ onMounted(async () => {
     </template>
   </div>
 
-  <Dialog v-model:visible="showEditModal" modal :style="{ width: '48rem' }">
+  <Dialog v-model:visible="showEditModal" modal :draggable="false" :style="{ width: '36rem' }">
     <ModifyProductFormContent
       v-if="selectedProductId"
       :product-id="selectedProductId"

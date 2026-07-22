@@ -77,6 +77,7 @@ onMounted(async () => {
 
   <Form
     v-else-if="!isLoading"
+    v-slot="$form"
     :key="product?.id"
     class="flex flex-col items-center w-full max-w-2xl mx-auto gap-8 px-2 py-4"
     :resolver="resolver"
@@ -108,7 +109,7 @@ onMounted(async () => {
 
     <FormField v-slot="$field" name="description" class="flex w-full flex-col gap-1">
       <label for="description" class="font-medium text-sky-700">Descripción</label>
-      <Textarea id="description" rows="3" fluid />
+      <Textarea id="description" rows="3" fluid class="resize-none" />
       <Message v-if="$field.invalid" severity="error" size="small">{{
         $field.error?.message
       }}</Message>
@@ -122,13 +123,25 @@ onMounted(async () => {
       Editar variantes/ítems de este producto
     </button>
 
-    <div class="flex flex-row justify-around md:w-2/3 w-full">
-      <Button type="submit" label="ACEPTAR" :loading="isSubmitting" />
-      <Button type="button" label="ELIMINAR" severity="danger" @click="showDeleteModal = true" />
+    <div class="flex w-full flex-col gap-3 sm:flex-row">
+      <Button
+        type="submit"
+        label="ACEPTAR"
+        class="flex-1"
+        :loading="isSubmitting"
+        :disabled="!($form.name?.dirty || $form.description?.dirty)"
+      />
+      <Button
+        type="button"
+        label="ELIMINAR"
+        severity="danger"
+        class="flex-1"
+        @click="showDeleteModal = true"
+      />
     </div>
   </Form>
 
-  <Dialog v-model:visible="showDeleteModal" modal :style="{ width: '28rem' }">
+  <Dialog v-model:visible="showDeleteModal" modal :draggable="false" :style="{ width: '28rem' }">
     <template #header>
       <div class="font-semibold text-[#075985]">Eliminar producto</div>
     </template>
@@ -149,7 +162,7 @@ onMounted(async () => {
     </template>
   </Dialog>
 
-  <Dialog v-model:visible="showItemsModal" modal :style="{ width: '64rem' }">
+  <Dialog v-model:visible="showItemsModal" modal :draggable="false" :style="{ width: '64rem' }">
     <template #header>
       <div class="font-semibold text-[#075985]">Editar variantes de {{ product?.name }}</div>
     </template>

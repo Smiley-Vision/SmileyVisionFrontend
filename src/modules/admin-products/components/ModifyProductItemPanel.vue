@@ -131,10 +131,7 @@ onMounted(async () => {
           {{ isLensProduct ? selectedLensSeries?.label : selectedProductItem?.SKU }}
         </div>
 
-        <ImagePickerButton
-          :preview-url="currentImageSrc ? `${backendUrl}/storage/${currentImageSrc}` : null"
-          @select="onImageSelected"
-        />
+        <ImagePickerButton :preview-url="currentImageSrc || null" @select="onImageSelected" />
 
         <div class="flex flex-col gap-1">
           <label for="item-price" class="font-medium text-sky-700">Precio</label>

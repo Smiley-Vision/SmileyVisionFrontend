@@ -13,7 +13,7 @@ const backendUrl = import.meta.env.VITE_BACKEND_BASE
     :to="{ name: 'product', params: { code: product.id } }"
     class="group flex flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-lg"
   >
-    <div class="flex aspect-square items-center justify-center bg-white p-4">
+    <div class="flex aspect-square min-h-0 items-center justify-center overflow-hidden bg-white p-4">
       <img
         :src="`${backendUrl}/storage/${product.image_path}`"
         :alt="product.name"

@@ -23,6 +23,8 @@ function normalizeVariationName(value: string): string {
     .trim()
 }
 
+const backendUrl = import.meta.env.VITE_BACKEND_BASE
+
 export function useModifyProductItemForm(productId: number) {
   const notify = useAppToast()
   const catalog = useProductCatalog()
@@ -71,11 +73,11 @@ export function useModifyProductItemForm(productId: number) {
   const currentImageSrc = computed(() => {
     if (selectedImagePreviewUrl.value) return selectedImagePreviewUrl.value
 
-    if (isLensProduct.value) {
-      return selectedLensSeries.value?.image_url || product.value?.image_path || ''
-    }
+    const imagePath = isLensProduct.value
+      ? selectedLensSeries.value?.image_url || product.value?.image_path || ''
+      : (selectedProductItem.value?.image_path ?? product.value?.image_path ?? '')
 
-    return selectedProductItem.value?.image_path ?? product.value?.image_path ?? ''
+    return imagePath ? `${backendUrl}/storage/${imagePath}` : ''
   })
 
   function getItemSubtitle(item: ProductItem | null): string {
