@@ -1,4 +1,12 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { ref } from 'vue'
+
+import PrivacyNoticeModal from '@/modules/core/components/PrivacyNoticeModal.vue'
+import TermsAndConditionsModal from '@/modules/core/components/TermsAndConditionsModal.vue'
+
+const isPrivacyNoticeVisible = ref(false)
+const isTermsAndConditionsVisible = ref(false)
+</script>
 
 <template>
   <footer class="bg-sky-800 text-white shadow-[0_-18px_50px_rgba(12,94,137,0.18)]">
@@ -74,15 +82,26 @@
       >
         <p>© 2026 Smiley Vision. Todos los derechos reservados</p>
         <div class="mt-3 flex flex-wrap items-center justify-center gap-3">
-          <RouterLink :to="{ name: 'home' }" class="transition hover:text-white">
+          <button
+            type="button"
+            class="transition hover:text-white"
+            @click="isPrivacyNoticeVisible = true"
+          >
             Aviso de privacidad
-          </RouterLink>
+          </button>
           <span class="hidden h-4 w-px bg-white/20 sm:block"></span>
-          <RouterLink :to="{ name: 'home' }" class="transition hover:text-white">
+          <button
+            type="button"
+            class="transition hover:text-white"
+            @click="isTermsAndConditionsVisible = true"
+          >
             Términos y condiciones
-          </RouterLink>
+          </button>
         </div>
       </div>
     </div>
+
+    <PrivacyNoticeModal v-model:visible="isPrivacyNoticeVisible" />
+    <TermsAndConditionsModal v-model:visible="isTermsAndConditionsVisible" />
   </footer>
 </template>
