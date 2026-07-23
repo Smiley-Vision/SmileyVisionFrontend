@@ -1,31 +1,20 @@
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
 import { RouterView } from 'vue-router'
-import Navbar from '@/components/Navbar.vue'
-import Footer from '@/components/Footer.vue'
 
-const isMenuOpen = ref(false)
-
-function handleToggleMenu(state) {
-  isMenuOpen.value = state
-}
+import Footer from './modules/core/components/Footer.vue'
+import Navbar from './modules/core/components/Navbar.vue'
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col">
-    <!-- Navbar -->
-    <Navbar @toggle-menu="handleToggleMenu" />
+  <div class="grid min-h-screen grid-rows-[auto_1fr_auto]">
+    <Navbar />
 
-    <!-- Content Overlay -->
-    <div v-if="isMenuOpen" class="fixed inset-0 top-[7rem]
-    w-full lg:bg-black/0 bg-black/30 z-40"></div>
-
-    <!-- Main Content -->
-    <div class="flex-grow relative z-10">
+    <main class="flex flex-col">
       <RouterView />
-    </div>
+    </main>
 
-    <!-- Footer -->
-    <Footer></Footer>
+    <Footer />
+
+    <Toast position="bottom-right" />
   </div>
 </template>
