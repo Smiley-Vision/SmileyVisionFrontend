@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router'
 
 const HomeView = () => import('@/modules/marketing/pages/HomeView.vue')
 const AboutUsView = () => import('@/modules/marketing/pages/AboutUsView.vue')
+const ContactView = () => import('@/modules/marketing/pages/ContactView.vue')
 
 export const marketingRoutes: RouteRecordRaw[] = [
   {
@@ -13,5 +14,10 @@ export const marketingRoutes: RouteRecordRaw[] = [
     path: '/sobre-nosotros',
     name: 'about',
     component: AboutUsView,
+  },
+  {
+    path: '/contacto',
+    name: 'contact',
+    component: ContactView,
   },
 ]
