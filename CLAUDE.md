@@ -87,3 +87,7 @@ src/
 ### Code style
 
 Prettier is authoritative (not ESLint — there is no ESLint config in this repo): no semicolons, single quotes, 100-char width, trailing commas, imports auto-sorted into third-party / `@/*` / relative groups (`@trivago/prettier-plugin-sort-imports`). Run `npm run format` rather than hand-formatting.
+
+### Verifying UI changes visually
+
+Playwright is a devDependency (`npx playwright install chromium` once to cache the browser binary in `~/.cache/ms-playwright`, which persists across machines/sessions). For any visual/frontend change, start the dev server (`npm run dev`, port 3000) and drive a headless Chromium against it (navigate, wait for the relevant selector, screenshot) rather than trusting `type-check` alone — type-checking only proves the code compiles, not that it renders correctly.
