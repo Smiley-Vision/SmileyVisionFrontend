@@ -31,6 +31,7 @@ const SHOP_LEFT_NAV_ITEMS: NavItem[] = [
   { label: 'Armazones', routeName: 'shop', params: { categorySlug: 'armazones' } },
   { label: 'Equipos', routeName: 'shop', params: { categorySlug: 'equipos' } },
   { label: 'Mis pedidos', routeName: 'my-orders' },
+  { label: 'Contacto', routeName: 'contact' },
 ]
 
 const DRIVER_LEFT_NAV_ITEMS: NavItem[] = [

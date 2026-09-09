@@ -1,16 +1,19 @@
 import { ref } from 'vue'
 
-import { type ApiProblemDetails, firstProblemMessage } from '@/modules/core/api/apiProblem'
-import { useAppToast } from '@/modules/core/composables/useAppToast'
-
-import type { FrameVariantCombination, FrameVariantRowState } from './useFrameVariants'
-import type { LensSeriesRow } from './useLensSeries'
 import {
   createEquipmentItemService,
   createFrameItemService,
   createLensBatchService,
 } from '@/modules/admin-products/services/productItemService'
-import { createProductService } from '@/modules/admin-products/services/productService'
+import {
+  createProductService,
+  deleteProductService,
+} from '@/modules/admin-products/services/productService'
+import { type ApiProblemDetails, firstProblemMessage } from '@/modules/core/api/apiProblem'
+import { useAppToast } from '@/modules/core/composables/useAppToast'
+
+import type { FrameVariantCombination, FrameVariantRowState } from './useFrameVariants'
+import type { LensSeriesRow } from './useLensSeries'
 
 export type CreateProductCategorySlug = 'equipos' | 'armazones' | 'micas'
 
@@ -88,65 +91,77 @@ export function useCreateProductSubmit() {
     try {
       const { product } = await createProductService(buildBaseFormData(params.base))
 
-      if (params.category === 'equipos' && params.equipment) {
-        await createEquipmentItemService(
-          buildItemFormData(
-            product.id,
-            params.equipment.sku,
-            params.equipment.price,
-            params.base.image,
-          ),
-        )
-
-        successMessage.value = 'Equipo creado con su SKU e inventario inicial.'
-      }
-
-      if (params.category === 'armazones' && params.frame) {
-        for (const combination of params.frame.combinations) {
-          const row = params.frame.rows[combination.index]
-
-          await createFrameItemService(
-            buildItemFormData(product.id, combination.sku, row.price, row.image ?? params.base.image, [
-              combination.colorOption.id,
-              combination.materialOption.id,
-            ]),
+      try {
+        if (params.category === 'equipos' && params.equipment) {
+          await createEquipmentItemService(
+            buildItemFormData(
+              product.id,
+              params.equipment.sku,
+              params.equipment.price,
+              params.base.image,
+            ),
           )
+
+          successMessage.value = 'Equipo creado con su SKU e inventario inicial.'
         }
 
-        successMessage.value = `Armazón creado con ${params.frame.combinations.length} combinaciones.`
-      }
+        if (params.category === 'armazones' && params.frame) {
+          for (const combination of params.frame.combinations) {
+            const row = params.frame.rows[combination.index]
 
-      if (params.category === 'micas' && params.lens) {
-        let created = 0
-        let skipped = 0
+            await createFrameItemService(
+              buildItemFormData(
+                product.id,
+                combination.sku,
+                row.price,
+                row.image ?? params.base.image,
+                [combination.colorOption.id, combination.materialOption.id],
+              ),
+            )
+          }
 
-        for (const row of params.lens.series) {
-          const result = await createLensBatchService({
-            productId: product.id,
-            price: row.price,
-            sphereMin: row.sphereMin,
-            sphereMax: row.sphereMax,
-            cylinderMin: row.cylinderMin,
-            cylinderMax: row.cylinderMax,
-            image: row.image,
-          })
-
-          created += result.data.created_count
-          skipped += result.data.skipped_count
+          successMessage.value = `Armazón creado con ${params.frame.combinations.length} combinaciones.`
         }
 
-        successMessage.value = `Mica creada en ${params.lens.series.length} series. Ítems generados: ${created}. Existentes: ${skipped}.`
+        if (params.category === 'micas' && params.lens) {
+          let created = 0
+          let skipped = 0
+
+          for (const row of params.lens.series) {
+            const result = await createLensBatchService({
+              productId: product.id,
+              price: row.price,
+              sphereMin: row.sphereMin,
+              sphereMax: row.sphereMax,
+              cylinderMin: row.cylinderMin,
+              cylinderMax: row.cylinderMax,
+              image: row.image,
+            })
+
+            created += result.data.created_count
+            skipped += result.data.skipped_count
+          }
+
+          successMessage.value = `Mica creada en ${params.lens.series.length} series. Ítems generados: ${created}. Existentes: ${skipped}.`
+        }
+      } catch (itemError) {
+        // El producto base ya se creó en el backend; si el ítem específico
+        // falla (p. ej. SKU duplicado), se revierte para no dejar un
+        // producto sin código visible en el catálogo.
+        await deleteProductService(product.id).catch(() => undefined)
+
+        throw itemError
       }
 
-      notify(
-        'success',
-        'Producto creado',
-        successMessage.value ?? 'Producto creado correctamente.',
-      )
+      notify('success', 'Producto creado', successMessage.value ?? 'Producto creado correctamente.')
 
       return true
     } catch (error) {
-      notify('error', 'No se pudo crear el producto', firstProblemMessage(error as ApiProblemDetails))
+      notify(
+        'error',
+        'No se pudo crear el producto',
+        firstProblemMessage(error as ApiProblemDetails),
+      )
 
       return false
     } finally {

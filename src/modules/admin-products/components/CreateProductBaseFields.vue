@@ -84,7 +84,7 @@ function onImageSelected(file: File) {
 
       <FormField v-slot="$field" name="description" class="flex flex-col gap-1 md:col-span-2">
         <label for="description" class="font-medium text-sky-700">Descripción</label>
-        <Textarea id="description" rows="3" fluid />
+        <Textarea id="description" rows="3" fluid pt:root:class="resize-none" />
         <Message v-if="$field.invalid" severity="error" size="small">{{
           $field.error?.message
         }}</Message>

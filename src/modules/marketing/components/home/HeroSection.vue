@@ -116,7 +116,7 @@ onMounted(async () => {
 
           <div
             v-reveal="{ origin: 'up', distance: 24, duration: 720, delay: 220 }"
-            class="flex w-full max-w-xl flex-col gap-4 sm:flex-row sm:justify-center"
+            class="flex w-full max-w-2xl flex-col gap-4 sm:flex-row sm:flex-wrap sm:justify-center"
           >
             <button
               type="button"
@@ -125,6 +125,12 @@ onMounted(async () => {
             >
               Ver catálogo
             </button>
+            <RouterLink
+              :to="{ name: 'about' }"
+              class="rounded-full border-2 border-sky-600 bg-sky-50 px-7 py-3 text-center text-base font-bold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-100"
+            >
+              Sobre nosotros
+            </RouterLink>
             <button
               type="button"
               class="rounded-full border border-sky-200 bg-white px-7 py-3 text-base font-bold text-sky-700 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50"
