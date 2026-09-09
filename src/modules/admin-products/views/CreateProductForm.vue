@@ -159,7 +159,7 @@ onMounted(async () => {
 <template>
   <div class="bg-slate-100 py-10">
     <div
-      class="flex flex-col bg-white max-w-4xl mx-auto md:px-10 md:py-10 px-8 gap-8 rounded-2xl md:shadow-2xl"
+      class="flex flex-col bg-white max-w-4xl mx-auto md:px-10 md:py-10 px-8 py-6 gap-8 rounded-2xl md:shadow-2xl"
     >
       <h2 class="text-3xl font-bold text-sky-800 text-center">Crear producto</h2>
 
